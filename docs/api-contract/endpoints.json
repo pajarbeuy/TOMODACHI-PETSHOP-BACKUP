@@ -1,0 +1,596 @@
+{
+  "api_version": "1.0",
+  "base_url": "https://[domain]/api",
+  "description": "Petshop Tomodachi Management System - API Endpoints",
+  "last_updated": "2026-05-18",
+  "endpoints": [
+    {
+      "category": "Authentication",
+      "endpoints": [
+        {
+          "id": "AUTH-001",
+          "method": "POST",
+          "path": "/api/auth/register",
+          "description": "Registrasi pengguna baru",
+          "auth_required": false,
+          "request_body": {
+            "name": "string",
+            "email": "string (email format)",
+            "password": "string (min 8 chars)",
+            "role": "string (owner|kasir|admin_online)"
+          },
+          "response": {
+            "status": "boolean",
+            "message": "string",
+            "data": {
+              "user_id": "integer",
+              "name": "string",
+              "email": "string",
+              "role": "string"
+            }
+          },
+          "status_codes": [201, 422, 400]
+        },
+        {
+          "id": "AUTH-002",
+          "method": "POST",
+          "path": "/api/auth/login",
+          "description": "Login dan mendapatkan token JWT/Sanctum",
+          "auth_required": false,
+          "request_body": {
+            "email": "string",
+            "password": "string"
+          },
+          "response": {
+            "status": "boolean",
+            "message": "string",
+            "data": {
+              "token": "string",
+              "user": {
+                "id": "integer",
+                "name": "string",
+                "email": "string",
+                "role": "string"
+              }
+            }
+          },
+          "status_codes": [200, 401, 422],
+          "notes": "Token expiry: 24 jam untuk kasir, 7 hari untuk owner"
+        },
+        {
+          "id": "AUTH-003",
+          "method": "POST",
+          "path": "/api/auth/logout",
+          "description": "Logout dan revoke token",
+          "auth_required": true,
+          "response": {
+            "status": "boolean",
+            "message": "string"
+          },
+          "status_codes": [200, 401]
+        },
+        {
+          "id": "AUTH-004",
+          "method": "GET",
+          "path": "/api/auth/me",
+          "description": "Mendapatkan profil pengguna aktif",
+          "auth_required": true,
+          "response": {
+            "status": "boolean",
+            "message": "string",
+            "data": {
+              "id": "integer",
+              "name": "string",
+              "email": "string",
+              "role": "string",
+              "created_at": "datetime"
+            }
+          },
+          "status_codes": [200, 401]
+        }
+      ]
+    },
+    {
+      "category": "Manajemen Produk",
+      "endpoints": [
+        {
+          "id": "PROD-001",
+          "method": "GET",
+          "path": "/api/products",
+          "description": "Mengambil daftar semua produk",
+          "auth_required": true,
+          "query_params": {
+            "category_id": "integer (optional)",
+            "animal_type": "string (optional)",
+            "sub_category": "string (optional)",
+            "search": "string (optional)",
+            "page": "integer (optional)",
+            "per_page": "integer (optional, default: 15)"
+          },
+          "response": {
+            "status": "boolean",
+            "message": "string",
+            "data": [
+              {
+                "id": "integer",
+                "name": "string",
+                "sku": "string",
+                "category_id": "integer",
+                "animal_type": "string",
+                "sub_category": "string",
+                "buy_price": "decimal",
+                "sell_price": "decimal",
+                "margin_percentage": "decimal",
+                "image_url": "string",
+                "created_at": "datetime"
+              }
+            ],
+            "pagination": {
+              "current_page": "integer",
+              "per_page": "integer",
+              "total": "integer"
+            }
+          },
+          "status_codes": [200, 401]
+        },
+        {
+          "id": "PROD-002",
+          "method": "POST",
+          "path": "/api/products",
+          "description": "Menambahkan produk baru",
+          "auth_required": true,
+          "required_role": "owner",
+          "request_body": {
+            "name": "string",
+            "sku": "string",
+            "category_id": "integer",
+            "animal_type": "string",
+            "sub_category": "string",
+            "buy_price": "decimal",
+            "sell_price": "decimal",
+            "image": "file (JPEG/PNG, max 2MB)"
+          },
+          "response": {
+            "status": "boolean",
+            "message": "string",
+            "data": {
+              "id": "integer",
+              "name": "string",
+              "sku": "string",
+              "image_url": "string"
+            }
+          },
+          "status_codes": [201, 422, 401, 403]
+        },
+        {
+          "id": "PROD-003",
+          "method": "GET",
+          "path": "/api/products/{id}",
+          "description": "Mengambil detail satu produk",
+          "auth_required": true,
+          "url_params": {
+            "id": "integer"
+          },
+          "response": {
+            "status": "boolean",
+            "message": "string",
+            "data": {
+              "id": "integer",
+              "name": "string",
+              "sku": "string",
+              "category_id": "integer",
+              "buy_price": "decimal",
+              "sell_price": "decimal",
+              "margin_percentage": "decimal",
+              "image_url": "string",
+              "stock": {
+                "offline_qty": "integer",
+                "online_qty": "integer",
+                "min_threshold": "integer"
+              }
+            }
+          },
+          "status_codes": [200, 401, 404]
+        },
+        {
+          "id": "PROD-004",
+          "method": "PUT",
+          "path": "/api/products/{id}",
+          "description": "Memperbarui data produk",
+          "auth_required": true,
+          "required_role": "owner",
+          "url_params": {
+            "id": "integer"
+          },
+          "request_body": {
+            "name": "string (optional)",
+            "category_id": "integer (optional)",
+            "buy_price": "decimal (optional)",
+            "sell_price": "decimal (optional)",
+            "image": "file (optional)"
+          },
+          "response": {
+            "status": "boolean",
+            "message": "string",
+            "data": {
+              "id": "integer",
+              "updated_at": "datetime"
+            }
+          },
+          "status_codes": [200, 422, 401, 403, 404]
+        },
+        {
+          "id": "PROD-005",
+          "method": "DELETE",
+          "path": "/api/products/{id}",
+          "description": "Menghapus produk (soft delete)",
+          "auth_required": true,
+          "required_role": "owner",
+          "url_params": {
+            "id": "integer"
+          },
+          "response": {
+            "status": "boolean",
+            "message": "string"
+          },
+          "status_codes": [200, 401, 403, 404]
+        },
+        {
+          "id": "PROD-006",
+          "method": "GET",
+          "path": "/api/products/categories",
+          "description": "Mengambil daftar kategori produk",
+          "auth_required": true,
+          "response": {
+            "status": "boolean",
+            "message": "string",
+            "data": [
+              {
+                "id": "integer",
+                "name": "string",
+                "animal_type": "string",
+                "sub_categories": ["string"]
+              }
+            ]
+          },
+          "status_codes": [200, 401]
+        }
+      ]
+    },
+    {
+      "category": "Point of Sale (POS)",
+      "endpoints": [
+        {
+          "id": "POS-001",
+          "method": "POST",
+          "path": "/api/transactions",
+          "description": "Membuat transaksi penjualan baru",
+          "auth_required": true,
+          "required_role": "kasir",
+          "request_body": {
+            "channel": "string (offline|online)",
+            "items": [
+              {
+                "product_id": "integer",
+                "quantity": "integer",
+                "unit_price": "decimal"
+              }
+            ],
+            "payment_method": "string (cash|qris|transfer)",
+            "amount_paid": "decimal"
+          },
+          "response": {
+            "status": "boolean",
+            "message": "string",
+            "data": {
+              "transaction_id": "string (TRX-YYYYMMDD-XXXXX)",
+              "total": "decimal",
+              "change": "decimal",
+              "created_at": "datetime"
+            }
+          },
+          "status_codes": [201, 422, 401, 403],
+          "notes": "Stok offline akan berkurang otomatis setelah transaksi berhasil"
+        },
+        {
+          "id": "POS-002",
+          "method": "GET",
+          "path": "/api/transactions",
+          "description": "Mengambil daftar transaksi",
+          "auth_required": true,
+          "query_params": {
+            "channel": "string (optional)",
+            "start_date": "date (optional, YYYY-MM-DD)",
+            "end_date": "date (optional, YYYY-MM-DD)",
+            "page": "integer (optional)",
+            "per_page": "integer (optional)"
+          },
+          "response": {
+            "status": "boolean",
+            "message": "string",
+            "data": [
+              {
+                "id": "integer",
+                "transaction_id": "string",
+                "channel": "string",
+                "total": "decimal",
+                "payment_method": "string",
+                "created_at": "datetime"
+              }
+            ]
+          },
+          "status_codes": [200, 401]
+        },
+        {
+          "id": "POS-003",
+          "method": "GET",
+          "path": "/api/transactions/{id}",
+          "description": "Mengambil detail transaksi",
+          "auth_required": true,
+          "url_params": {
+            "id": "integer"
+          },
+          "response": {
+            "status": "boolean",
+            "message": "string",
+            "data": {
+              "id": "integer",
+              "transaction_id": "string",
+              "kasir_id": "integer",
+              "channel": "string",
+              "total": "decimal",
+              "payment_method": "string",
+              "amount_paid": "decimal",
+              "change": "decimal",
+              "items": [
+                {
+                  "product_id": "integer",
+                  "product_name": "string",
+                  "quantity": "integer",
+                  "unit_price": "decimal",
+                  "subtotal": "decimal"
+                }
+              ],
+              "created_at": "datetime"
+            }
+          },
+          "status_codes": [200, 401, 404]
+        },
+        {
+          "id": "POS-004",
+          "method": "GET",
+          "path": "/api/transactions/{id}/receipt",
+          "description": "Mengambil data struk transaksi (untuk cetak/tampil digital)",
+          "auth_required": true,
+          "url_params": {
+            "id": "integer"
+          },
+          "response": {
+            "status": "boolean",
+            "message": "string",
+            "data": {
+              "transaction_id": "string",
+              "transaction_date": "datetime",
+              "items": [
+                {
+                  "product_name": "string",
+                  "quantity": "integer",
+                  "unit_price": "decimal",
+                  "subtotal": "decimal"
+                }
+              ],
+              "subtotal": "decimal",
+              "tax": "decimal",
+              "total": "decimal",
+              "payment_method": "string",
+              "amount_paid": "decimal",
+              "change": "decimal",
+              "kasir_name": "string"
+            }
+          },
+          "status_codes": [200, 401, 404]
+        }
+      ]
+    },
+    {
+      "category": "Dashboard & Laporan",
+      "endpoints": [
+        {
+          "id": "REPORT-001",
+          "method": "GET",
+          "path": "/api/reports/sales",
+          "description": "Laporan penjualan berdasarkan filter periode",
+          "auth_required": true,
+          "required_role": "owner",
+          "query_params": {
+            "start_date": "date (YYYY-MM-DD)",
+            "end_date": "date (YYYY-MM-DD)",
+            "channel": "string (optional: offline|online|all)",
+            "category": "string (optional)"
+          },
+          "response": {
+            "status": "boolean",
+            "message": "string",
+            "data": {
+              "period": {
+                "start_date": "date",
+                "end_date": "date"
+              },
+              "summary": {
+                "total_transactions": "integer",
+                "total_revenue": "decimal",
+                "total_items_sold": "integer",
+                "average_transaction_value": "decimal"
+              },
+              "by_channel": {
+                "offline": {
+                  "total_transactions": "integer",
+                  "total_revenue": "decimal"
+                },
+                "online": {
+                  "total_transactions": "integer",
+                  "total_revenue": "decimal"
+                }
+              }
+            }
+          },
+          "status_codes": [200, 401, 403, 422]
+        },
+        {
+          "id": "REPORT-002",
+          "method": "GET",
+          "path": "/api/reports/sales/summary",
+          "description": "Ringkasan penjualan harian/mingguan/bulanan",
+          "auth_required": true,
+          "required_role": "owner",
+          "query_params": {
+            "period": "string (daily|weekly|monthly)",
+            "month": "integer (1-12, untuk monthly)",
+            "year": "integer"
+          },
+          "response": {
+            "status": "boolean",
+            "message": "string",
+            "data": [
+              {
+                "date": "string",
+                "total_revenue": "decimal",
+                "transaction_count": "integer",
+                "items_sold": "integer"
+              }
+            ]
+          },
+          "status_codes": [200, 401, 403, 422]
+        },
+        {
+          "id": "REPORT-003",
+          "method": "GET",
+          "path": "/api/reports/top-products",
+          "description": "Produk terlaris berdasarkan kuantitas/nilai",
+          "auth_required": true,
+          "required_role": "owner",
+          "query_params": {
+            "sort_by": "string (quantity|revenue)",
+            "limit": "integer (default: 10)",
+            "start_date": "date (optional)",
+            "end_date": "date (optional)"
+          },
+          "response": {
+            "status": "boolean",
+            "message": "string",
+            "data": [
+              {
+                "rank": "integer",
+                "product_id": "integer",
+                "product_name": "string",
+                "sku": "string",
+                "quantity_sold": "integer",
+                "total_revenue": "decimal"
+              }
+            ]
+          },
+          "status_codes": [200, 401, 403, 422]
+        },
+        {
+          "id": "REPORT-004",
+          "method": "GET",
+          "path": "/api/dashboard/analytics",
+          "description": "Data analytics untuk dashboard (grafik, KPI)",
+          "auth_required": true,
+          "required_role": "owner",
+          "query_params": {
+            "period": "string (7d|30d|3m)",
+            "start_date": "date (optional)",
+            "end_date": "date (optional)"
+          },
+          "response": {
+            "status": "boolean",
+            "message": "string",
+            "data": {
+              "kpi": {
+                "today_sales": "decimal",
+                "total_transactions_today": "integer",
+                "items_sold_today": "integer",
+                "average_transaction_value": "decimal"
+              },
+              "sales_trend": [
+                {
+                  "date": "string",
+                  "revenue": "decimal",
+                  "transactions": "integer"
+                }
+              ],
+              "top_products": [
+                {
+                  "product_name": "string",
+                  "quantity_sold": "integer"
+                }
+              ],
+              "category_breakdown": {
+                "cat": "decimal (percentage)",
+                "dog": "decimal (percentage)",
+                "hamster": "decimal (percentage)"
+              },
+              "channel_comparison": {
+                "offline": "decimal (percentage)",
+                "online": "decimal (percentage)"
+              },
+              "low_stock_alerts": [
+                {
+                  "product_id": "integer",
+                  "product_name": "string",
+                  "current_stock": "integer",
+                  "min_threshold": "integer"
+                }
+              ]
+            }
+          },
+          "status_codes": [200, 401, 403]
+        }
+      ]
+    }
+  ],
+  "headers": {
+    "required": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer {token} (untuk endpoint yang auth_required: true)"
+    },
+    "optional": {
+      "Accept": "application/json"
+    }
+  },
+  "response_format": {
+    "success": {
+      "status": true,
+      "message": "Deskripsi sukses",
+      "data": {}
+    },
+    "error": {
+      "status": false,
+      "message": "Deskripsi error",
+      "data": null
+    }
+  },
+  "error_codes": {
+    "400": "Bad Request - Input tidak valid",
+    "401": "Unauthorized - Token tidak valid atau tidak ada",
+    "403": "Forbidden - Pengguna tidak memiliki hak akses",
+    "404": "Not Found - Resource tidak ditemukan",
+    "422": "Unprocessable Entity - Validasi data gagal",
+    "500": "Internal Server Error"
+  },
+  "authentication": {
+    "type": "Bearer Token (JWT/Sanctum)",
+    "header": "Authorization",
+    "format": "Bearer {token}",
+    "token_expiry": {
+      "kasir": "24 jam",
+      "owner": "7 hari",
+      "admin_online": "7 hari"
+    }
+  },
+  "rate_limiting": {
+    "login_endpoint": "5 percobaan per menit per IP"
+  },
+  "ssl_requirement": "HTTPS (TLS 1.2+) untuk semua endpoint"
+}
