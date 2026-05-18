@@ -1,0 +1,130 @@
+erDiagram
+    ROLES ||--o{ USERS : "assigned to"
+    USERS ||--o{ PERSONAL_ACCESS_TOKENS : "owns"
+    USERS ||--o{ TRANSACTIONS : "handles as cashier"
+
+    CATEGORIES ||--o{ PRODUCTS : "groups"
+    PRODUCTS ||--|| STOCKS : "has"
+    PRODUCTS ||--o{ TRANSACTION_ITEMS : "sold as"
+    PRODUCTS ||--o{ PURCHASE_ORDER_ITEMS : "ordered as"
+
+    TRANSACTIONS ||--|{ TRANSACTION_ITEMS : "contains"
+    PURCHASE_ORDERS ||--|{ PURCHASE_ORDER_ITEMS : "contains"
+
+    ROLES {
+        bigint id PK
+        varchar name "owner|kasir|admin"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    USERS {
+        bigint id PK
+        bigint role_id FK
+        varchar name
+        varchar email UK
+        varchar password
+        timestamp email_verified_at
+        varchar remember_token
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    PERSONAL_ACCESS_TOKENS {
+        bigint id PK
+        varchar tokenable_type
+        bigint tokenable_id
+        varchar name
+        varchar token UK
+        text abilities
+        timestamp last_used_at
+        timestamp expires_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    CATEGORIES {
+        bigint id PK
+        varchar name
+        varchar animal_type "cat|dog|hamster|rabbit|bird|fish|reptile|etc"
+        varchar sub_category "food|medicine_vitamin|equipment"
+        text description
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    PRODUCTS {
+        bigint id PK
+        bigint category_id FK
+        varchar name
+        varchar sku UK
+        decimal buy_price
+        decimal sell_price
+        decimal margin_percentage
+        varchar image_url
+        text description
+        timestamp deleted_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    STOCKS {
+        bigint id PK
+        bigint product_id FK
+        int offline_qty
+        int online_qty
+        int min_threshold
+        timestamp last_updated
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    TRANSACTIONS {
+        bigint id PK
+        bigint kasir_id FK
+        varchar transaction_code UK "TRX-YYYYMMDD-XXXXX"
+        enum channel "offline|online"
+        decimal subtotal
+        decimal tax
+        decimal total
+        enum payment_method "cash|qris|transfer"
+        decimal amount_paid
+        decimal change_amount
+        enum status "pending|completed|cancelled"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    TRANSACTION_ITEMS {
+        bigint id PK
+        bigint transaction_id FK
+        bigint product_id FK
+        int quantity
+        decimal unit_price
+        decimal subtotal
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    PURCHASE_ORDERS {
+        bigint id PK
+        varchar po_number UK
+        varchar supplier_name
+        enum status "draft|ordered|received|cancelled"
+        decimal total
+        date order_date
+        date received_date
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    PURCHASE_ORDER_ITEMS {
+        bigint id PK
+        bigint purchase_order_id FK
+        bigint product_id FK
+        int quantity
+        decimal unit_cost
+        decimal subtotal
+        timestamp created_at
+        timestamp updated_at
+    }

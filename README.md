@@ -1,123 +1,169 @@
-# Tomodachi Pet Shop - Laravel Management System
+# Tomodachi Pet Shop
 
-UI Laravel untuk sistem manajemen toko hewan peliharaan tanpa database.
+Sistem Informasi Manajemen Tomodachi Pet Shop terdiri dari:
 
-## Features
+- `backend`: Laravel 10 REST API
+- `frontend`: Flutter mobile app
+- `docs`: SRS, API contract, dan diagram pendukung
 
-- ✅ Dashboard dengan overview penjualan & stok
-- ✅ Manajemen Produk (CRUD)
-- ✅ Kasir/POS System
-- ✅ Manajemen Stok
-- ✅ Laporan Penjualan
-- ✅ Data disimpan di Session (tanpa database)
-- ✅ Responsive Design dengan Orange Theme
+Backend menyimpan data di MySQL dan menyediakan API untuk produk, kategori, stok, dan transaksi. Frontend Flutter membaca API Laravel melalui base URL seperti `http://10.0.2.2:8000/api` untuk Android emulator.
 
-## Requirements
+## Prasyarat
 
-- PHP 8.1+
+Pastikan sudah terpasang:
+
+- PHP 8.1 atau lebih baru
 - Composer
-- Laravel 10.x
+- MySQL atau MariaDB
+- Flutter SDK
+- Git
+- Laragon, XAMPP, atau environment server lokal sejenis
 
-## Instalasi & Running
+## Instalasi Setelah Clone
 
-### 1. Clone/Extract project ke folder
+Clone repository, lalu masuk ke folder project:
 
 ```bash
-cd laravel
+git clone <url-repository>
+cd Project-Tomodachi-Pet-Shop
 ```
 
-### 2. Install dependencies
+## Setup Backend Laravel
+
+Masuk ke folder backend:
 
 ```bash
+cd backend
 composer install
 ```
 
-### 3. Setup .env
+Buat file `.env`. Jika belum ada `backend/.env.example`, gunakan file `.env.example` dari root project:
 
 ```bash
-cp .env.example .env
+copy ..\.env.example .env
+```
+
+Untuk Git Bash atau Linux/macOS:
+
+```bash
+cp ../.env.example .env
+```
+
+Generate application key:
+
+```bash
 php artisan key:generate
 ```
 
-### 4. Jalankan Laravel
+Atur koneksi database di `backend/.env`, contoh untuk Laragon:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=tomodachi_petshop
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+Buat database `tomodachi_petshop` di MySQL, lalu jalankan migration dan seeder:
 
 ```bash
-php artisan serve
+php artisan migrate --seed
 ```
 
-Aplikasi akan berjalan di `http://localhost:8000`
+Jika ingin reset database dari awal:
 
-## Login
-
-- **Email**: Gunakan email apapun (contoh: admin@petshop.com)
-- **Password**: Gunakan password apapun (minimal 3 karakter)
-- Demo mode - tidak ada validasi backend yang ketat
-
-## File Structure
-
-```
-laravel/
-├── app/
-│   └── Http/
-│       └── Controllers/
-│           └── PetshopController.php    # Main controller
-├── resources/
-│   └── views/
-│       ├── layout.blade.php              # Base layout
-│       ├── auth/login.blade.php          # Login page
-│       ├── dashboard.blade.php           # Dashboard
-│       ├── produk.blade.php              # Product management
-│       ├── pos.blade.php                 # POS/Cashier
-│       ├── stok.blade.php                # Stock management
-│       └── laporan.blade.php             # Reports
-├── public/
-│   ├── css/style.css                     # Main stylesheet
-│   ├── js/app.js                         # Global functions
-│   └── images/logo.svg                   # Tomodachi logo
-├── routes/
-│   └── web.php                           # Route definitions
-└── .env.example                          # Environment template
+```bash
+php artisan migrate:fresh --seed
 ```
 
-## Routes
+Jalankan backend:
 
-| Halaman | URL | Deskripsi |
-|---------|-----|-----------|
-| Login | `/` | Halaman login |
-| Dashboard | `/dashboard` | Dashboard utama |
-| Produk | `/produk` | Manajemen produk |
-| Kasir | `/pos` | Sistem POS |
-| Stok | `/stok` | Manajemen stok |
-| Laporan | `/laporan` | Laporan penjualan |
+```bash
+php artisan serve --host=0.0.0.0 --port=8000
+```
 
-## Data Storage
+Endpoint penting:
 
-Semua data disimpan di session (temporary). Data akan hilang jika:
-- Browser cache dibersihkan
-- User logout
-- Browser ditutup
+- Root status: `http://127.0.0.1:8000`
+- API health: `http://127.0.0.1:8000/api/health`
+- Produk: `http://127.0.0.1:8000/api/products`
+- Kategori: `http://127.0.0.1:8000/api/categories`
 
-Untuk persistensi data, tambahkan database MySQL/SQLite.
+## Setup Frontend Flutter
 
-## Development Notes
+Buka terminal baru dari root project, lalu masuk ke folder frontend:
 
-- UI sudah responsive untuk mobile
-- Menggunakan Font Awesome 6.4.0 untuk icons
-- Orange color scheme (#F4A460, #FF8C42)
-- Session-based authentication (demo only)
+```bash
+cd frontend
+flutter pub get
+flutter run
+```
 
-## Next Steps (Optional)
+Base URL API yang digunakan di aplikasi:
 
-Untuk production:
-1. Tambahkan real database (MySQL/SQLite)
-2. Implement proper authentication (Laravel Sanctum/Passport)
-3. Tambahkan validation layer
-4. Setup CSRF protection lebih ketat
-5. Tambahkan file upload untuk product images
-6. Export PDF functionality untuk laporan
+- Android emulator: `http://10.0.2.2:8000/api`
+- Windows desktop / iOS simulator: `http://127.0.0.1:8000/api`
+- HP fisik: gunakan IP laptop di jaringan yang sama, contoh `http://192.168.1.10:8000/api`
 
----
+Jika menggunakan HP fisik, jalankan backend dengan:
 
-**Version**: 1.0.0  
-**Author**: Tomodachi Pet Shop Development  
-**Last Updated**: 2026-04-30
+```bash
+php artisan serve --host=0.0.0.0 --port=8000
+```
+
+Pastikan firewall mengizinkan akses ke port `8000`.
+
+## Verifikasi
+
+Cek backend:
+
+```bash
+cd backend
+php artisan route:list --path=api
+```
+
+Cek frontend:
+
+```bash
+cd frontend
+flutter analyze
+flutter test
+```
+
+## Struktur Project
+
+```text
+Project-Tomodachi-Pet-Shop/
+├── backend/
+│   ├── app/
+│   ├── database/
+│   ├── routes/
+│   └── composer.json
+├── frontend/
+│   ├── lib/
+│   ├── android/
+│   ├── test/
+│   └── pubspec.yaml
+├── docs/
+│   ├── api-contract/
+│   └── diagrams/
+└── README.md
+```
++-- backend/
+|   +-- app/
+|   +-- database/
+|   +-- routes/
+|   +-- composer.json
++-- frontend/
+|   +-- lib/
+|   +-- android/
+|   +-- test/
+|   +-- pubspec.yaml
++-- docs/
+|   +-- api-contract/
+|   +-- diagrams/
++-- README.md
+
+```
