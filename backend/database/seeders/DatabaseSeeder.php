@@ -5,6 +5,9 @@ namespace Database\Seeders;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+use App\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,11 +16,46 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Seed roles
         DB::table('roles')->upsert([
             ['name' => 'owner', 'created_at' => now(), 'updated_at' => now()],
             ['name' => 'kasir', 'created_at' => now(), 'updated_at' => now()],
             ['name' => 'admin', 'created_at' => now(), 'updated_at' => now()],
         ], ['name'], ['updated_at']);
+
+        // Seed test users
+        $ownerRole = Role::where('name', 'owner')->first();
+        $kasirRole = Role::where('name', 'kasir')->first();
+        $adminRole = Role::where('name', 'admin')->first();
+
+        if ($ownerRole && $kasirRole && $adminRole) {
+            User::updateOrCreate(
+                ['email' => 'owner@tomodachi.com'],
+                [
+                    'name' => 'Pak Heri',
+                    'password' => Hash::make('password123'),
+                    'role_id' => $ownerRole->id,
+                ]
+            );
+
+            User::updateOrCreate(
+                ['email' => 'kasir@tomodachi.com'],
+                [
+                    'name' => 'Budi Santoso',
+                    'password' => Hash::make('password123'),
+                    'role_id' => $kasirRole->id,
+                ]
+            );
+
+            User::updateOrCreate(
+                ['email' => 'admin@tomodachi.com'],
+                [
+                    'name' => 'Admin Utama',
+                    'password' => Hash::make('password123'),
+                    'role_id' => $adminRole->id,
+                ]
+            );
+        }
 
         DB::table('categories')->upsert([
             [
@@ -109,3 +147,4 @@ class DatabaseSeeder extends Seeder
         // ]);
     }
 }
+
