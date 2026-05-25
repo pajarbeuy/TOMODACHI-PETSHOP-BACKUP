@@ -2,14 +2,28 @@ import 'dart:convert';
 import 'dart:io';
 
 class ApiClient {
-  ApiClient(String baseUrl) : _baseUri = Uri.parse(_normalizeBaseUrl(baseUrl));
+  ApiClient(String baseUrl, {String? token})
+    : _baseUri = Uri.parse(_normalizeBaseUrl(baseUrl)),
+      _token = token;
 
   final Uri _baseUri;
+  String? _token;
 
   static String _normalizeBaseUrl(String value) {
     return value.endsWith('/') ? value : '$value/';
   }
 
+  /// Set the authentication token
+  void setToken(String token) {
+    _token = token;
+  }
+
+  /// Clear the authentication token
+  void clearToken() {
+    _token = null;
+  }
+
+  /// Make a GET request
   Future<Map<String, dynamic>> get(String path) async {
     final client = HttpClient();
     client.connectionTimeout = const Duration(seconds: 10);
@@ -18,6 +32,8 @@ class ApiClient {
       final cleanPath = path.startsWith('/') ? path.substring(1) : path;
       final request = await client.getUrl(_baseUri.resolve(cleanPath));
       request.headers.set(HttpHeaders.acceptHeader, 'application/json');
+
+      _addAuthHeader(request);
 
       final response = await request.close();
       final body = await response.transform(utf8.decoder).join();
@@ -34,6 +50,119 @@ class ApiClient {
       throw const FormatException('Response API bukan JSON object');
     } finally {
       client.close(force: true);
+    }
+  }
+
+  /// Make a POST request
+  Future<Map<String, dynamic>> post(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
+    final client = HttpClient();
+    client.connectionTimeout = const Duration(seconds: 10);
+
+    try {
+      final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+      final request = await client.postUrl(_baseUri.resolve(cleanPath));
+      request.headers.set(HttpHeaders.acceptHeader, 'application/json');
+      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
+
+      _addAuthHeader(request);
+
+      if (body != null) {
+        request.write(jsonEncode(body));
+      }
+
+      final response = await request.close();
+      final responseBody = await response.transform(utf8.decoder).join();
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw ApiException('HTTP ${response.statusCode}: $responseBody');
+      }
+
+      final decoded = jsonDecode(responseBody);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      throw const FormatException('Response API bukan JSON object');
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  /// Make a PUT request
+  Future<Map<String, dynamic>> put(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
+    final client = HttpClient();
+    client.connectionTimeout = const Duration(seconds: 10);
+
+    try {
+      final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+      final request = await client.putUrl(_baseUri.resolve(cleanPath));
+      request.headers.set(HttpHeaders.acceptHeader, 'application/json');
+      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
+
+      _addAuthHeader(request);
+
+      if (body != null) {
+        request.write(jsonEncode(body));
+      }
+
+      final response = await request.close();
+      final responseBody = await response.transform(utf8.decoder).join();
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw ApiException('HTTP ${response.statusCode}: $responseBody');
+      }
+
+      final decoded = jsonDecode(responseBody);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      throw const FormatException('Response API bukan JSON object');
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  /// Make a DELETE request
+  Future<Map<String, dynamic>> delete(String path) async {
+    final client = HttpClient();
+    client.connectionTimeout = const Duration(seconds: 10);
+
+    try {
+      final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+      final request = await client.deleteUrl(_baseUri.resolve(cleanPath));
+      request.headers.set(HttpHeaders.acceptHeader, 'application/json');
+
+      _addAuthHeader(request);
+
+      final response = await request.close();
+      final body = await response.transform(utf8.decoder).join();
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw ApiException('HTTP ${response.statusCode}: $body');
+      }
+
+      final decoded = jsonDecode(body);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      throw const FormatException('Response API bukan JSON object');
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  /// Add Bearer token to request headers
+  void _addAuthHeader(HttpClientRequest request) {
+    if (_token != null && _token!.isNotEmpty) {
+      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_token');
     }
   }
 }
