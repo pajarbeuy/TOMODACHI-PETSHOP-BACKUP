@@ -48,6 +48,11 @@ class ApiClient {
       }
 
       throw const FormatException('Response API bukan JSON object');
+    } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
+      throw ApiException('Network error: ${e.toString()}');
     } finally {
       client.close(force: true);
     }
@@ -86,6 +91,11 @@ class ApiClient {
       }
 
       throw const FormatException('Response API bukan JSON object');
+    } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
+      throw ApiException('Network error: ${e.toString()}');
     } finally {
       client.close(force: true);
     }
@@ -124,6 +134,11 @@ class ApiClient {
       }
 
       throw const FormatException('Response API bukan JSON object');
+    } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
+      throw ApiException('Network error: ${e.toString()}');
     } finally {
       client.close(force: true);
     }
@@ -154,6 +169,108 @@ class ApiClient {
       }
 
       throw const FormatException('Response API bukan JSON object');
+    } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
+      throw ApiException('Network error: ${e.toString()}');
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  /// Make a multipart POST request
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    required Map<String, String> fields,
+    List<int>? fileBytes,
+    String? filePath,
+    String? fileName,
+    String fileContentType = 'image/jpeg',
+    String fileFieldName = 'image',
+  }) async {
+    final client = HttpClient();
+    client.connectionTimeout = const Duration(seconds: 10);
+
+    try {
+      final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+      final request = await client.postUrl(_baseUri.resolve(cleanPath));
+      request.headers.set(HttpHeaders.acceptHeader, 'application/json');
+
+      _addAuthHeader(request);
+
+      final boundary =
+          '------TomodachiBoundary${DateTime.now().millisecondsSinceEpoch}';
+      final List<int> bodyBytes = [];
+
+      // Add fields
+      fields.forEach((key, value) {
+        bodyBytes.addAll(utf8.encode('--$boundary\r\n'));
+        bodyBytes.addAll(
+          utf8.encode('Content-Disposition: form-data; name="$key"\r\n\r\n'),
+        );
+        bodyBytes.addAll(utf8.encode('$value\r\n'));
+      });
+
+      // Add file
+      if (fileBytes != null && fileBytes.isNotEmpty) {
+        bodyBytes.addAll(utf8.encode('--$boundary\r\n'));
+        bodyBytes.addAll(
+          utf8.encode(
+            'Content-Disposition: form-data; name="$fileFieldName"; filename="${fileName ?? "upload.jpg"}"\r\n',
+          ),
+        );
+        bodyBytes.addAll(utf8.encode('Content-Type: $fileContentType\r\n\r\n'));
+        bodyBytes.addAll(fileBytes);
+        bodyBytes.addAll(utf8.encode('\r\n'));
+      } else if (filePath != null && filePath.isNotEmpty) {
+        final file = File(filePath);
+        if (await file.exists()) {
+          final bytes = await file.readAsBytes();
+          bodyBytes.addAll(utf8.encode('--$boundary\r\n'));
+          bodyBytes.addAll(
+            utf8.encode(
+              'Content-Disposition: form-data; name="$fileFieldName"; filename="${fileName ?? file.uri.pathSegments.last}"\r\n',
+            ),
+          );
+          bodyBytes.addAll(
+            utf8.encode('Content-Type: $fileContentType\r\n\r\n'),
+          );
+          bodyBytes.addAll(bytes);
+          bodyBytes.addAll(utf8.encode('\r\n'));
+        }
+      }
+
+      bodyBytes.addAll(utf8.encode('--$boundary--\r\n'));
+
+      request.headers.set(
+        HttpHeaders.contentTypeHeader,
+        'multipart/form-data; boundary=$boundary',
+      );
+      request.headers.set(
+        HttpHeaders.contentLengthHeader,
+        bodyBytes.length.toString(),
+      );
+      request.add(bodyBytes);
+
+      final response = await request.close();
+      final responseBody = await response.transform(utf8.decoder).join();
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw ApiException('HTTP ${response.statusCode}: $responseBody');
+      }
+
+      final decoded = jsonDecode(responseBody);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      throw const FormatException('Response API bukan JSON object');
+    } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
+      throw ApiException('Network error: ${e.toString()}');
     } finally {
       client.close(force: true);
     }

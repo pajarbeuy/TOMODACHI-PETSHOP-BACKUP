@@ -49,6 +49,7 @@ class AuthService extends ChangeNotifier {
   String? get token => _token;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  ApiClient get apiClient => _apiClient;
 
   /// Initialize auth service with API base URL
   void initialize(String baseUrl) {
