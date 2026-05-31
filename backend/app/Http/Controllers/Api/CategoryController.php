@@ -98,4 +98,39 @@ class CategoryController extends Controller
         $category->delete();
         return response()->json(['status' => true, 'message' => 'Kategori berhasil dihapus'], 200);
     }
+
+    /**
+     * GET /api/products/categories
+     * Return grouped list of animal categories and sub-categories
+     */
+    public function productCategories()
+    {
+        $categories = Category::all();
+        $grouped = $categories->groupBy('animal_type');
+        
+        $formatted = [];
+        $index = 1;
+        foreach ($grouped as $animalType => $items) {
+            $formatted[] = [
+                'id' => $index++,
+                'name' => ucfirst($animalType) . ' Products',
+                'animal_type' => $animalType,
+                'sub_categories' => $items->pluck('sub_category')->unique()->values()->all(),
+                'categories' => $items->map(function($item) {
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->name,
+                        'sub_category' => $item->sub_category,
+                        'description' => $item->description
+                    ];
+                })->all()
+            ];
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Categories retrieved',
+            'data' => $formatted
+        ], 200);
+    }
 }
