@@ -16,6 +16,16 @@ class ApiClient {
     return value.endsWith('/') ? value : '$value/';
   }
 
+  String resolveUrl(String value) {
+    final uri = Uri.tryParse(value);
+    if (uri == null || uri.hasScheme) {
+      return value;
+    }
+
+    final cleanPath = value.startsWith('/') ? value.substring(1) : value;
+    return _baseUri.resolve(cleanPath).toString();
+  }
+
   /// Set the authentication token
   void setToken(String token) {
     _token = token;
@@ -121,14 +131,14 @@ class ApiClient {
         try {
           final status = request.status;
           if (status < 200 || status >= 300) {
-            final responseText = request.responseText ?? '';
+            final responseText = request.responseText;
             completer.completeError(
               ApiException('HTTP $status: $responseText'),
             );
             return;
           }
 
-          final responseText = request.responseText ?? '';
+          final responseText = request.responseText;
           if (responseText.isEmpty) {
             completer.completeError(const FormatException('Empty response'));
             return;
@@ -213,14 +223,14 @@ class ApiClient {
         try {
           final status = request.status;
           if (status < 200 || status >= 300) {
-            final responseText = request.responseText ?? '';
+            final responseText = request.responseText;
             completer.completeError(
               ApiException('HTTP $status: $responseText'),
             );
             return;
           }
 
-          final responseText = request.responseText ?? '';
+          final responseText = request.responseText;
           if (responseText.isEmpty) {
             completer.completeError(const FormatException('Empty response'));
             return;
@@ -260,13 +270,6 @@ class ApiClient {
         rethrow;
       }
       throw ApiException('Multipart request failed: $e');
-    }
-  }
-
-  /// Add Bearer token to request headers
-  void _addAuthHeader(Map<String, String> headers) {
-    if (_token != null && _token!.isNotEmpty) {
-      headers['Authorization'] = 'Bearer $_token';
     }
   }
 

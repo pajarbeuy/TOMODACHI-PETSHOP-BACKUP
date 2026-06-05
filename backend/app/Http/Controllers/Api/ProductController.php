@@ -5,9 +5,48 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
+    private function publicImageUrl(Request $request, ?string $imageUrl): ?string
+    {
+        if (empty($imageUrl)) {
+            return $imageUrl;
+        }
+
+        $path = parse_url($imageUrl, PHP_URL_PATH) ?: $imageUrl;
+
+        if (str_starts_with($path, '/storage/')) {
+            return $request->getSchemeAndHttpHost() . '/api/product-images/' . ltrim(substr($path, strlen('/storage/')), '/');
+        }
+
+        if (str_starts_with($path, 'storage/')) {
+            return $request->getSchemeAndHttpHost() . '/api/product-images/' . ltrim(substr($path, strlen('storage/')), '/');
+        }
+
+        return $imageUrl;
+    }
+
+    private function attachPublicImageUrl(Request $request, Product $product): Product
+    {
+        $product->image_url = $this->publicImageUrl($request, $product->image_url);
+        return $product;
+    }
+
+    public function image(string $path)
+    {
+        if (str_contains($path, '..') || !Storage::disk('public')->exists($path)) {
+            abort(404);
+        }
+
+        return response()->file(Storage::disk('public')->path($path), [
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+            'Access-Control-Allow-Headers' => '*',
+        ]);
+    }
+
     /**
      * Display a listing of the resource.
      * GET /api/products
@@ -64,7 +103,7 @@ class ProductController extends Controller
         $user = auth()->user();
         $isOwner = $user && $user->role && $user->role->name === 'owner';
 
-        $paginated->getCollection()->transform(function ($product) use ($isOwner) {
+        $paginated->getCollection()->transform(function ($product) use ($isOwner, $request) {
             $buyPrice = floatval($product->buy_price);
             $sellPrice = floatval($product->sell_price);
             $margin = $buyPrice > 0 ? (($sellPrice - $buyPrice) / $buyPrice) * 100 : 0;
@@ -78,6 +117,8 @@ class ProductController extends Controller
                 $product->online_qty = $product->stock->online_qty;
                 $product->min_threshold = $product->stock->min_threshold;
             }
+
+            $this->attachPublicImageUrl($request, $product);
 
             if (!$isOwner) {
                 // Hide pricing margins and purchase costs for Cashier/others
@@ -144,7 +185,7 @@ class ProductController extends Controller
         $imageUrl = $validated['image_url'] ?? null;
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('products', 'public');
-            $imageUrl = asset('storage/' . $path);
+            $imageUrl = '/storage/' . $path;
         }
 
         $marginPercentage = $buyPrice > 0 ? (($sellPrice - $buyPrice) / $buyPrice) * 100 : 0;
@@ -167,10 +208,13 @@ class ProductController extends Controller
             'last_updated' => now(),
         ]);
 
+        $product->load(['category', 'stock']);
+        $this->attachPublicImageUrl($request, $product);
+
         return response()->json([
             'status' => true,
             'message' => 'Product created successfully',
-            'data' => $product->load(['category', 'stock']),
+            'data' => $product,
         ], 201);
     }
 
@@ -178,7 +222,7 @@ class ProductController extends Controller
      * Display the specified resource.
      * GET /api/products/{id}
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
         $product = Product::with(['category', 'stock'])->find($id);
         if (!$product) {
@@ -199,6 +243,8 @@ class ProductController extends Controller
             $product->online_qty = $product->stock->online_qty;
             $product->min_threshold = $product->stock->min_threshold;
         }
+
+        $this->attachPublicImageUrl($request, $product);
 
         if (!$isOwner) {
             unset($product->buy_price);
@@ -261,7 +307,7 @@ class ProductController extends Controller
         $imageUrl = $validated['image_url'] ?? $product->image_url;
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('products', 'public');
-            $imageUrl = asset('storage/' . $path);
+            $imageUrl = '/storage/' . $path;
         }
 
         $marginPercentage = $buyPrice > 0 ? (($sellPrice - $buyPrice) / $buyPrice) * 100 : 0;
@@ -287,10 +333,13 @@ class ProductController extends Controller
             ]
         );
 
+        $product->load(['category', 'stock']);
+        $this->attachPublicImageUrl($request, $product);
+
         return response()->json([
             'status' => true,
             'message' => 'Product updated successfully',
-            'data' => $product->load(['category', 'stock']),
+            'data' => $product,
         ], 200);
     }
 

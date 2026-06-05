@@ -110,7 +110,11 @@ class _ProductsTabState extends State<ProductsTab> {
 
   List<String> _availableSubCategories() {
     final subCategories = _categoriesList
-        .where((cat) => _selectedAnimalType == null || cat['animal_type'] == _selectedAnimalType)
+        .where(
+          (cat) =>
+              _selectedAnimalType == null ||
+              cat['animal_type'] == _selectedAnimalType,
+        )
         .map((cat) => cat['sub_category']?.toString())
         .whereType<String>()
         .where((value) => value.isNotEmpty)
@@ -126,7 +130,9 @@ class _ProductsTabState extends State<ProductsTab> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Hapus Produk'),
-          content: Text('Apakah Anda yakin ingin menghapus produk "$name"? Data transaksi historis akan tetap tersimpan.'),
+          content: Text(
+            'Apakah Anda yakin ingin menghapus produk "$name"? Data transaksi historis akan tetap tersimpan.',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -136,7 +142,7 @@ class _ProductsTabState extends State<ProductsTab> {
               onPressed: () => Navigator.pop(context, true),
               style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: const Text('Hapus'),
-            )
+            ),
           ],
         );
       },
@@ -149,7 +155,9 @@ class _ProductsTabState extends State<ProductsTab> {
       if (res['status'] == true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Produk berhasil dihapus (soft delete)')),
+            const SnackBar(
+              content: Text('Produk berhasil dihapus (soft delete)'),
+            ),
           );
         }
         _fetchProducts();
@@ -169,15 +177,31 @@ class _ProductsTabState extends State<ProductsTab> {
 
     final nameCtrl = TextEditingController(text: isEdit ? product['name'] : '');
     final skuCtrl = TextEditingController(text: isEdit ? product['sku'] : '');
-    final buyPriceCtrl = TextEditingController(text: isEdit ? product['buy_price']?.toString() ?? '' : '');
-    final sellPriceCtrl = TextEditingController(text: isEdit ? product['sell_price']?.toString() ?? '' : '');
-    final offlineQtyCtrl = TextEditingController(text: isEdit ? product['offline_qty']?.toString() ?? '0' : '0');
-    final onlineQtyCtrl = TextEditingController(text: isEdit ? product['online_qty']?.toString() ?? '0' : '0');
-    final minThresholdCtrl = TextEditingController(text: isEdit ? product['min_threshold']?.toString() ?? '5' : '5');
-    final descCtrl = TextEditingController(text: isEdit ? product['description'] ?? '' : '');
-    final imgUrlCtrl = TextEditingController(text: isEdit ? product['image_url'] ?? '' : '');
+    final buyPriceCtrl = TextEditingController(
+      text: isEdit ? product['buy_price']?.toString() ?? '' : '',
+    );
+    final sellPriceCtrl = TextEditingController(
+      text: isEdit ? product['sell_price']?.toString() ?? '' : '',
+    );
+    final offlineQtyCtrl = TextEditingController(
+      text: isEdit ? product['offline_qty']?.toString() ?? '0' : '0',
+    );
+    final onlineQtyCtrl = TextEditingController(
+      text: isEdit ? product['online_qty']?.toString() ?? '0' : '0',
+    );
+    final minThresholdCtrl = TextEditingController(
+      text: isEdit ? product['min_threshold']?.toString() ?? '5' : '5',
+    );
+    final descCtrl = TextEditingController(
+      text: isEdit ? product['description'] ?? '' : '',
+    );
+    final imgUrlCtrl = TextEditingController(
+      text: isEdit ? product['image_url'] ?? '' : '',
+    );
 
-    String? selectedCategoryId = isEdit ? product['category_id']?.toString() : null;
+    String? selectedCategoryId = isEdit
+        ? product['category_id']?.toString()
+        : null;
     bool confirmBelowCost = false;
     ProductImageSelection? selectedImage;
 
@@ -207,13 +231,18 @@ class _ProductsTabState extends State<ProductsTab> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          isEdit ? 'Ubah Informasi Produk' : 'Tambah Produk Baru',
-                          style: _plusJakarta(fontSize: 18, fontWeight: FontWeight.bold),
+                          isEdit
+                              ? 'Ubah Informasi Produk'
+                              : 'Tambah Produk Baru',
+                          style: _plusJakarta(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.close),
                           onPressed: () => Navigator.pop(context),
-                        )
+                        ),
                       ],
                     ),
                     const Divider(height: 20),
@@ -222,7 +251,9 @@ class _ProductsTabState extends State<ProductsTab> {
                     TextField(
                       controller: nameCtrl,
                       style: _plusJakarta(fontSize: 14),
-                      decoration: const InputDecoration(labelText: 'Nama Produk *'),
+                      decoration: const InputDecoration(
+                        labelText: 'Nama Produk *',
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -231,22 +262,30 @@ class _ProductsTabState extends State<ProductsTab> {
                           child: TextField(
                             controller: skuCtrl,
                             style: _plusJakarta(fontSize: 14),
-                            decoration: const InputDecoration(labelText: 'SKU Produk *'),
+                            decoration: const InputDecoration(
+                              labelText: 'SKU Produk *',
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            value: selectedCategoryId,
+                            initialValue: selectedCategoryId,
                             style: _plusJakarta(fontSize: 14),
-                            decoration: const InputDecoration(labelText: 'Kategori *'),
+                            decoration: const InputDecoration(
+                              labelText: 'Kategori *',
+                            ),
                             items: _categoriesList.map((cat) {
                               return DropdownMenuItem<String>(
                                 value: cat['id'].toString(),
-                                child: Text(cat['name'], style: _plusJakarta(fontSize: 13)),
+                                child: Text(
+                                  cat['name'],
+                                  style: _plusJakarta(fontSize: 13),
+                                ),
                               );
                             }).toList(),
-                            onChanged: (v) => setModalState(() => selectedCategoryId = v),
+                            onChanged: (v) =>
+                                setModalState(() => selectedCategoryId = v),
                           ),
                         ),
                       ],
@@ -259,7 +298,10 @@ class _ProductsTabState extends State<ProductsTab> {
                             controller: buyPriceCtrl,
                             keyboardType: TextInputType.number,
                             style: _plusJakarta(fontSize: 14),
-                            decoration: const InputDecoration(labelText: 'Harga Beli (Rp) *', prefixText: 'Rp '),
+                            decoration: const InputDecoration(
+                              labelText: 'Harga Beli (Rp) *',
+                              prefixText: 'Rp ',
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -268,7 +310,10 @@ class _ProductsTabState extends State<ProductsTab> {
                             controller: sellPriceCtrl,
                             keyboardType: TextInputType.number,
                             style: _plusJakarta(fontSize: 14),
-                            decoration: const InputDecoration(labelText: 'Harga Jual (Rp) *', prefixText: 'Rp '),
+                            decoration: const InputDecoration(
+                              labelText: 'Harga Jual (Rp) *',
+                              prefixText: 'Rp ',
+                            ),
                           ),
                         ),
                       ],
@@ -281,7 +326,9 @@ class _ProductsTabState extends State<ProductsTab> {
                             controller: offlineQtyCtrl,
                             keyboardType: TextInputType.number,
                             style: _plusJakarta(fontSize: 14),
-                            decoration: const InputDecoration(labelText: 'Stok Offline *'),
+                            decoration: const InputDecoration(
+                              labelText: 'Stok Offline *',
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -290,7 +337,9 @@ class _ProductsTabState extends State<ProductsTab> {
                             controller: onlineQtyCtrl,
                             keyboardType: TextInputType.number,
                             style: _plusJakarta(fontSize: 14),
-                            decoration: const InputDecoration(labelText: 'Stok Online *'),
+                            decoration: const InputDecoration(
+                              labelText: 'Stok Online *',
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -299,7 +348,9 @@ class _ProductsTabState extends State<ProductsTab> {
                             controller: minThresholdCtrl,
                             keyboardType: TextInputType.number,
                             style: _plusJakarta(fontSize: 14),
-                            decoration: const InputDecoration(labelText: 'Batas Minimum *'),
+                            decoration: const InputDecoration(
+                              labelText: 'Batas Minimum *',
+                            ),
                           ),
                         ),
                       ],
@@ -308,7 +359,10 @@ class _ProductsTabState extends State<ProductsTab> {
                     TextField(
                       controller: imgUrlCtrl,
                       style: _plusJakarta(fontSize: 14),
-                      decoration: const InputDecoration(labelText: 'URL Foto Produk (Opsional jika tidak upload file)'),
+                      decoration: const InputDecoration(
+                        labelText:
+                            'URL Foto Produk (Opsional jika tidak upload file)',
+                      ),
                       onChanged: (_) => setModalState(() {}),
                     ),
                     const SizedBox(height: 12),
@@ -318,7 +372,9 @@ class _ProductsTabState extends State<ProductsTab> {
                           child: OutlinedButton.icon(
                             icon: const Icon(Icons.upload_file),
                             label: Text(
-                              selectedImage == null ? 'Pilih Foto JPEG/PNG' : selectedImage!.name,
+                              selectedImage == null
+                                  ? 'Pilih Foto JPEG/PNG'
+                                  : selectedImage!.name,
                               overflow: TextOverflow.ellipsis,
                             ),
                             onPressed: () async {
@@ -327,19 +383,30 @@ class _ProductsTabState extends State<ProductsTab> {
                                 if (image == null) {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Pemilihan file tidak tersedia di platform ini.')),
+                                      const SnackBar(
+                                        content: Text(
+                                          'Pemilihan file tidak tersedia di platform ini.',
+                                        ),
+                                      ),
                                     );
                                   }
                                   return;
                                 }
 
-                                final isSupportedType = image.mimeType == 'image/jpeg' || image.mimeType == 'image/png';
-                                final isWithinLimit = image.sizeInBytes <= 2 * 1024 * 1024;
+                                final isSupportedType =
+                                    image.mimeType == 'image/jpeg' ||
+                                    image.mimeType == 'image/png';
+                                final isWithinLimit =
+                                    image.sizeInBytes <= 2 * 1024 * 1024;
 
                                 if (!isSupportedType || !isWithinLimit) {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Foto harus JPEG/PNG dan maksimal 2MB.')),
+                                      const SnackBar(
+                                        content: Text(
+                                          'Foto harus JPEG/PNG dan maksimal 2MB.',
+                                        ),
+                                      ),
                                     );
                                   }
                                   return;
@@ -352,7 +419,11 @@ class _ProductsTabState extends State<ProductsTab> {
                               } catch (e) {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Gagal memilih foto: ${e.toString()}')),
+                                    SnackBar(
+                                      content: Text(
+                                        'Gagal memilih foto: ${e.toString()}',
+                                      ),
+                                    ),
                                   );
                                 }
                               }
@@ -364,12 +435,14 @@ class _ProductsTabState extends State<ProductsTab> {
                           IconButton(
                             tooltip: 'Hapus foto terpilih',
                             icon: const Icon(Icons.close),
-                            onPressed: () => setModalState(() => selectedImage = null),
+                            onPressed: () =>
+                                setModalState(() => selectedImage = null),
                           ),
                         ],
                       ],
                     ),
-                    if (selectedImage != null || imgUrlCtrl.text.trim().isNotEmpty) ...[
+                    if (selectedImage != null ||
+                        imgUrlCtrl.text.trim().isNotEmpty) ...[
                       const SizedBox(height: 12),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
@@ -383,12 +456,17 @@ class _ProductsTabState extends State<ProductsTab> {
                                   fit: BoxFit.cover,
                                 )
                               : Image.network(
-                                  imgUrlCtrl.text.trim(),
+                                  widget.productService.resolveImageUrl(
+                                    imgUrlCtrl.text.trim(),
+                                  ),
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Center(
+                                  errorBuilder: (_, _, _) => Center(
                                     child: Text(
                                       'Preview foto tidak dapat dimuat',
-                                      style: _plusJakarta(fontSize: 12, color: Colors.grey),
+                                      style: _plusJakarta(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -400,7 +478,9 @@ class _ProductsTabState extends State<ProductsTab> {
                       controller: descCtrl,
                       maxLines: 2,
                       style: _plusJakarta(fontSize: 14),
-                      decoration: const InputDecoration(labelText: 'Deskripsi Produk'),
+                      decoration: const InputDecoration(
+                        labelText: 'Deskripsi Produk',
+                      ),
                     ),
                     const SizedBox(height: 24),
 
@@ -412,17 +492,26 @@ class _ProductsTabState extends State<ProductsTab> {
                         onPressed: () async {
                           final name = nameCtrl.text.trim();
                           final sku = skuCtrl.text.trim();
-                          final buyVal = double.tryParse(buyPriceCtrl.text) ?? 0.0;
-                          final sellVal = double.tryParse(sellPriceCtrl.text) ?? 0.0;
+                          final buyVal =
+                              double.tryParse(buyPriceCtrl.text) ?? 0.0;
+                          final sellVal =
+                              double.tryParse(sellPriceCtrl.text) ?? 0.0;
                           final offQty = int.tryParse(offlineQtyCtrl.text) ?? 0;
                           final onQty = int.tryParse(onlineQtyCtrl.text) ?? 0;
-                          final minThresh = int.tryParse(minThresholdCtrl.text) ?? 5;
+                          final minThresh =
+                              int.tryParse(minThresholdCtrl.text) ?? 5;
                           final desc = descCtrl.text.trim();
                           final imgUrl = imgUrlCtrl.text.trim();
 
-                          if (name.isEmpty || sku.isEmpty || selectedCategoryId == null) {
+                          if (name.isEmpty ||
+                              sku.isEmpty ||
+                              selectedCategoryId == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Lengkapi kolom bertanda bintang (*)')),
+                              const SnackBar(
+                                content: Text(
+                                  'Lengkapi kolom bertanda bintang (*)',
+                                ),
+                              ),
                             );
                             return;
                           }
@@ -435,17 +524,23 @@ class _ProductsTabState extends State<ProductsTab> {
                               builder: (context) {
                                 return AlertDialog(
                                   title: const Text('Peringatan Harga'),
-                                  content: const Text('Harga jual lebih rendah dari harga beli! Apakah Anda yakin ingin melanjutkan tindakan ini?'),
+                                  content: const Text(
+                                    'Harga jual lebih rendah dari harga beli! Apakah Anda yakin ingin melanjutkan tindakan ini?',
+                                  ),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.pop(context, false),
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
                                       child: const Text('Ubah Harga'),
                                     ),
                                     TextButton(
-                                      onPressed: () => Navigator.pop(context, true),
-                                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.red,
+                                      ),
                                       child: const Text('Ya, Lanjutkan'),
-                                    )
+                                    ),
                                   ],
                                 );
                               },
@@ -500,7 +595,13 @@ class _ProductsTabState extends State<ProductsTab> {
                               if (context.mounted) {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(isEdit ? 'Produk berhasil diperbarui' : 'Produk berhasil ditambahkan')),
+                                  SnackBar(
+                                    content: Text(
+                                      isEdit
+                                          ? 'Produk berhasil diperbarui'
+                                          : 'Produk berhasil ditambahkan',
+                                    ),
+                                  ),
                                 );
                               }
                               _fetchProducts();
@@ -509,7 +610,9 @@ class _ProductsTabState extends State<ProductsTab> {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Gagal menyimpan: ${e.toString()}'),
+                                  content: Text(
+                                    'Gagal menyimpan: ${e.toString()}',
+                                  ),
                                   backgroundColor: Colors.red.shade700,
                                 ),
                               );
@@ -519,11 +622,17 @@ class _ProductsTabState extends State<ProductsTab> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFFFB570),
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         child: Text(
                           isEdit ? 'SIMPAN PERUBAHAN' : 'TAMBAH PRODUK',
-                          style: _plusJakarta(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: _plusJakarta(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -539,7 +648,8 @@ class _ProductsTabState extends State<ProductsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final isOwnerOrAdmin = widget.userRole == 'owner' || widget.userRole == 'admin';
+    final isOwnerOrAdmin =
+        widget.userRole == 'owner' || widget.userRole == 'admin';
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -562,8 +672,13 @@ class _ProductsTabState extends State<ProductsTab> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFFB570),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                 ),
             ],
@@ -579,7 +694,10 @@ class _ProductsTabState extends State<ProductsTab> {
                   style: _plusJakarta(fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Cari berdasarkan Nama atau SKU...',
-                    prefixIcon: const Icon(Icons.search, color: Color(0xFFFFB570)),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: Color(0xFFFFB570),
+                    ),
                     filled: true,
                     fillColor: const Color(0xFFFFF9F2),
                     border: OutlineInputBorder(
@@ -600,23 +718,38 @@ class _ProductsTabState extends State<ProductsTab> {
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _selectedAnimalType,
-                    hint: Text('Filter Hewan', style: _plusJakarta(fontSize: 13, color: Colors.grey)),
+                    hint: Text(
+                      'Filter Hewan',
+                      style: _plusJakarta(fontSize: 13, color: Colors.grey),
+                    ),
                     items: [
                       DropdownMenuItem<String>(
                         value: null,
-                        child: Text('Semua Hewan', style: _plusJakarta(fontSize: 13)),
+                        child: Text(
+                          'Semua Hewan',
+                          style: _plusJakarta(fontSize: 13),
+                        ),
                       ),
                       DropdownMenuItem<String>(
                         value: 'cat',
-                        child: Text('🐈 Kucing', style: _plusJakarta(fontSize: 13)),
+                        child: Text(
+                          '🐈 Kucing',
+                          style: _plusJakarta(fontSize: 13),
+                        ),
                       ),
                       DropdownMenuItem<String>(
                         value: 'dog',
-                        child: Text('🐕 Anjing', style: _plusJakarta(fontSize: 13)),
+                        child: Text(
+                          '🐕 Anjing',
+                          style: _plusJakarta(fontSize: 13),
+                        ),
                       ),
                       DropdownMenuItem<String>(
                         value: 'hamster',
-                        child: Text('🐹 Hamster', style: _plusJakarta(fontSize: 13)),
+                        child: Text(
+                          '🐹 Hamster',
+                          style: _plusJakarta(fontSize: 13),
+                        ),
                       ),
                     ],
                     onChanged: (v) {
@@ -639,16 +772,25 @@ class _ProductsTabState extends State<ProductsTab> {
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _selectedSubCategory,
-                    hint: Text('Sub-kategori', style: _plusJakarta(fontSize: 13, color: Colors.grey)),
+                    hint: Text(
+                      'Sub-kategori',
+                      style: _plusJakarta(fontSize: 13, color: Colors.grey),
+                    ),
                     items: [
                       DropdownMenuItem<String>(
                         value: null,
-                        child: Text('Semua Sub-kategori', style: _plusJakarta(fontSize: 13)),
+                        child: Text(
+                          'Semua Sub-kategori',
+                          style: _plusJakarta(fontSize: 13),
+                        ),
                       ),
                       ..._availableSubCategories().map((subCategory) {
                         return DropdownMenuItem<String>(
                           value: subCategory,
-                          child: Text(subCategory, style: _plusJakarta(fontSize: 13)),
+                          child: Text(
+                            subCategory,
+                            style: _plusJakarta(fontSize: 13),
+                          ),
                         );
                       }),
                     ],
@@ -679,12 +821,16 @@ class _ProductsTabState extends State<ProductsTab> {
 
     if (_products.isEmpty) {
       return Center(
-        child: Text('Tidak ada data produk ditemukan.', style: _plusJakarta(color: Colors.grey)),
+        child: Text(
+          'Tidak ada data produk ditemukan.',
+          style: _plusJakarta(color: Colors.grey),
+        ),
       );
     }
 
     final isOwner = widget.userRole == 'owner';
-    final isOwnerOrAdmin = widget.userRole == 'owner' || widget.userRole == 'admin';
+    final isOwnerOrAdmin =
+        widget.userRole == 'owner' || widget.userRole == 'admin';
 
     return ListView.builder(
       itemCount: _products.length,
@@ -694,15 +840,26 @@ class _ProductsTabState extends State<ProductsTab> {
         final name = prod['name'];
         final sku = prod['sku'];
         final sellPrice = double.parse(prod['sell_price'].toString());
-        final offlineQty = int.parse((prod['stock']?['offline_qty'] ?? 0).toString());
-        final minThresh = int.parse((prod['stock']?['min_threshold'] ?? 5).toString());
+        final offlineQty = int.parse(
+          (prod['stock']?['offline_qty'] ?? 0).toString(),
+        );
+        final minThresh = int.parse(
+          (prod['stock']?['min_threshold'] ?? 5).toString(),
+        );
         final String? img = prod['image_url'];
+        final imageUrl = img != null && img.isNotEmpty
+            ? widget.productService.resolveImageUrl(img)
+            : null;
 
         final isLowStock = offlineQty <= minThresh;
 
         // Margin info (only accessible by Owner)
-        final marginPct = isOwner ? prod['margin_percentage']?.toString() ?? '0' : null;
-        final buyPrice = isOwner ? double.tryParse(prod['buy_price']?.toString() ?? '0') : null;
+        final marginPct = isOwner
+            ? prod['margin_percentage']?.toString() ?? '0'
+            : null;
+        final buyPrice = isOwner
+            ? double.tryParse(prod['buy_price']?.toString() ?? '0')
+            : null;
 
         return Card(
           color: Colors.white,
@@ -724,8 +881,13 @@ class _ProductsTabState extends State<ProductsTab> {
                     color: const Color(0xFFFFFDF9),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: img != null && img.isNotEmpty
-                      ? Image.network(img, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.pets, color: Color(0xFFFFB570)))
+                  child: imageUrl != null
+                      ? Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) =>
+                              const Icon(Icons.pets, color: Color(0xFFFFB570)),
+                        )
                       : const Icon(Icons.pets, color: Color(0xFFFFB570)),
                 ),
                 const SizedBox(width: 14),
@@ -735,19 +897,44 @@ class _ProductsTabState extends State<ProductsTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(name, style: _plusJakarta(fontSize: 14, fontWeight: FontWeight.bold)),
+                      Text(
+                        name,
+                        style: _plusJakarta(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 4),
-                      Text('SKU: $sku', style: _plusJakarta(fontSize: 11, color: Colors.grey.shade500)),
+                      Text(
+                        'SKU: $sku',
+                        style: _plusJakarta(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Text('Jual: Rp ${sellPrice.toStringAsFixed(0)}', style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFFFF9A4D))),
+                          Text(
+                            'Jual: Rp ${sellPrice.toStringAsFixed(0)}',
+                            style: _plusJakarta(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFFFF9A4D),
+                            ),
+                          ),
                           if (isOwner && buyPrice != null) ...[
                             const SizedBox(width: 12),
-                            Text('Beli: Rp ${buyPrice.toStringAsFixed(0)}', style: _plusJakarta(fontSize: 12, color: Colors.grey.shade600)),
+                            Text(
+                              'Beli: Rp ${buyPrice.toStringAsFixed(0)}',
+                              style: _plusJakarta(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
                           ],
                         ],
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -757,15 +944,22 @@ class _ProductsTabState extends State<ProductsTab> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: isLowStock ? const Color(0xFFFFF0F1) : const Color(0xFFF0FDF4),
+                        color: isLowStock
+                            ? const Color(0xFFFFF0F1)
+                            : const Color(0xFFF0FDF4),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
                           Icon(
-                            isLowStock ? Icons.warning_amber : Icons.check_circle_outline,
+                            isLowStock
+                                ? Icons.warning_amber
+                                : Icons.check_circle_outline,
                             size: 13,
                             color: isLowStock ? Colors.red : Colors.green,
                           ),
@@ -775,7 +969,9 @@ class _ProductsTabState extends State<ProductsTab> {
                             style: _plusJakarta(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: isLowStock ? Colors.red.shade700 : Colors.green.shade700,
+                              color: isLowStock
+                                  ? Colors.red.shade700
+                                  : Colors.green.shade700,
                             ),
                           ),
                         ],
@@ -785,7 +981,11 @@ class _ProductsTabState extends State<ProductsTab> {
                     if (isOwner && marginPct != null)
                       Text(
                         'Margin: $marginPct%',
-                        style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.indigo.shade700),
+                        style: _plusJakarta(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.indigo.shade700,
+                        ),
                       ),
                   ],
                 ),
@@ -807,7 +1007,11 @@ class _ProductsTabState extends State<ProductsTab> {
                           value: 'edit',
                           child: Row(
                             children: [
-                              const Icon(Icons.edit, size: 16, color: Colors.blue),
+                              const Icon(
+                                Icons.edit,
+                                size: 16,
+                                color: Colors.blue,
+                              ),
                               const SizedBox(width: 8),
                               Text('Ubah', style: _plusJakarta(fontSize: 13)),
                             ],
@@ -817,16 +1021,20 @@ class _ProductsTabState extends State<ProductsTab> {
                           value: 'delete',
                           child: Row(
                             children: [
-                              const Icon(Icons.delete, size: 16, color: Colors.red),
+                              const Icon(
+                                Icons.delete,
+                                size: 16,
+                                color: Colors.red,
+                              ),
                               const SizedBox(width: 8),
                               Text('Hapus', style: _plusJakarta(fontSize: 13)),
                             ],
                           ),
-                        )
+                        ),
                       ];
                     },
-                  )
-                ]
+                  ),
+                ],
               ],
             ),
           ),

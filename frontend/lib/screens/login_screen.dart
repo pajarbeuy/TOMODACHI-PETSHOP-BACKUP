@@ -420,7 +420,7 @@ class _LoginScreenState extends State<LoginScreen>
                     style: _iosStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white.withOpacity(0.85),
+                      color: Colors.white.withValues(alpha: 0.85),
                       height: 1.6,
                     ),
                   ),
@@ -446,9 +446,11 @@ class _LoginScreenState extends State<LoginScreen>
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: Colors.white.withOpacity(0.3)),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Text(
                       '💕 Because every pet deserves the best',
@@ -518,7 +520,7 @@ class _LoginScreenState extends State<LoginScreen>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: _orange.withOpacity(0.4),
+                color: _orange.withValues(alpha: 0.4),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -776,7 +778,7 @@ class _LoginScreenState extends State<LoginScreen>
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: _orange.withOpacity(0.4),
+              color: _orange.withValues(alpha: 0.4),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),

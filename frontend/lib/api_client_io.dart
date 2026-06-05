@@ -13,6 +13,16 @@ class ApiClient {
     return value.endsWith('/') ? value : '$value/';
   }
 
+  String resolveUrl(String value) {
+    final uri = Uri.tryParse(value);
+    if (uri == null || uri.hasScheme) {
+      return value;
+    }
+
+    final cleanPath = value.startsWith('/') ? value.substring(1) : value;
+    return _baseUri.resolve(cleanPath).toString();
+  }
+
   /// Set the authentication token
   void setToken(String token) {
     _token = token;

@@ -1,6 +1,7 @@
 import 'dart:async';
-import 'dart:html' as html;
 import 'dart:typed_data';
+import 'dart:js_interop';
+import 'package:web/web.dart' as web;
 
 class ProductImageSelection {
   const ProductImageSelection({
@@ -17,30 +18,23 @@ class ProductImageSelection {
 }
 
 Future<ProductImageSelection?> pickProductImage() async {
-  final input = html.FileUploadInputElement()
-    ..accept = 'image/jpeg,image/png'
-    ..multiple = false;
+  final input = web.HTMLInputElement()
+    ..type = 'file'
+    ..accept = 'image/jpeg,image/png';
 
   final completer = Completer<ProductImageSelection?>();
 
-  input.onChange.first.then((_) {
-    final file = input.files?.isNotEmpty == true ? input.files!.first : null;
+  input.onChange.listen((_) async {
+    final files = input.files;
+    final file = files != null && files.length > 0 ? files.item(0) : null;
     if (file == null) {
       completer.complete(null);
       return;
     }
 
-    final reader = html.FileReader();
-    reader.onError.first.then((_) {
-      if (!completer.isCompleted) {
-        completer.completeError(Exception('Gagal membaca file gambar.'));
-      }
-    });
-    reader.onLoad.first.then((_) {
-      final result = reader.result;
-      final bytes = result is ByteBuffer
-          ? Uint8List.view(result).toList()
-          : (result as Uint8List).toList();
+    try {
+      final buffer = await file.arrayBuffer().toDart;
+      final bytes = Uint8List.view(buffer.toDart).toList();
 
       if (!completer.isCompleted) {
         completer.complete(
@@ -51,8 +45,11 @@ Future<ProductImageSelection?> pickProductImage() async {
           ),
         );
       }
-    });
-    reader.readAsArrayBuffer(file);
+    } catch (_) {
+      if (!completer.isCompleted) {
+        completer.completeError(Exception('Gagal membaca file gambar.'));
+      }
+    }
   });
 
   input.click();

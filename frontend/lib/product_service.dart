@@ -5,6 +5,10 @@ class ProductService {
 
   ProductService(this._client);
 
+  String resolveImageUrl(String value) {
+    return _client.resolveUrl(value);
+  }
+
   /// Fetch products with optional search and filters
   Future<Map<String, dynamic>> getProducts({
     String? search,
@@ -99,7 +103,6 @@ class ProductService {
     bool confirmPriceBelowCost = false,
   }) async {
     final fields = {
-      '_method': 'PUT',
       'name': name,
       'sku': sku,
       'category_id': categoryId,
@@ -113,7 +116,7 @@ class ProductService {
     };
     if (imageUrl != null) fields['image_url'] = imageUrl;
 
-    // Spoofed POST update route to support multipart upload in Laravel
+    // Dedicated POST update route keeps multipart uploads compatible with Laravel.
     return await _client.postMultipart(
       '/api/products/$id/update',
       fields: fields,

@@ -5,10 +5,7 @@ import '../../dashboard_service.dart';
 class DashboardTab extends StatefulWidget {
   final DashboardService dashboardService;
 
-  const DashboardTab({
-    super.key,
-    required this.dashboardService,
-  });
+  const DashboardTab({super.key, required this.dashboardService});
 
   @override
   State<DashboardTab> createState() => _DashboardTabState();
@@ -32,7 +29,6 @@ class _DashboardTabState extends State<DashboardTab> {
   Map<String, dynamic> _kpi = {};
   List<dynamic> _topProducts = [];
   Map<String, dynamic> _categoryBreakdown = {};
-  List<dynamic> _salesTrend = [];
 
   @override
   void initState() {
@@ -52,13 +48,14 @@ class _DashboardTabState extends State<DashboardTab> {
           _kpi = data['kpi'] ?? {};
           _topProducts = data['top_products'] ?? [];
           _categoryBreakdown = data['category_breakdown'] ?? {};
-          _salesTrend = data['sales_trend'] ?? [];
         });
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load dashboard metrics: ${e.toString()}')),
+          SnackBar(
+            content: Text('Failed to load dashboard metrics: ${e.toString()}'),
+          ),
         );
       }
     } finally {
@@ -72,10 +69,15 @@ class _DashboardTabState extends State<DashboardTab> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final double todaySales = double.tryParse((_kpi['today_sales'] ?? 0).toString()) ?? 0.0;
-    final int todayTrx = int.tryParse((_kpi['total_transactions_today'] ?? 0).toString()) ?? 0;
-    final int todayItems = int.tryParse((_kpi['items_sold_today'] ?? 0).toString()) ?? 0;
-    final double avgValue = double.tryParse((_kpi['average_transaction_value'] ?? 0).toString()) ?? 0.0;
+    final double todaySales =
+        double.tryParse((_kpi['today_sales'] ?? 0).toString()) ?? 0.0;
+    final int todayTrx =
+        int.tryParse((_kpi['total_transactions_today'] ?? 0).toString()) ?? 0;
+    final int todayItems =
+        int.tryParse((_kpi['items_sold_today'] ?? 0).toString()) ?? 0;
+    final double avgValue =
+        double.tryParse((_kpi['average_transaction_value'] ?? 0).toString()) ??
+        0.0;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -90,19 +92,25 @@ class _DashboardTabState extends State<DashboardTab> {
                 children: [
                   Text(
                     'Dashboard Analitik Penjualan',
-                    style: _plusJakarta(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: _plusJakarta(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Metrik performa bisnis riil Toko Tomodachi Pet Shop',
-                    style: _plusJakarta(fontSize: 12, color: Colors.grey.shade600),
+                    style: _plusJakarta(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                 ],
               ),
               IconButton(
                 icon: const Icon(Icons.refresh, color: Color(0xFFFFB570)),
                 onPressed: _fetchAnalytics,
-              )
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -120,25 +128,37 @@ class _DashboardTabState extends State<DashboardTab> {
                 title: 'Omzet Hari Ini',
                 value: 'Rp ${todaySales.toStringAsFixed(0)}',
                 icon: Icons.monetization_on,
-                gradientColors: [const Color(0xFFFFB570), const Color(0xFFFF9A4D)],
+                gradientColors: [
+                  const Color(0xFFFFB570),
+                  const Color(0xFFFF9A4D),
+                ],
               ),
               _buildKpiCard(
                 title: 'Jumlah Transaksi',
                 value: '$todayTrx Transaksi',
                 icon: Icons.receipt_long,
-                gradientColors: [const Color(0xFF6EE7B7), const Color(0xFF34D399)],
+                gradientColors: [
+                  const Color(0xFF6EE7B7),
+                  const Color(0xFF34D399),
+                ],
               ),
               _buildKpiCard(
                 title: 'Item Terjual',
                 value: '$todayItems Pcs',
                 icon: Icons.shopping_bag,
-                gradientColors: [const Color(0xFF93C5FD), const Color(0xFF60A5FA)],
+                gradientColors: [
+                  const Color(0xFF93C5FD),
+                  const Color(0xFF60A5FA),
+                ],
               ),
               _buildKpiCard(
                 title: 'Rata-Rata Order',
                 value: 'Rp ${avgValue.toStringAsFixed(0)}',
                 icon: Icons.analytics,
-                gradientColors: [const Color(0xFFC084FC), const Color(0xFFA855F7)],
+                gradientColors: [
+                  const Color(0xFFC084FC),
+                  const Color(0xFFA855F7),
+                ],
               ),
             ],
           ),
@@ -148,17 +168,11 @@ class _DashboardTabState extends State<DashboardTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Left: Top products rank
-              Expanded(
-                flex: 6,
-                child: _buildTopProductsSection(),
-              ),
+              Expanded(flex: 6, child: _buildTopProductsSection()),
               const SizedBox(width: 24),
 
               // Right: Category Share breakdown
-              Expanded(
-                flex: 4,
-                child: _buildCategoryBreakdownSection(),
-              ),
+              Expanded(flex: 4, child: _buildCategoryBreakdownSection()),
             ],
           ),
         ],
@@ -182,10 +196,10 @@ class _DashboardTabState extends State<DashboardTab> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: gradientColors.first.withOpacity(0.35),
+            color: gradientColors.first.withValues(alpha: 0.35),
             blurRadius: 12,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
       ),
       padding: const EdgeInsets.all(18),
@@ -198,14 +212,22 @@ class _DashboardTabState extends State<DashboardTab> {
             children: [
               Text(
                 title,
-                style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white70),
+                style: _plusJakarta(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white70,
+                ),
               ),
               Icon(icon, color: Colors.white, size: 22),
             ],
           ),
           Text(
             value,
-            style: _plusJakarta(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
+            style: _plusJakarta(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
@@ -233,7 +255,10 @@ class _DashboardTabState extends State<DashboardTab> {
               ? Padding(
                   padding: const EdgeInsets.all(32),
                   child: Center(
-                    child: Text('Belum ada data penjualan tercatat hari ini.', style: _plusJakarta(color: Colors.grey)),
+                    child: Text(
+                      'Belum ada data penjualan tercatat hari ini.',
+                      style: _plusJakarta(color: Colors.grey),
+                    ),
                   ),
                 )
               : ListView.builder(
@@ -251,17 +276,31 @@ class _DashboardTabState extends State<DashboardTab> {
                         backgroundColor: const Color(0xFFFFF3E6),
                         child: Text(
                           '#${index + 1}',
-                          style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFFFF9A4D)),
+                          style: _plusJakarta(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFFFF9A4D),
+                          ),
                         ),
                       ),
-                      title: Text(name, style: _plusJakarta(fontSize: 14, fontWeight: FontWeight.bold)),
+                      title: Text(
+                        name,
+                        style: _plusJakarta(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       trailing: Text(
                         '$qty Pcs',
-                        style: _plusJakarta(fontSize: 14, fontWeight: FontWeight.w900, color: const Color(0xFF3D2314)),
+                        style: _plusJakarta(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF3D2314),
+                        ),
                       ),
                     );
                   },
-                )
+                ),
         ],
       ),
     );
@@ -287,20 +326,33 @@ class _DashboardTabState extends State<DashboardTab> {
               ? Padding(
                   padding: const EdgeInsets.all(32),
                   child: Center(
-                    child: Text('Belum ada distribusi data.', style: _plusJakarta(color: Colors.grey)),
+                    child: Text(
+                      'Belum ada distribusi data.',
+                      style: _plusJakarta(color: Colors.grey),
+                    ),
                   ),
                 )
               : Column(
                   children: _categoryBreakdown.entries.map((entry) {
                     final String key = entry.key;
-                    final double val = double.tryParse(entry.value.toString()) ?? 0.0;
-                    
+                    final double val =
+                        double.tryParse(entry.value.toString()) ?? 0.0;
+
                     Color barColor = Colors.grey;
                     String emoji = '🐾';
-                    if (key == 'cat') { barColor = Colors.orange; emoji = '🐈'; }
-                    else if (key == 'dog') { barColor = Colors.blue; emoji = '🐕'; }
-                    else if (key == 'hamster') { barColor = Colors.green; emoji = '🐹'; }
-                    else if (key == 'rabbit') { barColor = Colors.red; emoji = '🐇'; }
+                    if (key == 'cat') {
+                      barColor = Colors.orange;
+                      emoji = '🐈';
+                    } else if (key == 'dog') {
+                      barColor = Colors.blue;
+                      emoji = '🐕';
+                    } else if (key == 'hamster') {
+                      barColor = Colors.green;
+                      emoji = '🐹';
+                    } else if (key == 'rabbit') {
+                      barColor = Colors.red;
+                      emoji = '🐇';
+                    }
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 14),
@@ -310,8 +362,20 @@ class _DashboardTabState extends State<DashboardTab> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('$emoji ${key.toUpperCase()}', style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.bold)),
-                              Text('${val.toStringAsFixed(1)}%', style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.bold)),
+                              Text(
+                                '$emoji ${key.toUpperCase()}',
+                                style: _plusJakarta(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                '${val.toStringAsFixed(1)}%',
+                                style: _plusJakarta(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 6),
@@ -321,12 +385,12 @@ class _DashboardTabState extends State<DashboardTab> {
                             backgroundColor: Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(999),
                             minHeight: 8,
-                          )
+                          ),
                         ],
                       ),
                     );
                   }).toList(),
-                )
+                ),
         ],
       ),
     );
