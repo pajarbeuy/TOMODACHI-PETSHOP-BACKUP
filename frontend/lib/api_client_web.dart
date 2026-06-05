@@ -269,6 +269,13 @@ class ApiClient {
       headers['Authorization'] = 'Bearer $_token';
     }
   }
+
+  /// Add Bearer token to request headers
+  void _addAuthHeader(Map<String, String> headers) {
+    if (_token != null && _token!.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $_token';
+    }
+  }
 }
 
 class ApiException implements Exception {

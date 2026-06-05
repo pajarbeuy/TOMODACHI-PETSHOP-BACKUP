@@ -64,14 +64,13 @@ class ProductController extends Controller
         $user = auth()->user();
         $isOwner = $user && $user->role && $user->role->name === 'owner';
 
-        $paginated->getCollection()->transform(function ($product) use ($isOwner, $request) {
+        $paginated->getCollection()->transform(function ($product) use ($isOwner) {
             $buyPrice = floatval($product->buy_price);
             $sellPrice = floatval($product->sell_price);
             $margin = $buyPrice > 0 ? (($sellPrice - $buyPrice) / $buyPrice) * 100 : 0;
 
             // Set dynamic attributes
             $product->margin_percentage = round($margin, 2);
-            $product->image_url = $this->resolveImageUrl($product->image_url, $request);
 
             // Fetch quantity info
             if ($product->stock) {
@@ -145,7 +144,7 @@ class ProductController extends Controller
         $imageUrl = $validated['image_url'] ?? null;
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('products', 'public');
-            $imageUrl = $this->storageImageUrl($path, $request);
+            $imageUrl = asset('storage/' . $path);
         }
 
         $marginPercentage = $buyPrice > 0 ? (($sellPrice - $buyPrice) / $buyPrice) * 100 : 0;
@@ -194,7 +193,6 @@ class ProductController extends Controller
         $margin = $buyPrice > 0 ? (($sellPrice - $buyPrice) / $buyPrice) * 100 : 0;
 
         $product->margin_percentage = round($margin, 2);
-        $product->image_url = $this->resolveImageUrl($product->image_url, request());
 
         if ($product->stock) {
             $product->offline_qty = $product->stock->offline_qty;
@@ -263,7 +261,7 @@ class ProductController extends Controller
         $imageUrl = $validated['image_url'] ?? $product->image_url;
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('products', 'public');
-            $imageUrl = $this->storageImageUrl($path, $request);
+            $imageUrl = asset('storage/' . $path);
         }
 
         $marginPercentage = $buyPrice > 0 ? (($sellPrice - $buyPrice) / $buyPrice) * 100 : 0;
@@ -294,30 +292,6 @@ class ProductController extends Controller
             'message' => 'Product updated successfully',
             'data' => $product->load(['category', 'stock']),
         ], 200);
-    }
-
-    private function storageImageUrl(string $path, Request $request): string
-    {
-        return rtrim($request->getSchemeAndHttpHost(), '/') . '/storage/' . ltrim($path, '/');
-    }
-
-    private function resolveImageUrl(?string $imageUrl, Request $request): ?string
-    {
-        if (empty($imageUrl)) {
-            return $imageUrl;
-        }
-
-        $path = parse_url($imageUrl, PHP_URL_PATH) ?: $imageUrl;
-
-        if (str_starts_with($path, '/storage/')) {
-            return rtrim($request->getSchemeAndHttpHost(), '/') . $path;
-        }
-
-        if (str_starts_with($path, 'storage/')) {
-            return rtrim($request->getSchemeAndHttpHost(), '/') . '/' . $path;
-        }
-
-        return $imageUrl;
     }
 
     /**

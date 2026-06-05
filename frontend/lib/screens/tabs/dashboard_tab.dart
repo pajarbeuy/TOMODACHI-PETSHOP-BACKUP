@@ -5,13 +5,17 @@ import '../../dashboard_service.dart';
 class DashboardTab extends StatefulWidget {
   final DashboardService dashboardService;
 
-  const DashboardTab({super.key, required this.dashboardService});
+  const DashboardTab({
+    super.key,
+    required this.dashboardService,
+  });
 
   @override
   State<DashboardTab> createState() => _DashboardTabState();
 }
 
 class _DashboardTabState extends State<DashboardTab> {
+  // Styles helper
   TextStyle _plusJakarta({
     double fontSize = 14,
     FontWeight fontWeight = FontWeight.w500,
@@ -28,6 +32,7 @@ class _DashboardTabState extends State<DashboardTab> {
   Map<String, dynamic> _kpi = {};
   List<dynamic> _topProducts = [];
   Map<String, dynamic> _categoryBreakdown = {};
+  List<dynamic> _salesTrend = [];
 
   @override
   void initState() {
@@ -47,20 +52,17 @@ class _DashboardTabState extends State<DashboardTab> {
           _kpi = data['kpi'] ?? {};
           _topProducts = data['top_products'] ?? [];
           _categoryBreakdown = data['category_breakdown'] ?? {};
+          _salesTrend = data['sales_trend'] ?? [];
         });
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load dashboard metrics: ${e.toString()}'),
-          ),
+          SnackBar(content: Text('Failed to load dashboard metrics: ${e.toString()}')),
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      setState(() => _loading = false);
     }
   }
 
@@ -70,133 +72,97 @@ class _DashboardTabState extends State<DashboardTab> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final width = MediaQuery.of(context).size.width;
-    final isWide = width >= 900;
-    final isCompact = width < 520;
-
-    final todaySales =
-        double.tryParse((_kpi['today_sales'] ?? 0).toString()) ?? 0.0;
-    final todayTrx =
-        int.tryParse((_kpi['total_transactions_today'] ?? 0).toString()) ?? 0;
-    final todayItems =
-        int.tryParse((_kpi['items_sold_today'] ?? 0).toString()) ?? 0;
-    final avgValue =
-        double.tryParse((_kpi['average_transaction_value'] ?? 0).toString()) ??
-        0.0;
+    final double todaySales = double.tryParse((_kpi['today_sales'] ?? 0).toString()) ?? 0.0;
+    final int todayTrx = int.tryParse((_kpi['total_transactions_today'] ?? 0).toString()) ?? 0;
+    final int todayItems = int.tryParse((_kpi['items_sold_today'] ?? 0).toString()) ?? 0;
+    final double avgValue = double.tryParse((_kpi['average_transaction_value'] ?? 0).toString()) ?? 0.0;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        isCompact ? 16 : 24,
-        isCompact ? 18 : 24,
-        isCompact ? 16 : 24,
-        24,
-      ),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(isCompact),
-          SizedBox(height: isCompact ? 18 : 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Dashboard Analitik Penjualan',
+                    style: _plusJakarta(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Metrik performa bisnis riil Toko Tomodachi Pet Shop',
+                    style: _plusJakarta(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh, color: Color(0xFFFFB570)),
+                onPressed: _fetchAnalytics,
+              )
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // KPI Metrik grid
           GridView.count(
-            crossAxisCount: isWide ? 4 : 2,
-            crossAxisSpacing: isCompact ? 10 : 16,
-            mainAxisSpacing: isCompact ? 10 : 16,
+            crossAxisCount: MediaQuery.of(context).size.width >= 900 ? 4 : 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            childAspectRatio: isCompact ? 1.18 : 1.5,
+            childAspectRatio: 1.5,
             children: [
               _buildKpiCard(
                 title: 'Omzet Hari Ini',
                 value: 'Rp ${todaySales.toStringAsFixed(0)}',
-                icon: Icons.monetization_on_rounded,
-                gradientColors: const [Color(0xFFFFB570), Color(0xFFFF9A4D)],
+                icon: Icons.monetization_on,
+                gradientColors: [const Color(0xFFFFB570), const Color(0xFFFF9A4D)],
               ),
               _buildKpiCard(
                 title: 'Jumlah Transaksi',
                 value: '$todayTrx Transaksi',
-                icon: Icons.receipt_long_rounded,
-                gradientColors: const [Color(0xFF6EE7B7), Color(0xFF34D399)],
+                icon: Icons.receipt_long,
+                gradientColors: [const Color(0xFF6EE7B7), const Color(0xFF34D399)],
               ),
               _buildKpiCard(
                 title: 'Item Terjual',
                 value: '$todayItems Pcs',
-                icon: Icons.shopping_bag_rounded,
-                gradientColors: const [Color(0xFF93C5FD), Color(0xFF60A5FA)],
+                icon: Icons.shopping_bag,
+                gradientColors: [const Color(0xFF93C5FD), const Color(0xFF60A5FA)],
               ),
               _buildKpiCard(
                 title: 'Rata-Rata Order',
                 value: 'Rp ${avgValue.toStringAsFixed(0)}',
-                icon: Icons.analytics_rounded,
-                gradientColors: const [Color(0xFFC084FC), Color(0xFFA855F7)],
+                icon: Icons.analytics,
+                gradientColors: [const Color(0xFFC084FC), const Color(0xFFA855F7)],
               ),
             ],
           ),
-          SizedBox(height: isCompact ? 18 : 28),
-          if (isWide)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 6,
-                  child: _buildTopProductsSection(isCompact: false),
-                ),
-                const SizedBox(width: 24),
-                Expanded(
-                  flex: 4,
-                  child: _buildCategoryBreakdownSection(isCompact: false),
-                ),
-              ],
-            )
-          else
-            Column(
-              children: [
-                _buildTopProductsSection(isCompact: isCompact),
-                const SizedBox(height: 14),
-                _buildCategoryBreakdownSection(isCompact: isCompact),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
+          const SizedBox(height: 28),
 
-  Widget _buildHeader(bool isCompact) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Dashboard Analitik',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: _plusJakarta(
-                  fontSize: isCompact ? 22 : 20,
-                  fontWeight: FontWeight.bold,
-                ),
+              // Left: Top products rank
+              Expanded(
+                flex: 6,
+                child: _buildTopProductsSection(),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Ringkasan performa penjualan hari ini',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: _plusJakarta(fontSize: 12, color: Colors.grey.shade600),
+              const SizedBox(width: 24),
+
+              // Right: Category Share breakdown
+              Expanded(
+                flex: 4,
+                child: _buildCategoryBreakdownSection(),
               ),
             ],
           ),
-        ),
-        IconButton(
-          icon: _loading
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.refresh_rounded, color: Color(0xFFFFB570)),
-          onPressed: _loading ? null : _fetchAnalytics,
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -213,235 +179,155 @@ class _DashboardTabState extends State<DashboardTab> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: gradientColors.first.withValues(alpha: 0.28),
-            blurRadius: 10,
+            color: gradientColors.first.withOpacity(0.35),
+            blurRadius: 12,
             offset: const Offset(0, 4),
-          ),
+          )
         ],
       ),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: _plusJakarta(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white70,
-                  ),
-                ),
+              Text(
+                title,
+                style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white70),
               ),
-              const SizedBox(width: 8),
               Icon(icon, color: Colors.white, size: 22),
             ],
           ),
           Text(
             value,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: _plusJakarta(
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-            ),
+            style: _plusJakarta(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTopProductsSection({required bool isCompact}) {
-    return _sectionShell(
-      isCompact: isCompact,
-      icon: Icons.emoji_events_rounded,
-      title: 'Produk Terlaris',
-      child: _topProducts.isEmpty
-          ? _emptyState('Belum ada data penjualan tercatat hari ini.')
-          : ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _topProducts.length,
-              itemBuilder: (context, index) {
-                final item = _topProducts[index];
-                final name = item['product_name']?.toString() ?? '-';
-                final qty = int.tryParse(item['quantity_sold'].toString()) ?? 0;
-
-                return Padding(
-                  padding: EdgeInsets.only(top: index == 0 ? 0 : 14),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundColor: const Color(0xFFFFF3E6),
-                        child: Text(
-                          '#${index + 1}',
-                          style: _plusJakarta(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFFFF9A4D),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: _plusJakarta(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        '$qty Pcs',
-                        style: _plusJakarta(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-    );
-  }
-
-  Widget _buildCategoryBreakdownSection({required bool isCompact}) {
-    return _sectionShell(
-      isCompact: isCompact,
-      icon: Icons.bar_chart_rounded,
-      title: 'Distribusi Kategori',
-      child: _categoryBreakdown.isEmpty
-          ? _emptyState('Belum ada distribusi data.')
-          : Column(
-              children: _categoryBreakdown.entries.map((entry) {
-                final key = entry.key;
-                final val = double.tryParse(entry.value.toString()) ?? 0.0;
-
-                Color barColor = Colors.grey;
-                if (key == 'cat') {
-                  barColor = Colors.orange;
-                } else if (key == 'dog') {
-                  barColor = Colors.blue;
-                } else if (key == 'hamster') {
-                  barColor = Colors.green;
-                } else if (key == 'rabbit') {
-                  barColor = Colors.red;
-                }
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.pets_rounded, color: barColor, size: 16),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              key.toUpperCase(),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: _plusJakarta(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            '${val.toStringAsFixed(1)}%',
-                            style: _plusJakarta(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      LinearProgressIndicator(
-                        value: val.clamp(0, 100) / 100.0,
-                        color: barColor,
-                        backgroundColor: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(999),
-                        minHeight: 8,
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-    );
-  }
-
-  Widget _sectionShell({
-    required bool isCompact,
-    required IconData icon,
-    required String title,
-    required Widget child,
-  }) {
+  Widget _buildTopProductsSection() {
     return Container(
-      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.grey.shade100),
       ),
-      padding: EdgeInsets.all(isCompact ? 16 : 20),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(icon, color: const Color(0xFFFFB570), size: 22),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: _plusJakarta(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            '🏆 Produk Terlaris Teratas',
+            style: _plusJakarta(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 14),
           const Divider(height: 1),
-          const SizedBox(height: 14),
-          child,
+          _topProducts.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Center(
+                    child: Text('Belum ada data penjualan tercatat hari ini.', style: _plusJakarta(color: Colors.grey)),
+                  ),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _topProducts.length,
+                  itemBuilder: (context, index) {
+                    final item = _topProducts[index];
+                    final String name = item['product_name'];
+                    final int qty = int.parse(item['quantity_sold'].toString());
+
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: CircleAvatar(
+                        backgroundColor: const Color(0xFFFFF3E6),
+                        child: Text(
+                          '#${index + 1}',
+                          style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFFFF9A4D)),
+                        ),
+                      ),
+                      title: Text(name, style: _plusJakarta(fontSize: 14, fontWeight: FontWeight.bold)),
+                      trailing: Text(
+                        '$qty Pcs',
+                        style: _plusJakarta(fontSize: 14, fontWeight: FontWeight.w900, color: const Color(0xFF3D2314)),
+                      ),
+                    );
+                  },
+                )
         ],
       ),
     );
   }
 
-  Widget _emptyState(String message) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 22),
-      child: Center(
-        child: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: _plusJakarta(color: Colors.grey),
-        ),
+  Widget _buildCategoryBreakdownSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '📊 Distribusi Kategori Hewan',
+            style: _plusJakarta(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 18),
+          _categoryBreakdown.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Center(
+                    child: Text('Belum ada distribusi data.', style: _plusJakarta(color: Colors.grey)),
+                  ),
+                )
+              : Column(
+                  children: _categoryBreakdown.entries.map((entry) {
+                    final String key = entry.key;
+                    final double val = double.tryParse(entry.value.toString()) ?? 0.0;
+                    
+                    Color barColor = Colors.grey;
+                    String emoji = '🐾';
+                    if (key == 'cat') { barColor = Colors.orange; emoji = '🐈'; }
+                    else if (key == 'dog') { barColor = Colors.blue; emoji = '🐕'; }
+                    else if (key == 'hamster') { barColor = Colors.green; emoji = '🐹'; }
+                    else if (key == 'rabbit') { barColor = Colors.red; emoji = '🐇'; }
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('$emoji ${key.toUpperCase()}', style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.bold)),
+                              Text('${val.toStringAsFixed(1)}%', style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          LinearProgressIndicator(
+                            value: val / 100.0,
+                            color: barColor,
+                            backgroundColor: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(999),
+                            minHeight: 8,
+                          )
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                )
+        ],
       ),
     );
   }

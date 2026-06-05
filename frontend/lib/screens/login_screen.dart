@@ -157,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen>
 
     // Initialize AuthService with your API base URL
     _authService = AuthService();
-    _authService.initialize('https://crusher-vaguely-tyke.ngrok-free.dev');
+    _authService.initialize('http://localhost:8000');
   }
 
   @override

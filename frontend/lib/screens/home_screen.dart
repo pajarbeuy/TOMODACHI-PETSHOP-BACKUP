@@ -74,25 +74,17 @@ class _HomeScreenState extends State<HomeScreen> {
           _NavigationItem(
             label: 'POS Kasir',
             icon: Icons.point_of_sale,
-            widget: PosTab(
-              productService: _productService,
-              transactionService: _transactionService,
-            ),
+            widget: PosTab(productService: _productService, transactionService: _transactionService),
           ),
           _NavigationItem(
             label: 'Manajemen Produk',
             icon: Icons.inventory,
-            widget: ProductsTab(
-              productService: _productService,
-              userRole: role,
-            ),
+            widget: ProductsTab(productService: _productService, userRole: role),
           ),
           _NavigationItem(
             label: 'Riwayat Transaksi',
             icon: Icons.history,
-            widget: TransactionsHistoryTab(
-              transactionService: _transactionService,
-            ),
+            widget: TransactionsHistoryTab(transactionService: _transactionService),
           ),
         ];
 
@@ -101,25 +93,17 @@ class _HomeScreenState extends State<HomeScreen> {
           _NavigationItem(
             label: 'Manajemen Produk',
             icon: Icons.inventory,
-            widget: ProductsTab(
-              productService: _productService,
-              userRole: role,
-            ),
+            widget: ProductsTab(productService: _productService, userRole: role),
           ),
           _NavigationItem(
             label: 'POS Kasir',
             icon: Icons.point_of_sale,
-            widget: PosTab(
-              productService: _productService,
-              transactionService: _transactionService,
-            ),
+            widget: PosTab(productService: _productService, transactionService: _transactionService),
           ),
           _NavigationItem(
             label: 'Riwayat Transaksi',
             icon: Icons.history,
-            widget: TransactionsHistoryTab(
-              transactionService: _transactionService,
-            ),
+            widget: TransactionsHistoryTab(transactionService: _transactionService),
           ),
         ];
 
@@ -129,25 +113,17 @@ class _HomeScreenState extends State<HomeScreen> {
           _NavigationItem(
             label: 'POS Kasir',
             icon: Icons.point_of_sale,
-            widget: PosTab(
-              productService: _productService,
-              transactionService: _transactionService,
-            ),
+            widget: PosTab(productService: _productService, transactionService: _transactionService),
           ),
           _NavigationItem(
             label: 'Stok Produk',
             icon: Icons.inventory_2,
-            widget: ProductsTab(
-              productService: _productService,
-              userRole: role,
-            ), // Read-only for Kasir
+            widget: ProductsTab(productService: _productService, userRole: role), // Read-only for Kasir
           ),
           _NavigationItem(
             label: 'Riwayat Kasir',
             icon: Icons.history,
-            widget: TransactionsHistoryTab(
-              transactionService: _transactionService,
-            ),
+            widget: TransactionsHistoryTab(transactionService: _transactionService),
           ),
         ];
     }
@@ -160,16 +136,14 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
 
     if (success) {
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
     } else {
       setState(() => _loadingLogout = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            widget.authService.errorMessage ?? 'Gagal melakukan Logout',
-          ),
+          content: Text(widget.authService.errorMessage ?? 'Gagal melakukan Logout'),
         ),
       );
     }
@@ -191,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFDF9),
-      appBar: _buildAppBar(user?.name ?? 'Pengguna', role, isWide),
+      appBar: _buildAppBar(user?.name ?? 'Pengguna', role),
       body: isWide
           ? Row(
               children: [
@@ -199,7 +173,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildSidebar(items),
                 const VerticalDivider(width: 1, thickness: 1),
                 // Core screen content
-                Expanded(child: items[_currentIndex].widget),
+                Expanded(
+                  child: items[_currentIndex].widget,
+                ),
               ],
             )
           : items[_currentIndex].widget,
@@ -221,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(String userName, String role, bool isWide) {
+  PreferredSizeWidget _buildAppBar(String userName, String role) {
     String roleLabel = 'Kasir';
     Color roleColor = const Color(0xFFFFC7D1);
     Color roleText = const Color(0xFFC7153D);
@@ -239,7 +215,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0.5,
-      titleSpacing: 16,
       title: Row(
         children: [
           Container(
@@ -253,162 +228,57 @@ class _HomeScreenState extends State<HomeScreen> {
             child: const Icon(Icons.pets, size: 20, color: Colors.white),
           ),
           const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Tomodachi Pet Shop',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: _plusJakarta(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: const Color(0xFF3D2314),
-              ),
-            ),
+          Text(
+            'Tomodachi Pet Shop',
+            style: _plusJakarta(fontSize: 16, fontWeight: FontWeight.w900, color: const Color(0xFF3D2314)),
           ),
         ],
       ),
-      actions: isWide
-          ? [
-              // User profile capsule
-              Row(
-                children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        userName,
-                        style: _plusJakarta(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      _buildRoleBadge(roleLabel, roleColor, roleText),
-                    ],
-                  ),
-                  const SizedBox(width: 8),
-                  CircleAvatar(
-                    backgroundColor: const Color(0xFFFFEAD4),
-                    foregroundColor: const Color(0xFFFF9A4D),
-                    child: Text(userName.substring(0, 1).toUpperCase()),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 12),
-              IconButton(
-                icon: _loadingLogout
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.logout, color: Color(0xFFC7153D)),
-                tooltip: 'Logout',
-                onPressed: _loadingLogout ? null : _handleLogout,
-              ),
-              const SizedBox(width: 12),
-            ]
-          : [
-              PopupMenuButton<String>(
-                tooltip: 'Menu akun',
-                offset: const Offset(0, 46),
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+      actions: [
+        // User profile capsule
+        Row(
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  userName,
+                  style: _plusJakarta(fontSize: 13, fontWeight: FontWeight.bold),
                 ),
-                onSelected: (value) {
-                  if (value == 'logout' && !_loadingLogout) {
-                    _handleLogout();
-                  }
-                },
-                itemBuilder: (context) => [
-                  PopupMenuItem<String>(
-                    enabled: false,
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: const Color(0xFFFFEAD4),
-                          foregroundColor: const Color(0xFFFF9A4D),
-                          child: Text(userName.substring(0, 1).toUpperCase()),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                userName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: _plusJakarta(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              _buildRoleBadge(roleLabel, roleColor, roleText),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                const SizedBox(height: 2),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: roleColor,
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                  const PopupMenuDivider(),
-                  PopupMenuItem<String>(
-                    value: 'logout',
-                    child: Row(
-                      children: [
-                        _loadingLogout
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(
-                                Icons.logout,
-                                color: Color(0xFFC7153D),
-                              ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'Logout',
-                          style: _plusJakarta(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFFC7153D),
-                          ),
-                        ),
-                      ],
-                    ),
+                  child: Text(
+                    roleLabel,
+                    style: _plusJakarta(fontSize: 9, fontWeight: FontWeight.w900, color: roleText),
                   ),
-                ],
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Icon(Icons.menu_rounded, color: Color(0xFF3D2314)),
-                ),
-              ),
-            ],
-    );
-  }
-
-  Widget _buildRoleBadge(String roleLabel, Color roleColor, Color roleText) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-      decoration: BoxDecoration(
-        color: roleColor,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        roleLabel,
-        style: _plusJakarta(
-          fontSize: 9,
-          fontWeight: FontWeight.w900,
-          color: roleText,
+                )
+              ],
+            ),
+            const SizedBox(width: 8),
+            CircleAvatar(
+              backgroundColor: const Color(0xFFFFEAD4),
+              foregroundColor: const Color(0xFFFF9A4D),
+              child: Text(userName.substring(0, 1).toUpperCase()),
+            ),
+          ],
         ),
-      ),
+        const SizedBox(width: 12),
+        // Logout Icon
+        IconButton(
+          icon: _loadingLogout
+              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Icon(Icons.logout, color: Color(0xFFC7153D)),
+          tooltip: 'Logout',
+          onPressed: _loadingLogout ? null : _handleLogout,
+        ),
+        const SizedBox(width: 12),
+      ],
     );
   }
 
@@ -438,12 +308,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       item.label,
                       style: _plusJakarta(
                         fontSize: 13,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.w500,
-                        color: isSelected
-                            ? const Color(0xFFFF9A4D)
-                            : const Color(0xFF3D2314),
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected ? const Color(0xFFFF9A4D) : const Color(0xFF3D2314),
                       ),
                     ),
                     shape: RoundedRectangleBorder(
@@ -463,7 +329,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'Tomodachi POS v1.0',
               style: _plusJakarta(fontSize: 11, color: Colors.grey.shade400),
             ),
-          ),
+          )
         ],
       ),
     );

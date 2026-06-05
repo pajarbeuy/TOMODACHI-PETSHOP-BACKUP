@@ -1,10 +1,24 @@
-import 'package:url_launcher/url_launcher.dart';
+import 'dart:io';
 
 Future<bool> openPaymentUrl(String url) async {
-  final uri = Uri.tryParse(url);
-  if (uri == null) {
+  try {
+    if (Platform.isWindows) {
+      await Process.start('cmd', ['/c', 'start', '', url], runInShell: true);
+      return true;
+    }
+
+    if (Platform.isMacOS) {
+      await Process.start('open', [url]);
+      return true;
+    }
+
+    if (Platform.isLinux) {
+      await Process.start('xdg-open', [url]);
+      return true;
+    }
+  } catch (_) {
     return false;
   }
 
-  return launchUrl(uri, mode: LaunchMode.externalApplication);
+  return false;
 }

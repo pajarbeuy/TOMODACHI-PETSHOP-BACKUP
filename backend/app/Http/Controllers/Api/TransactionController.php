@@ -403,7 +403,6 @@ class TransactionController extends Controller
             'tax' => floatval($transaction->tax),
             'total' => floatval($transaction->total),
             'payment_method' => $transaction->payment_method,
-            'payment_status' => $transaction->status,
             'amount_paid' => floatval($transaction->amount_paid),
             'change' => floatval($transaction->change_amount),
             'items' => $itemsFormatted,

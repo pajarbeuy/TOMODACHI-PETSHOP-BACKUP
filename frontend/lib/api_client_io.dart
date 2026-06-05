@@ -26,8 +26,6 @@ class ApiClient {
   /// Make a GET request
   Future<Map<String, dynamic>> get(String path) async {
     final client = HttpClient();
-    client.badCertificateCallback =
-        (X509Certificate cert, String host, int port) => true;
     client.connectionTimeout = const Duration(seconds: 10);
 
     try {
@@ -66,8 +64,6 @@ class ApiClient {
     Map<String, dynamic>? body,
   }) async {
     final client = HttpClient();
-    client.badCertificateCallback =
-        (X509Certificate cert, String host, int port) => true;
     client.connectionTimeout = const Duration(seconds: 10);
 
     try {
@@ -111,8 +107,6 @@ class ApiClient {
     Map<String, dynamic>? body,
   }) async {
     final client = HttpClient();
-    client.badCertificateCallback =
-        (X509Certificate cert, String host, int port) => true;
     client.connectionTimeout = const Duration(seconds: 10);
 
     try {
@@ -153,8 +147,6 @@ class ApiClient {
   /// Make a DELETE request
   Future<Map<String, dynamic>> delete(String path) async {
     final client = HttpClient();
-    client.badCertificateCallback =
-        (X509Certificate cert, String host, int port) => true;
     client.connectionTimeout = const Duration(seconds: 10);
 
     try {
@@ -198,8 +190,6 @@ class ApiClient {
     String fileFieldName = 'image',
   }) async {
     final client = HttpClient();
-    client.badCertificateCallback =
-        (X509Certificate cert, String host, int port) => true;
     client.connectionTimeout = const Duration(seconds: 10);
 
     try {
