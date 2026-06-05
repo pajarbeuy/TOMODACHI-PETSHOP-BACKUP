@@ -35,6 +35,7 @@ Route::get('/health', function () {
 });
 
 Route::post('/midtrans/notification', [TransactionController::class, 'midtransNotification']);
+Route::get('/product-images/{path}', [ProductController::class, 'image'])->where('path', '.*');
 
 // ── Protected Auth & User Routes ─────────────────────────────────────────────
 
