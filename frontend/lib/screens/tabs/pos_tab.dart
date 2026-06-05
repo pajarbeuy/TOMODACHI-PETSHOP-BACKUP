@@ -38,7 +38,7 @@ class _PosTabState extends State<PosTab> {
   String? _selectedAnimalType;
   String? _selectedSubCategory;
   bool _loadingProducts = false;
-  
+
   // Cart items: Map of productId -> CartItem
   final Map<String, Map<String, dynamic>> _cart = {};
 
@@ -119,7 +119,9 @@ class _PosTabState extends State<PosTab> {
     final String id = prod['id'].toString();
     final String name = prod['name'];
     final double price = double.parse(prod['sell_price'].toString());
-    final int maxStock = int.parse((prod['stock']?['offline_qty'] ?? 0).toString());
+    final int maxStock = int.parse(
+      (prod['stock']?['offline_qty'] ?? 0).toString(),
+    );
 
     setState(() {
       if (_cart.containsKey(id)) {
@@ -128,7 +130,9 @@ class _PosTabState extends State<PosTab> {
           _cart[id]!['quantity'] = currentQty + 1;
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Cannot exceed available stock ($maxStock)')),
+            SnackBar(
+              content: Text('Cannot exceed available stock ($maxStock)'),
+            ),
           );
         }
       } else {
@@ -157,7 +161,9 @@ class _PosTabState extends State<PosTab> {
           _cart[id]!['quantity'] = nextQty;
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Cannot exceed available stock ($maxStock)')),
+            SnackBar(
+              content: Text('Cannot exceed available stock ($maxStock)'),
+            ),
           );
         }
         _calculateChange();
@@ -184,9 +190,9 @@ class _PosTabState extends State<PosTab> {
   void _handleCheckout() async {
     final sub = _getCartSubtotal();
     if (sub <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cart is empty.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Cart is empty.')));
       return;
     }
 
@@ -219,7 +225,9 @@ class _PosTabState extends State<PosTab> {
       if (res['status'] == true) {
         final trxId = res['data']['transaction_id'];
         final payment = res['data']['payment'];
-        final redirectUrl = payment is Map ? payment['redirect_url']?.toString() : null;
+        final redirectUrl = payment is Map
+            ? payment['redirect_url']?.toString()
+            : null;
 
         if (redirectUrl != null && redirectUrl.isNotEmpty) {
           final opened = await openPaymentUrl(redirectUrl);
@@ -254,13 +262,21 @@ class _PosTabState extends State<PosTab> {
     }
   }
 
-  void _showPaymentPendingDialog(String transactionId, String paymentUrl, bool opened) {
+  void _showPaymentPendingDialog(
+    String transactionId,
+    String paymentUrl,
+    bool opened,
+  ) {
+    var dialogOpen = true;
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: const Color(0xFFFFFDF9),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Column(
             children: [
               const Icon(Icons.qr_code_2, color: Color(0xFFFF9A4D), size: 54),
@@ -277,17 +293,32 @@ class _PosTabState extends State<PosTab> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('No: $transactionId', style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.bold)),
+                Text(
+                  'No: $transactionId',
+                  style: _plusJakarta(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 10),
                 Text(
                   opened
                       ? 'Halaman pembayaran Midtrans sudah dibuka. Status akan berubah otomatis setelah webhook Midtrans diterima.'
                       : 'Tidak bisa membuka browser otomatis. Buka URL pembayaran ini secara manual:',
-                  style: _plusJakarta(fontSize: 12, color: Colors.grey.shade700),
+                  style: _plusJakarta(
+                    fontSize: 12,
+                    color: Colors.grey.shade700,
+                  ),
                 ),
                 if (!opened) ...[
                   const SizedBox(height: 10),
-                  SelectableText(paymentUrl, style: _plusJakarta(fontSize: 11, color: const Color(0xFFFF9A4D))),
+                  SelectableText(
+                    paymentUrl,
+                    style: _plusJakarta(
+                      fontSize: 11,
+                      color: const Color(0xFFFF9A4D),
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -295,13 +326,67 @@ class _PosTabState extends State<PosTab> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(foregroundColor: const Color(0xFFFFB570)),
-              child: Text('Tutup', style: _plusJakarta(fontWeight: FontWeight.bold)),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFFFB570),
+              ),
+              child: Text(
+                'Tutup',
+                style: _plusJakarta(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         );
       },
-    );
+    ).then((_) {
+      dialogOpen = false;
+    });
+
+    _waitForPaymentCompletion(transactionId).then((completed) {
+      if (!mounted || !dialogOpen || !completed) {
+        return;
+      }
+
+      Navigator.of(context).pop();
+      _showReceiptDialog(transactionId);
+    });
+  }
+
+  Future<bool> _waitForPaymentCompletion(String transactionId) async {
+    for (var attempt = 0; attempt < 40; attempt++) {
+      await Future.delayed(const Duration(seconds: 3));
+
+      if (!mounted) {
+        return false;
+      }
+
+      try {
+        final res = await widget.transactionService.getTransactionDetail(
+          transactionId,
+        );
+        if (res['status'] != true) {
+          continue;
+        }
+
+        final data = res['data'];
+        if (data is! Map) {
+          continue;
+        }
+
+        final paymentStatus = (data['payment_status'] ?? data['status'])
+            ?.toString();
+        if (paymentStatus == 'completed') {
+          return true;
+        }
+
+        if (paymentStatus == 'cancelled') {
+          return false;
+        }
+      } catch (_) {
+        // Keep polling; the callback and detail endpoint can race briefly.
+      }
+    }
+
+    return false;
   }
 
   void _showReceiptDialog(String transactionId) async {
@@ -319,12 +404,14 @@ class _PosTabState extends State<PosTab> {
             if (snapshot.hasError || snapshot.data?['status'] != true) {
               return AlertDialog(
                 title: const Text('Error loading receipt'),
-                content: const Text('Transaction was completed, but receipt could not be fetched.'),
+                content: const Text(
+                  'Transaction was completed, but receipt could not be fetched.',
+                ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: const Text('OK'),
-                  )
+                  ),
                 ],
               );
             }
@@ -334,14 +421,19 @@ class _PosTabState extends State<PosTab> {
 
             return AlertDialog(
               backgroundColor: const Color(0xFFFFFDF9),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               title: Column(
                 children: [
                   const Icon(Icons.check_circle, color: Colors.green, size: 54),
                   const SizedBox(height: 8),
                   Text(
                     'TRANSAKSI BERHASIL',
-                    style: _plusJakarta(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: _plusJakarta(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -353,9 +445,27 @@ class _PosTabState extends State<PosTab> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Divider(thickness: 1.5, height: 20),
-                      Text('No: ${data['transaction_id']}', style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.bold)),
-                      Text('Waktu: ${data['transaction_date'].substring(0, 19).replaceFirst('T', ' ')}', style: _plusJakarta(fontSize: 12, color: Colors.grey.shade600)),
-                      Text('Kasir: ${data['kasir_name']}', style: _plusJakarta(fontSize: 12, color: Colors.grey.shade600)),
+                      Text(
+                        'No: ${data['transaction_id']}',
+                        style: _plusJakarta(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Waktu: ${data['transaction_date'].substring(0, 19).replaceFirst('T', ' ')}',
+                        style: _plusJakarta(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      Text(
+                        'Kasir: ${data['kasir_name']}',
+                        style: _plusJakarta(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
                       const Divider(thickness: 1.5, height: 20),
                       ...items.map((item) {
                         return Padding(
@@ -367,12 +477,30 @@ class _PosTabState extends State<PosTab> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(item['product_name'], style: _plusJakarta(fontSize: 13, fontWeight: FontWeight.bold)),
-                                    Text('${item['quantity']}x Rp ${item['unit_price']}', style: _plusJakarta(fontSize: 11, color: Colors.grey.shade600)),
+                                    Text(
+                                      item['product_name'],
+                                      style: _plusJakarta(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${item['quantity']}x Rp ${item['unit_price']}',
+                                      style: _plusJakarta(
+                                        fontSize: 11,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
-                              Text('Rp ${item['subtotal']}', style: _plusJakarta(fontSize: 13, fontWeight: FontWeight.bold)),
+                              Text(
+                                'Rp ${item['subtotal']}',
+                                style: _plusJakarta(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                         );
@@ -382,52 +510,100 @@ class _PosTabState extends State<PosTab> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('Subtotal', style: _plusJakarta(fontSize: 13)),
-                          Text('Rp ${data['subtotal']}', style: _plusJakarta(fontSize: 13)),
+                          Text(
+                            'Rp ${data['subtotal']}',
+                            style: _plusJakarta(fontSize: 13),
+                          ),
                         ],
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('Pajak (0%)', style: _plusJakarta(fontSize: 13)),
-                          Text('Rp ${data['tax']}', style: _plusJakarta(fontSize: 13)),
+                          Text(
+                            'Rp ${data['tax']}',
+                            style: _plusJakarta(fontSize: 13),
+                          ),
                         ],
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Total', style: _plusJakarta(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF3D2314))),
-                          Text('Rp ${data['total']}', style: _plusJakarta(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF3D2314))),
+                          Text(
+                            'Total',
+                            style: _plusJakarta(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF3D2314),
+                            ),
+                          ),
+                          Text(
+                            'Rp ${data['total']}',
+                            style: _plusJakarta(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF3D2314),
+                            ),
+                          ),
                         ],
                       ),
                       const Divider(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Metode Pembayaran', style: _plusJakarta(fontSize: 12)),
-                          Text(data['payment_method'].toString().toUpperCase(), style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.bold)),
+                          Text(
+                            'Metode Pembayaran',
+                            style: _plusJakarta(fontSize: 12),
+                          ),
+                          Text(
+                            data['payment_method'].toString().toUpperCase(),
+                            style: _plusJakarta(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('Bayar', style: _plusJakarta(fontSize: 13)),
-                          Text('Rp ${data['amount_paid']}', style: _plusJakarta(fontSize: 13)),
+                          Text(
+                            'Rp ${data['amount_paid']}',
+                            style: _plusJakarta(fontSize: 13),
+                          ),
                         ],
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Kembalian', style: _plusJakarta(fontSize: 13, fontWeight: FontWeight.bold)),
-                          Text('Rp ${data['change']}', style: _plusJakarta(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.green)),
+                          Text(
+                            'Kembalian',
+                            style: _plusJakarta(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Rp ${data['change']}',
+                            style: _plusJakarta(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
                       Center(
                         child: Text(
                           '~ Terima Kasih atas Kunjungan Anda ~',
-                          style: _plusJakarta(fontSize: 11, color: Colors.grey.shade500),
+                          style: _plusJakarta(
+                            fontSize: 11,
+                            color: Colors.grey.shade500,
+                          ),
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -438,7 +614,10 @@ class _PosTabState extends State<PosTab> {
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFFFFB570),
                   ),
-                  child: Text('Tutup', style: _plusJakarta(fontWeight: FontWeight.bold)),
+                  child: Text(
+                    'Tutup',
+                    style: _plusJakarta(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             );
@@ -477,7 +656,9 @@ class _PosTabState extends State<PosTab> {
               backgroundColor: const Color(0xFFFFB570),
               foregroundColor: Colors.white,
               icon: const Icon(Icons.shopping_cart),
-              label: Text('${_cart.length} Item - Rp ${_getCartSubtotal().toStringAsFixed(0)}'),
+              label: Text(
+                '${_cart.length} Item - Rp ${_getCartSubtotal().toStringAsFixed(0)}',
+              ),
             ),
           ),
         ],
@@ -487,10 +668,7 @@ class _PosTabState extends State<PosTab> {
     return Row(
       children: [
         // Left Column: Search, filters, products grid
-        Expanded(
-          flex: isWide ? 68 : 100,
-          child: productsArea,
-        ),
+        Expanded(flex: isWide ? 68 : 100, child: productsArea),
 
         // Right Column: Shopping Cart (Only in wide layouts, otherwise drawer/overlay can be used)
         if (isWide)
@@ -538,7 +716,10 @@ class _PosTabState extends State<PosTab> {
             prefixIcon: const Icon(Icons.search, color: Color(0xFFFFB570)),
             filled: true,
             fillColor: const Color(0xFFFFF9F2),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -566,7 +747,10 @@ class _PosTabState extends State<PosTab> {
     );
   }
 
-  Widget _buildFilterChip({required String label, required String? animalType}) {
+  Widget _buildFilterChip({
+    required String label,
+    required String? animalType,
+  }) {
     final isSelected = _selectedAnimalType == animalType;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
@@ -585,7 +769,9 @@ class _PosTabState extends State<PosTab> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(999),
           side: BorderSide(
-            color: isSelected ? const Color(0xFFFFB570) : const Color(0x33FFB570),
+            color: isSelected
+                ? const Color(0xFFFFB570)
+                : const Color(0x33FFB570),
           ),
         ),
         onSelected: (selected) {
@@ -632,7 +818,9 @@ class _PosTabState extends State<PosTab> {
         final String name = prod['name'];
         final String sku = prod['sku'];
         final double price = double.parse(prod['sell_price'].toString());
-        final int stock = int.parse((prod['stock']?['offline_qty'] ?? 0).toString());
+        final int stock = int.parse(
+          (prod['stock']?['offline_qty'] ?? 0).toString(),
+        );
         final String? img = prod['image_url'];
 
         return Card(
@@ -654,8 +842,20 @@ class _PosTabState extends State<PosTab> {
                     width: double.infinity,
                     color: const Color(0xFFFFFDF9),
                     child: img != null && img.isNotEmpty
-                        ? Image.network(img, fit: BoxFit.cover, errorBuilder: (_, _, _) => const Icon(Icons.pets, size: 36, color: Color(0xFFFFD4A8)))
-                        : const Icon(Icons.pets, size: 36, color: Color(0xFFFFD4A8)),
+                        ? Image.network(
+                            img,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => const Icon(
+                              Icons.pets,
+                              size: 36,
+                              color: Color(0xFFFFD4A8),
+                            ),
+                          )
+                        : const Icon(
+                            Icons.pets,
+                            size: 36,
+                            color: Color(0xFFFFD4A8),
+                          ),
                   ),
                 ),
 
@@ -669,12 +869,18 @@ class _PosTabState extends State<PosTab> {
                         name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: _plusJakarta(fontSize: 13, fontWeight: FontWeight.bold),
+                        style: _plusJakarta(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'SKU: $sku',
-                        style: _plusJakarta(fontSize: 10, color: Colors.grey.shade500),
+                        style: _plusJakarta(
+                          fontSize: 10,
+                          color: Colors.grey.shade500,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Row(
@@ -682,24 +888,35 @@ class _PosTabState extends State<PosTab> {
                         children: [
                           Text(
                             'Rp ${price.toStringAsFixed(0)}',
-                            style: _plusJakarta(fontSize: 13, fontWeight: FontWeight.w900, color: const Color(0xFFFF9A4D)),
+                            style: _plusJakarta(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFFFF9A4D),
+                            ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFFDF1E8),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               'Stok: $stock',
-                              style: _plusJakarta(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFFE27F3B)),
+                              style: _plusJakarta(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFFE27F3B),
+                              ),
                             ),
-                          )
+                          ),
                         ],
-                      )
+                      ),
                     ],
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -726,19 +943,29 @@ class _PosTabState extends State<PosTab> {
                   const SizedBox(width: 8),
                   Text(
                     'Keranjang Belanja',
-                    style: _plusJakarta(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: _plusJakarta(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF3E6),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '${_cart.length} Item',
-                  style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFFFF9A4D)),
+                  style: _plusJakarta(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFFF9A4D),
+                  ),
                 ),
               ),
             ],
@@ -753,17 +980,24 @@ class _PosTabState extends State<PosTab> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.shopping_cart_outlined, size: 54, color: Color(0xFFE2D6CD)),
+                      const Icon(
+                        Icons.shopping_cart_outlined,
+                        size: 54,
+                        color: Color(0xFFE2D6CD),
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         'Keranjang kosong',
                         style: _plusJakarta(fontSize: 14, color: Colors.grey),
-                      )
+                      ),
                     ],
                   ),
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   itemCount: _cart.length,
                   itemBuilder: (context, index) {
                     final item = _cart.values.elementAt(index);
@@ -790,12 +1024,18 @@ class _PosTabState extends State<PosTab> {
                                   name,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: _plusJakarta(fontSize: 13, fontWeight: FontWeight.bold),
+                                  style: _plusJakarta(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Rp ${price.toStringAsFixed(0)}',
-                                  style: _plusJakarta(fontSize: 12, color: Colors.grey.shade600),
+                                  style: _plusJakarta(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
                                 ),
                               ],
                             ),
@@ -803,16 +1043,30 @@ class _PosTabState extends State<PosTab> {
                           Row(
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.remove_circle_outline, size: 20, color: Color(0xFFFF9A4D)),
+                                icon: const Icon(
+                                  Icons.remove_circle_outline,
+                                  size: 20,
+                                  color: Color(0xFFFF9A4D),
+                                ),
                                 onPressed: () => _updateQuantity(id, -1),
                               ),
-                              Text('$qty', style: _plusJakarta(fontSize: 13, fontWeight: FontWeight.bold)),
+                              Text(
+                                '$qty',
+                                style: _plusJakarta(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               IconButton(
-                                icon: const Icon(Icons.add_circle_outline, size: 20, color: Color(0xFFFF9A4D)),
+                                icon: const Icon(
+                                  Icons.add_circle_outline,
+                                  size: 20,
+                                  color: Color(0xFFFF9A4D),
+                                ),
                                 onPressed: () => _updateQuantity(id, 1),
                               ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                     );
@@ -830,7 +1084,13 @@ class _PosTabState extends State<PosTab> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Subtotal', style: _plusJakarta(fontSize: 14)),
-                  Text('Rp ${subtotal.toStringAsFixed(0)}', style: _plusJakarta(fontSize: 14, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Rp ${subtotal.toStringAsFixed(0)}',
+                    style: _plusJakarta(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -838,9 +1098,17 @@ class _PosTabState extends State<PosTab> {
               // Payment Method Selectors
               Row(
                 children: [
-                  Expanded(child: _buildPaymentMethodBtn('Tunai', 'cash', Icons.money)),
+                  Expanded(
+                    child: _buildPaymentMethodBtn('Tunai', 'cash', Icons.money),
+                  ),
                   const SizedBox(width: 8),
-                  Expanded(child: _buildPaymentMethodBtn('QRIS/TF', 'qris', Icons.qr_code)),
+                  Expanded(
+                    child: _buildPaymentMethodBtn(
+                      'QRIS/TF',
+                      'qris',
+                      Icons.qr_code,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -850,7 +1118,10 @@ class _PosTabState extends State<PosTab> {
                 TextField(
                   controller: _amountPaidCtrl,
                   keyboardType: TextInputType.number,
-                  style: _plusJakarta(fontSize: 14, fontWeight: FontWeight.bold),
+                  style: _plusJakarta(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Nominal Bayar (Rp)',
                     labelStyle: _plusJakarta(fontSize: 12, color: Colors.grey),
@@ -870,7 +1141,11 @@ class _PosTabState extends State<PosTab> {
                     Text('Kembalian', style: _plusJakarta(fontSize: 14)),
                     Text(
                       'Rp ${_change.toStringAsFixed(0)}',
-                      style: _plusJakarta(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.green.shade700),
+                      style: _plusJakarta(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.green.shade700,
+                      ),
                     ),
                   ],
                 ),
@@ -882,7 +1157,9 @@ class _PosTabState extends State<PosTab> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: (_submittingCheckout || subtotal <= 0) ? null : _handleCheckout,
+                  onPressed: (_submittingCheckout || subtotal <= 0)
+                      ? null
+                      : _handleCheckout,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFFB570),
                     foregroundColor: Colors.white,
@@ -895,7 +1172,10 @@ class _PosTabState extends State<PosTab> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         )
                       : Text(
                           'BAYAR SEKARANG',
@@ -906,10 +1186,10 @@ class _PosTabState extends State<PosTab> {
                           ),
                         ),
                 ),
-              )
+              ),
             ],
           ),
-        )
+        ),
       ],
     );
   }
@@ -917,7 +1197,11 @@ class _PosTabState extends State<PosTab> {
   Widget _buildPaymentMethodBtn(String label, String value, IconData icon) {
     final isSelected = _paymentMethod == value;
     return OutlinedButton.icon(
-      icon: Icon(icon, size: 18, color: isSelected ? Colors.white : const Color(0xFF3D2314)),
+      icon: Icon(
+        icon,
+        size: 18,
+        color: isSelected ? Colors.white : const Color(0xFF3D2314),
+      ),
       label: Text(
         label,
         style: _plusJakarta(
