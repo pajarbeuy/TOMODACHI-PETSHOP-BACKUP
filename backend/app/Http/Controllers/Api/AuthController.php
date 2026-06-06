@@ -18,17 +18,20 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         try {
+            // 422: field kosong / format email salah / password kurang dari 6 karakter
             $validated = $request->validate([
-                'email' => 'required|email',
+                'email'    => 'required|email',
                 'password' => 'required|string|min:6',
             ]);
 
             $user = User::where('email', $validated['email'])->first();
 
+            // 401: email tidak ditemukan atau password salah
             if (!$user || !Hash::check($validated['password'], $user->password)) {
-                throw ValidationException::withMessages([
-                    'email' => ['The provided credentials are incorrect.'],
-                ]);
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Invalid credentials. Email or password is incorrect.',
+                ], 401);
             }
 
             // Revoke existing tokens
@@ -38,19 +41,20 @@ class AuthController extends Controller
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
-                'status' => true,
+                'status'  => true,
                 'message' => 'Login successful',
-                'data' => [
-                    'user' => $user->load('role'),
-                    'token' => $token,
+                'data'    => [
+                    'user'       => $user->load('role'),
+                    'token'      => $token,
                     'token_type' => 'Bearer',
                 ],
             ], 200);
         } catch (ValidationException $e) {
+            // 422: hanya untuk field yang tidak memenuhi aturan validasi
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Validation failed',
-                'errors' => $e->errors(),
+                'errors'  => $e->errors(),
             ], 422);
         }
     }
