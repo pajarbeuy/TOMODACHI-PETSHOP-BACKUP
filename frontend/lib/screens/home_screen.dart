@@ -7,7 +7,7 @@ import '../dashboard_service.dart';
 import 'tabs/pos_tab.dart';
 import 'tabs/products_tab.dart';
 import 'tabs/transactions_history_tab.dart';
-import 'tabs/dashboard_tab.dart';
+import 'tabs/dashboard_owner.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -69,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _NavigationItem(
             label: 'Dasbor Analitik',
             icon: Icons.dashboard,
-            widget: DashboardTab(dashboardService: _dashboardService),
+            widget: DashboardOwner(dashboardService: _dashboardService),
           ),
           _NavigationItem(
             label: 'POS Kasir',
