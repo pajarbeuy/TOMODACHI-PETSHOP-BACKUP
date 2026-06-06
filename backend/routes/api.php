@@ -21,7 +21,8 @@ use App\Http\Controllers\Api\ReportController;
 
 // ── Public Auth Routes ──────────────────────────────────────────────────────
 
-Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
+
 Route::get('/health', function () {
     return response()->json([
         'status' => true,
