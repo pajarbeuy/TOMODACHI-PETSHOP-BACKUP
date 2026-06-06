@@ -3,6 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import '../auth_service.dart';
 import 'home_screen.dart';
 
+const _apiBaseUrl = String.fromEnvironment(
+  'API_BASE_URL',
+  defaultValue: 'http://localhost:8000',
+);
+
 // ── Models ──────────────────────────────────────────────────────────────────
 
 enum Role { admin, kasir, owner }
@@ -155,9 +160,9 @@ class _LoginScreenState extends State<LoginScreen>
     )..forward();
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
 
-    // Initialize AuthService with your API base URL
+    // Override with: flutter run -d chrome --dart-define=API_BASE_URL=https://your-api.example.com
     _authService = AuthService();
-    _authService.initialize('http://localhost:8000');
+    _authService.initialize('https://crusher-vaguely-tyke.ngrok-free.dev');
   }
 
   @override
