@@ -5,7 +5,7 @@ import 'home_screen.dart';
 
 const _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://localhost:8000',
+  defaultValue: '/',
 );
 
 // ── Models ──────────────────────────────────────────────────────────────────
@@ -162,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen>
 
     // Override with: flutter run -d chrome --dart-define=API_BASE_URL=https://your-api.example.com
     _authService = AuthService();
-    _authService.initialize('https://crusher-vaguely-tyke.ngrok-free.dev');
+    _authService.initialize(_apiBaseUrl);
   }
 
   @override
