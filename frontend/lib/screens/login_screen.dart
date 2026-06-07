@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'product_management_screen.dart';
 import 'reports_screen.dart';
+import '../auth_service.dart';
+import 'home_screen.dart';
+
+const _apiBaseUrl = String.fromEnvironment(
+  'API_BASE_URL',
+  defaultValue: 'http://localhost:8000',
+);
 
 // ── Models ──────────────────────────────────────────────────────────────────
 
@@ -143,6 +150,11 @@ class _LoginScreenState extends State<LoginScreen>
 
   late final AnimationController _fadeCtrl;
   late final Animation<double> _fadeAnim;
+  String? _errorMessage;
+
+  late final AnimationController _fadeCtrl;
+  late final Animation<double> _fadeAnim;
+  late final AuthService _authService;
 
   @override
   void initState() {
@@ -152,6 +164,10 @@ class _LoginScreenState extends State<LoginScreen>
       duration: const Duration(milliseconds: 700),
     )..forward();
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
+
+    // Override with: flutter run -d chrome --dart-define=API_BASE_URL=https://your-api.example.com
+    _authService = AuthService();
+    _authService.initialize('https://crusher-vaguely-tyke.ngrok-free.dev');
   }
 
   @override
@@ -212,6 +228,130 @@ class _LoginScreenState extends State<LoginScreen>
     ),
   );
 }
+  void _handleLogin() async {
+    final email = _emailCtrl.text.trim();
+    final password = _passCtrl.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      setState(() => _errorMessage = 'Email and password are required');
+      return;
+    }
+
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+    });
+
+    final success = await _authService.login(email, password);
+
+    if (!mounted) return;
+
+    if (success && _authService.currentUser != null) {
+      final user = _authService.currentUser!;
+      _onLoginSuccess(
+        CurrentUser(
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: _roleFromString(user.role),
+        ),
+      );
+    } else {
+      setState(() {
+        _errorMessage =
+            _authService.errorMessage ??
+            'Login failed. Please check your credentials.';
+        _loading = false;
+      });
+      _showErrorDialog(_errorMessage ?? 'Login failed');
+    }
+  }
+
+  void _handleQuickLogin(_DemoRole demo) async {
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+    });
+
+    final success = await _authService.login(demo.user.email, 'password123');
+
+    if (!mounted) return;
+
+    if (success && _authService.currentUser != null) {
+      final user = _authService.currentUser!;
+      _onLoginSuccess(
+        CurrentUser(
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: _roleFromString(user.role),
+        ),
+      );
+    } else {
+      setState(() {
+        _errorMessage = _authService.errorMessage ?? 'Login failed';
+        _loading = false;
+      });
+      _showErrorDialog(_errorMessage ?? 'Login failed');
+    }
+  }
+
+  Role _roleFromString(String roleString) {
+    switch (roleString.toLowerCase()) {
+      case 'admin':
+        return Role.admin;
+      case 'kasir':
+        return Role.kasir;
+      case 'owner':
+        return Role.owner;
+      default:
+        return Role.kasir;
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Login Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onLoginSuccess(CurrentUser user) {
+    setState(() => _loading = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Welcome, ${user.name}! (${user.role.name})',
+          style: _iosStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: _orange,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    // Navigate to home/dashboard after a brief delay
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => HomeScreen(authService: _authService),
+          ),
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -341,6 +481,7 @@ class _LoginScreenState extends State<LoginScreen>
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: Colors.white.withOpacity(0.85),
+                      color: Colors.white.withValues(alpha: 0.85),
                       height: 1.6,
                     ),
                   ),
@@ -369,6 +510,11 @@ class _LoginScreenState extends State<LoginScreen>
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(color: Colors.white.withOpacity(0.3)),
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Text(
                       '💕 Because every pet deserves the best',
@@ -439,6 +585,7 @@ class _LoginScreenState extends State<LoginScreen>
             boxShadow: [
               BoxShadow(
                 color: _orange.withOpacity(0.4),
+                color: _orange.withValues(alpha: 0.4),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -470,6 +617,7 @@ class _LoginScreenState extends State<LoginScreen>
         boxShadow: [
           BoxShadow(
             color: _orange.withOpacity(0.15),
+            color: _orange.withValues(alpha: 0.15),
             blurRadius: 48,
             offset: const Offset(0, 8),
           ),
@@ -499,6 +647,27 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ),
           const SizedBox(height: 28),
+
+          // Error message display
+          if (_errorMessage != null) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.1),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                _errorMessage!,
+                style: _iosStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.red.shade700,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
 
           _buildLabel('Email Address'),
           const SizedBox(height: 6),
@@ -676,6 +845,7 @@ class _LoginScreenState extends State<LoginScreen>
           boxShadow: [
             BoxShadow(
               color: _orange.withOpacity(0.4),
+              color: _orange.withValues(alpha: 0.4),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -811,6 +981,7 @@ class _AnimatedLogoBoxState extends State<_AnimatedLogoBox> {
               boxShadow: [
                 BoxShadow(
                   color: Colors.white.withOpacity(_hovered ? 0.5 : 0.3),
+                  color: Colors.white.withValues(alpha: _hovered ? 0.5 : 0.3),
                   blurRadius: _hovered ? 48 : 32,
                   offset: const Offset(0, 8),
                 ),
@@ -976,6 +1147,7 @@ class _DemoRoleButtonState extends State<_DemoRoleButton> {
                 ? [
                     BoxShadow(
                       color: demo.hoverBorder.withOpacity(0.18),
+                      color: demo.hoverBorder.withValues(alpha: 0.18),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),

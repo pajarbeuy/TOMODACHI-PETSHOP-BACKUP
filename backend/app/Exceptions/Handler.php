@@ -2,7 +2,10 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use Illuminate\Http\Request;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -26,5 +29,27 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+
+        // 429: Rate limit exceeded → always return JSON
+        $this->renderable(function (ThrottleRequestsException $e, Request $request) {
+            $retryAfter = $e->getHeaders()['Retry-After'] ?? 60;
+            return response()->json([
+                'status'      => false,
+                'message'     => 'Too many requests. Please slow down.',
+                'retry_after' => (int) $retryAfter . ' seconds',
+            ], 429);
+        });
+    }
+
+    /**
+     * Override unauthenticated handler to always return JSON 401
+     * instead of redirecting to a 'login' route (which doesn't exist in API-only apps).
+     */
+    protected function unauthenticated($request, AuthenticationException $exception)
+    {
+        return response()->json([
+            'status'  => false,
+            'message' => 'Unauthenticated. Please provide a valid Bearer token.',
+        ], 401);
     }
 }
