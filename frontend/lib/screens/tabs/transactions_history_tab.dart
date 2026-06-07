@@ -464,20 +464,26 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
               '$dateStr - ${payment.toUpperCase()}',
               style: _plusJakarta(fontSize: 11, color: Colors.grey.shade500),
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  formatRupiah(total),
-                  style: _plusJakarta(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF3D2314),
+            trailing: SizedBox(
+              width: 120,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Flexible(
+                    child: Text(
+                      formatRupiah(total),
+                      overflow: TextOverflow.ellipsis,
+                      style: _plusJakarta(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF3D2314),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                const Icon(Icons.arrow_forward_ios, size: 12),
-              ],
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_forward_ios, size: 12),
+                ],
+              ),
             ),
             onTap: () => _showReceiptDialog(code),
           ),
