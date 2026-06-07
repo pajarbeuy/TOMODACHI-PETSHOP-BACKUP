@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'product_management_screen.dart';
+import 'reports_screen.dart';
 
 // ── Models ──────────────────────────────────────────────────────────────────
 
@@ -185,19 +187,31 @@ class _LoginScreenState extends State<LoginScreen>
     });
   }
 
-  void _onLoginSuccess(CurrentUser user) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Welcome, ${user.name}! (${user.role.name})',
-          style: _iosStyle(color: Colors.white, fontWeight: FontWeight.w600),
+ void _onLoginSuccess(CurrentUser user) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        'Welcome, ${user.name}! (${user.role.name})',
+        style: _iosStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
         ),
-        backgroundColor: _orange,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
-    );
-  }
+      backgroundColor: _orange,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+    ),
+  );
+
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const ReportsScreen(),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
