@@ -734,9 +734,9 @@ class _ProductsTabState extends State<ProductsTab> {
               children: [
                 Expanded(child: _buildSearchField()),
                 const SizedBox(width: 12),
-                _buildAnimalDropdown(),
+                Expanded(flex: 3, child: _buildAnimalDropdown()),
                 const SizedBox(width: 12),
-                _buildSubCategoryDropdown(),
+                Expanded(child: _buildSubCategoryDropdown()),
               ],
             ),
           const SizedBox(height: 16),
