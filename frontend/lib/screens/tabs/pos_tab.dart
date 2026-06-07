@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../payment_url_launcher.dart';
 import '../../product_service.dart';
 import '../../transaction_service.dart';
+import '../../utils/currency_formatter.dart';
 
 class PosTab extends StatefulWidget {
   final ProductService productService;
@@ -35,10 +36,12 @@ class _PosTabState extends State<PosTab> {
   );
 
   final _searchCtrl = TextEditingController();
+  Timer? _searchDebounce;
   List<dynamic> _products = [];
   String? _selectedAnimalType;
   String? _selectedSubCategory;
   bool _loadingProducts = false;
+  int _productFetchSerial = 0;
 
   // Cart items: Map of productId -> CartItem
   final Map<String, Map<String, dynamic>> _cart = {};
@@ -62,13 +65,18 @@ class _PosTabState extends State<PosTab> {
   @override
   void dispose() {
     _paymentStatusTimer?.cancel();
+    _searchDebounce?.cancel();
     _searchCtrl.dispose();
     _amountPaidCtrl.dispose();
     super.dispose();
   }
 
   void _onSearchChanged() {
-    _fetchProducts();
+    if (mounted) {
+      setState(() {});
+    }
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), _fetchProducts);
   }
 
   void _onAmountPaidChanged() {
@@ -85,17 +93,20 @@ class _PosTabState extends State<PosTab> {
   }
 
   Future<void> _fetchProducts() async {
-    if (_loadingProducts) return;
+    final fetchSerial = ++_productFetchSerial;
     setState(() => _loadingProducts = true);
+    final searchQuery = _searchCtrl.text.trim();
 
     try {
       final res = await widget.productService.getProducts(
-        search: _searchCtrl.text.trim(),
+        search: searchQuery,
         animalType: _selectedAnimalType,
         subCategory: _selectedSubCategory,
         channel: 'offline',
         inStock: true, // Only fetch items with stock > 0
       );
+
+      if (!mounted || fetchSerial != _productFetchSerial) return;
 
       if (res['status'] == true) {
         setState(() {
@@ -103,13 +114,15 @@ class _PosTabState extends State<PosTab> {
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && fetchSerial == _productFetchSerial) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to load products: ${e.toString()}')),
         );
       }
     } finally {
-      setState(() => _loadingProducts = false);
+      if (mounted && fetchSerial == _productFetchSerial) {
+        setState(() => _loadingProducts = false);
+      }
     }
   }
 
@@ -117,7 +130,7 @@ class _PosTabState extends State<PosTab> {
   void _addToCart(dynamic prod) {
     final String id = prod['id'].toString();
     final String name = prod['name'];
-    final double price = double.parse(prod['sell_price'].toString());
+    final double price = parseCurrency(prod['sell_price']);
     final int maxStock = int.parse(
       (prod['stock']?['offline_qty'] ?? 0).toString(),
     );
@@ -180,7 +193,7 @@ class _PosTabState extends State<PosTab> {
 
   void _calculateChange() {
     final sub = _getCartSubtotal();
-    final paid = double.tryParse(_amountPaidCtrl.text) ?? 0.0;
+    final paid = parseCurrency(_amountPaidCtrl.text);
     setState(() {
       _change = paid > sub ? paid - sub : 0.0;
     });
@@ -195,7 +208,7 @@ class _PosTabState extends State<PosTab> {
       return;
     }
 
-    final paid = double.tryParse(_amountPaidCtrl.text) ?? 0.0;
+    final paid = parseCurrency(_amountPaidCtrl.text);
     if (paid < sub && _paymentMethod == 'cash') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Insufficient paid amount.')),
@@ -487,7 +500,7 @@ class _PosTabState extends State<PosTab> {
                                       ),
                                     ),
                                     Text(
-                                      '${item['quantity']}x Rp ${item['unit_price']}',
+                                      '${item['quantity']}x ${formatRupiah(item['unit_price'])}',
                                       style: _plusJakarta(
                                         fontSize: 11,
                                         color: Colors.grey.shade600,
@@ -497,7 +510,7 @@ class _PosTabState extends State<PosTab> {
                                 ),
                               ),
                               Text(
-                                'Rp ${item['subtotal']}',
+                                formatRupiah(item['subtotal']),
                                 style: _plusJakarta(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
@@ -513,7 +526,7 @@ class _PosTabState extends State<PosTab> {
                         children: [
                           Text('Subtotal', style: _plusJakarta(fontSize: 13)),
                           Text(
-                            'Rp ${data['subtotal']}',
+                            formatRupiah(data['subtotal']),
                             style: _plusJakarta(fontSize: 13),
                           ),
                         ],
@@ -523,7 +536,7 @@ class _PosTabState extends State<PosTab> {
                         children: [
                           Text('Pajak (0%)', style: _plusJakarta(fontSize: 13)),
                           Text(
-                            'Rp ${data['tax']}',
+                            formatRupiah(data['tax']),
                             style: _plusJakarta(fontSize: 13),
                           ),
                         ],
@@ -540,7 +553,7 @@ class _PosTabState extends State<PosTab> {
                             ),
                           ),
                           Text(
-                            'Rp ${data['total']}',
+                            formatRupiah(data['total']),
                             style: _plusJakarta(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -571,7 +584,7 @@ class _PosTabState extends State<PosTab> {
                         children: [
                           Text('Bayar', style: _plusJakarta(fontSize: 13)),
                           Text(
-                            'Rp ${data['amount_paid']}',
+                            formatRupiah(data['amount_paid']),
                             style: _plusJakarta(fontSize: 13),
                           ),
                         ],
@@ -587,7 +600,7 @@ class _PosTabState extends State<PosTab> {
                             ),
                           ),
                           Text(
-                            'Rp ${data['change']}',
+                            formatRupiah(data['change']),
                             style: _plusJakarta(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
@@ -659,7 +672,7 @@ class _PosTabState extends State<PosTab> {
               foregroundColor: Colors.white,
               icon: const Icon(Icons.shopping_cart),
               label: Text(
-                '${_cart.length} Item - Rp ${_getCartSubtotal().toStringAsFixed(0)}',
+                '${_cart.length} Item - ${formatRupiah(_getCartSubtotal())}',
               ),
             ),
           ),
@@ -706,6 +719,8 @@ class _PosTabState extends State<PosTab> {
   }
 
   Widget _buildSearchAndFilters() {
+    final searchQuery = _searchCtrl.text.trim();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -714,8 +729,18 @@ class _PosTabState extends State<PosTab> {
           controller: _searchCtrl,
           style: _plusJakarta(fontSize: 14),
           decoration: InputDecoration(
-            hintText: 'Cari produk berdasarkan nama atau SKU...',
+            hintText: 'Cari produk berdasarkan nama...',
             prefixIcon: const Icon(Icons.search, color: Color(0xFFFFB570)),
+            suffixIcon: searchQuery.isEmpty
+                ? null
+                : IconButton(
+                    tooltip: 'Hapus pencarian',
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: Color(0xFFB68B6D),
+                    ),
+                    onPressed: _searchCtrl.clear,
+                  ),
             filled: true,
             fillColor: const Color(0xFFFFF9F2),
             contentPadding: const EdgeInsets.symmetric(
@@ -728,6 +753,17 @@ class _PosTabState extends State<PosTab> {
             ),
           ),
         ),
+        if (_loadingProducts && _products.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: const LinearProgressIndicator(
+              minHeight: 3,
+              backgroundColor: Color(0xFFFFF3E6),
+              color: Color(0xFFFFB570),
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
 
         // Animal Type Filters
@@ -787,6 +823,8 @@ class _PosTabState extends State<PosTab> {
   }
 
   Widget _buildProductsGrid() {
+    final searchQuery = _searchCtrl.text.trim();
+
     if (_loadingProducts && _products.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -799,7 +837,9 @@ class _PosTabState extends State<PosTab> {
             const Icon(Icons.pets, size: 54, color: Color(0xFFE2D6CD)),
             const SizedBox(height: 12),
             Text(
-              'Tidak ada produk tersedia',
+              searchQuery.isEmpty
+                  ? 'Tidak ada produk tersedia'
+                  : 'Produk "$searchQuery" tidak ditemukan',
               style: _plusJakarta(fontSize: 15, color: Colors.grey),
             ),
           ],
@@ -819,7 +859,7 @@ class _PosTabState extends State<PosTab> {
         final prod = _products[index];
         final String name = prod['name'];
         final String sku = prod['sku'];
-        final double price = double.parse(prod['sell_price'].toString());
+        final double price = parseCurrency(prod['sell_price']);
         final int stock = int.parse(
           (prod['stock']?['offline_qty'] ?? 0).toString(),
         );
@@ -846,10 +886,10 @@ class _PosTabState extends State<PosTab> {
                   child: Container(
                     width: double.infinity,
                     color: const Color(0xFFFFFDF9),
-                  child: imageUrl != null
-                      ? Image.network(
-                          imageUrl,
-                          fit: BoxFit.cover,
+                    child: imageUrl != null
+                        ? Image.network(
+                            imageUrl,
+                            fit: BoxFit.cover,
                             errorBuilder: (_, _, _) => const Icon(
                               Icons.pets,
                               size: 36,
@@ -892,7 +932,7 @@ class _PosTabState extends State<PosTab> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Rp ${price.toStringAsFixed(0)}',
+                            formatRupiah(price),
                             style: _plusJakarta(
                               fontSize: 13,
                               fontWeight: FontWeight.w900,
@@ -1036,7 +1076,7 @@ class _PosTabState extends State<PosTab> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Rp ${price.toStringAsFixed(0)}',
+                                  formatRupiah(price),
                                   style: _plusJakarta(
                                     fontSize: 12,
                                     color: Colors.grey.shade600,
@@ -1090,7 +1130,7 @@ class _PosTabState extends State<PosTab> {
                 children: [
                   Text('Subtotal', style: _plusJakarta(fontSize: 14)),
                   Text(
-                    'Rp ${subtotal.toStringAsFixed(0)}',
+                    formatRupiah(subtotal),
                     style: _plusJakarta(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -1123,6 +1163,7 @@ class _PosTabState extends State<PosTab> {
                 TextField(
                   controller: _amountPaidCtrl,
                   keyboardType: TextInputType.number,
+                  inputFormatters: [RupiahInputFormatter()],
                   style: _plusJakarta(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -1145,7 +1186,7 @@ class _PosTabState extends State<PosTab> {
                   children: [
                     Text('Kembalian', style: _plusJakarta(fontSize: 14)),
                     Text(
-                      'Rp ${_change.toStringAsFixed(0)}',
+                      formatRupiah(_change),
                       style: _plusJakarta(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
