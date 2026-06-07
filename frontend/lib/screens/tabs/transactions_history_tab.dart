@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../transaction_service.dart';
+import '../../utils/currency_formatter.dart';
 
 class TransactionsHistoryTab extends StatefulWidget {
   final TransactionService transactionService;
 
-  const TransactionsHistoryTab({
-    super.key,
-    required this.transactionService,
-  });
+  const TransactionsHistoryTab({super.key, required this.transactionService});
 
   @override
   State<TransactionsHistoryTab> createState() => _TransactionsHistoryTabState();
@@ -66,7 +64,11 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load transaction history: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              'Failed to load transaction history: ${e.toString()}',
+            ),
+          ),
         );
       }
     } finally {
@@ -88,12 +90,14 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
             if (snapshot.hasError || snapshot.data?['status'] != true) {
               return AlertDialog(
                 title: const Text('Error loading receipt'),
-                content: const Text('Could not load the receipt details at this moment.'),
+                content: const Text(
+                  'Could not load the receipt details at this moment.',
+                ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: const Text('OK'),
-                  )
+                  ),
                 ],
               );
             }
@@ -103,11 +107,17 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
 
             return AlertDialog(
               backgroundColor: const Color(0xFFFFFDF9),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               title: Center(
                 child: Text(
                   'STRUK DIGITAL',
-                  style: _plusJakarta(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1),
+                  style: _plusJakarta(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
                 ),
               ),
               content: SingleChildScrollView(
@@ -118,9 +128,27 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Divider(thickness: 1.5, height: 20),
-                      Text('No: ${data['transaction_id']}', style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.bold)),
-                      Text('Waktu: ${data['transaction_date'].substring(0, 19).replaceFirst('T', ' ')}', style: _plusJakarta(fontSize: 12, color: Colors.grey.shade600)),
-                      Text('Kasir: ${data['kasir_name']}', style: _plusJakarta(fontSize: 12, color: Colors.grey.shade600)),
+                      Text(
+                        'No: ${data['transaction_id']}',
+                        style: _plusJakarta(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Waktu: ${data['transaction_date'].substring(0, 19).replaceFirst('T', ' ')}',
+                        style: _plusJakarta(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      Text(
+                        'Kasir: ${data['kasir_name']}',
+                        style: _plusJakarta(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
                       const Divider(thickness: 1.5, height: 20),
                       ...items.map((item) {
                         return Padding(
@@ -132,12 +160,30 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(item['product_name'], style: _plusJakarta(fontSize: 13, fontWeight: FontWeight.bold)),
-                                    Text('${item['quantity']}x Rp ${item['unit_price']}', style: _plusJakarta(fontSize: 11, color: Colors.grey.shade600)),
+                                    Text(
+                                      item['product_name'],
+                                      style: _plusJakarta(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${item['quantity']}x ${formatRupiah(item['unit_price'])}',
+                                      style: _plusJakarta(
+                                        fontSize: 11,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
-                              Text('Rp ${item['subtotal']}', style: _plusJakarta(fontSize: 13, fontWeight: FontWeight.bold)),
+                              Text(
+                                formatRupiah(item['subtotal']),
+                                style: _plusJakarta(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                         );
@@ -147,43 +193,86 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('Subtotal', style: _plusJakarta(fontSize: 13)),
-                          Text('Rp ${data['subtotal']}', style: _plusJakarta(fontSize: 13)),
+                          Text(
+                            formatRupiah(data['subtotal']),
+                            style: _plusJakarta(fontSize: 13),
+                          ),
                         ],
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('Pajak (0%)', style: _plusJakarta(fontSize: 13)),
-                          Text('Rp ${data['tax']}', style: _plusJakarta(fontSize: 13)),
+                          Text(
+                            formatRupiah(data['tax']),
+                            style: _plusJakarta(fontSize: 13),
+                          ),
                         ],
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Total', style: _plusJakarta(fontSize: 14, fontWeight: FontWeight.bold)),
-                          Text('Rp ${data['total']}', style: _plusJakarta(fontSize: 14, fontWeight: FontWeight.bold)),
+                          Text(
+                            'Total',
+                            style: _plusJakarta(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            formatRupiah(data['total']),
+                            style: _plusJakarta(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                       const Divider(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Metode Pembayaran', style: _plusJakarta(fontSize: 12)),
-                          Text(data['payment_method'].toString().toUpperCase(), style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.bold)),
+                          Text(
+                            'Metode Pembayaran',
+                            style: _plusJakarta(fontSize: 12),
+                          ),
+                          Text(
+                            data['payment_method'].toString().toUpperCase(),
+                            style: _plusJakarta(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('Bayar', style: _plusJakarta(fontSize: 13)),
-                          Text('Rp ${data['amount_paid']}', style: _plusJakarta(fontSize: 13)),
+                          Text(
+                            formatRupiah(data['amount_paid']),
+                            style: _plusJakarta(fontSize: 13),
+                          ),
                         ],
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Kembalian', style: _plusJakarta(fontSize: 13, fontWeight: FontWeight.bold)),
-                          Text('Rp ${data['change']}', style: _plusJakarta(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.green)),
+                          Text(
+                            'Kembalian',
+                            style: _plusJakarta(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            formatRupiah(data['change']),
+                            style: _plusJakarta(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -193,7 +282,13 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Tutup', style: _plusJakarta(fontWeight: FontWeight.bold, color: const Color(0xFFFFB570))),
+                  child: Text(
+                    'Tutup',
+                    style: _plusJakarta(
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFFFFB570),
+                    ),
+                  ),
                 ),
               ],
             );
@@ -229,11 +324,32 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _selectedChannel,
-                    hint: Text('Filter Saluran', style: _plusJakarta(fontSize: 13, color: Colors.grey)),
+                    hint: Text(
+                      'Filter Saluran',
+                      style: _plusJakarta(fontSize: 13, color: Colors.grey),
+                    ),
                     items: [
-                      DropdownMenuItem<String>(value: null, child: Text('Semua Saluran', style: _plusJakarta(fontSize: 13))),
-                      DropdownMenuItem<String>(value: 'offline', child: Text('Offline (Toko)', style: _plusJakarta(fontSize: 13))),
-                      DropdownMenuItem<String>(value: 'online', child: Text('Online (App)', style: _plusJakarta(fontSize: 13))),
+                      DropdownMenuItem<String>(
+                        value: null,
+                        child: Text(
+                          'Semua Saluran',
+                          style: _plusJakarta(fontSize: 13),
+                        ),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'offline',
+                        child: Text(
+                          'Offline (Toko)',
+                          style: _plusJakarta(fontSize: 13),
+                        ),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'online',
+                        child: Text(
+                          'Online (App)',
+                          style: _plusJakarta(fontSize: 13),
+                        ),
+                      ),
                     ],
                     onChanged: (v) {
                       setState(() => _selectedChannel = v);
@@ -301,7 +417,10 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
 
     if (_transactions.isEmpty) {
       return Center(
-        child: Text('Tidak ada data transaksi ditemukan.', style: _plusJakarta(color: Colors.grey)),
+        child: Text(
+          'Tidak ada data transaksi ditemukan.',
+          style: _plusJakarta(color: Colors.grey),
+        ),
       );
     }
 
@@ -311,9 +430,11 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
         final trx = _transactions[index];
         final String code = trx['transaction_code'] ?? 'Unknown Code';
         final String channel = trx['channel'] ?? 'offline';
-        final double total = double.parse(trx['total'].toString());
+        final double total = parseCurrency(trx['total']);
         final String payment = trx['payment_method'] ?? 'cash';
-        final String dateStr = trx['created_at'].substring(0, 19).replaceFirst('T', ' ');
+        final String dateStr = trx['created_at']
+            .substring(0, 19)
+            .replaceFirst('T', ' ');
 
         return Card(
           color: Colors.white,
@@ -325,18 +446,34 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
           margin: const EdgeInsets.only(bottom: 10),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: channel == 'online' ? const Color(0xFFE0F2FE) : const Color(0xFFFEF3C7),
-              foregroundColor: channel == 'online' ? Colors.blue.shade700 : Colors.amber.shade700,
-              child: Icon(channel == 'online' ? Icons.language : Icons.storefront),
+              backgroundColor: channel == 'online'
+                  ? const Color(0xFFE0F2FE)
+                  : const Color(0xFFFEF3C7),
+              foregroundColor: channel == 'online'
+                  ? Colors.blue.shade700
+                  : Colors.amber.shade700,
+              child: Icon(
+                channel == 'online' ? Icons.language : Icons.storefront,
+              ),
             ),
-            title: Text(code, style: _plusJakarta(fontSize: 14, fontWeight: FontWeight.bold)),
-            subtitle: Text('$dateStr - ${payment.toUpperCase()}', style: _plusJakarta(fontSize: 11, color: Colors.grey.shade500)),
+            title: Text(
+              code,
+              style: _plusJakarta(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+              '$dateStr - ${payment.toUpperCase()}',
+              style: _plusJakarta(fontSize: 11, color: Colors.grey.shade500),
+            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Rp ${total.toStringAsFixed(0)}',
-                  style: _plusJakarta(fontSize: 14, fontWeight: FontWeight.w900, color: const Color(0xFF3D2314)),
+                  formatRupiah(total),
+                  style: _plusJakarta(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF3D2314),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 const Icon(Icons.arrow_forward_ios, size: 12),
