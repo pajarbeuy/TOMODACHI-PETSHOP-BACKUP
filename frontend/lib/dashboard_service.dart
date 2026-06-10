@@ -59,4 +59,15 @@ class DashboardService {
   Future<Map<String, dynamic>> getAnalytics() async {
     return await _client.get('/api/dashboard/analytics');
   }
+
+  /// Fetch latest transactions for live dashboard activity
+  Future<Map<String, dynamic>> getRecentTransactions({int limit = 5}) async {
+    final queryString = Uri(
+      queryParameters: {
+        'page': '1',
+        'per_page': limit.toString(),
+      },
+    ).query;
+    return await _client.get('/api/transactions?$queryString');
+  }
 }
