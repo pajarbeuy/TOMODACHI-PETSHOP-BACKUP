@@ -417,6 +417,174 @@ class DashboardTab extends StatelessWidget {
           ],
         );
       },
+    final hour = DateTime.now().hour;
+    final greeting = hour < 12
+        ? 'Good Morning'
+        : hour < 17
+        ? 'Good Afternoon'
+        : 'Good Evening';
+    final today = DateFormat('EEEE, d MMMM yyyy').format(DateTime.now());
+
+    return Container(
+      color: _pageBg,
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(greeting, today),
+              const SizedBox(height: 24),
+              _buildStats(context),
+              const SizedBox(height: 24),
+              _buildResponsivePair(
+                firstFlex: 2,
+                secondFlex: 1,
+                first: _buildSalesTrendCard(),
+                second: _buildBestSellersCard(),
+              ),
+              const SizedBox(height: 16),
+              _buildResponsivePair(
+                firstFlex: 2,
+                secondFlex: 1,
+                first: _buildRecentTransactionsCard(),
+                second: _buildLowStockCard(),
+              ),
+              const SizedBox(height: 16),
+              _buildMonthlyRevenueCard(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(String greeting, String today) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final actions = Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            OutlinedButton(
+              onPressed: () {},
+              style: OutlinedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: _brown700,
+                side: const BorderSide(color: Color(0x4DFFB570)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              child: const Text('Today'),
+            ),
+            _gradientButton(
+              icon: Icons.add,
+              label: 'New Transaction',
+              onPressed: () {},
+            ),
+          ],
+        );
+
+        final title = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('$greeting!', style: _text(size: 24, weight: FontWeight.w900)),
+            const SizedBox(height: 4),
+            Text(
+              "$today - Here's what's happening at Tomodachi Petshop",
+              style: _text(size: 13, color: _brown400),
+            ),
+          ],
+        );
+
+        if (constraints.maxWidth < 640) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [title, const SizedBox(height: 16), actions],
+          );
+        }
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: title),
+            const SizedBox(width: 16),
+            actions,
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildStats(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final columns = width >= 1100
+            ? 4
+            : width >= 680
+            ? 2
+            : 1;
+        final cardWidth = (width - (16 * (columns - 1))) / columns;
+
+        return Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          children: [
+            _buildStatCard(
+              width: cardWidth,
+              label: "Today's Sales",
+              value: formatRp(1890000),
+              sub: 'From 28 transactions',
+              icon: Icons.attach_money,
+              iconColor: _orangeDark,
+              trend: 12,
+              gradient: const [Color(0xFFFFF6E9), Color(0xFFFFE8CC)],
+              iconBg: const Color(0x33FFB570),
+            ),
+            _buildStatCard(
+              width: cardWidth,
+              label: 'Total Transactions',
+              value: '28',
+              sub: '8 more than yesterday',
+              icon: Icons.shopping_bag_outlined,
+              iconColor: _pink,
+              trend: 8,
+              gradient: const [Color(0xFFFFF0F5), Color(0xFFFFE0EC)],
+              iconBg: const Color(0x4DFFC7D1),
+            ),
+            _buildStatCard(
+              width: cardWidth,
+              label: 'Monthly Revenue',
+              value: formatRp(42000000),
+              sub: 'June 2024',
+              icon: Icons.trending_up,
+              iconColor: _green,
+              trend: 15,
+              gradient: const [Color(0xFFF0FDF9), Color(0xFFD4F5EE)],
+              iconBg: const Color(0x80B8F2E6),
+            ),
+            _buildStatCard(
+              width: cardWidth,
+              label: 'Active Products',
+              value: '48',
+              sub: '4 need restocking',
+              icon: Icons.inventory_2_outlined,
+              iconColor: _blue,
+              trend: -2,
+              gradient: const [Color(0xFFF0FAFE), Color(0xFFD4EFFD)],
+              iconBg: const Color(0x66A0E7E5),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -454,6 +622,106 @@ class DashboardTab extends StatelessWidget {
           ),
         ],
       ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -32,
+            bottom: -32,
+            child: Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.22),
+              ),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style: _text(
+                            size: 13,
+                            weight: FontWeight.w700,
+                            color: _brown700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          value,
+                          style: _text(size: 24, weight: FontWeight.w900),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(sub, style: _text(size: 11, color: _brown400)),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: iconBg,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(icon, color: iconColor, size: 22),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: positive ? _successBg : _dangerBg,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Transform.rotate(
+                          angle: positive ? 0 : 3.14159,
+                          child: Icon(
+                            Icons.arrow_outward,
+                            size: 11,
+                            color: positive
+                                ? const Color(0xFF1B7A65)
+                                : const Color(0xFFC0392B),
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${trend.abs()}%',
+                          style: _text(
+                            size: 11,
+                            weight: FontWeight.w900,
+                            color: positive
+                                ? const Color(0xFF1B7A65)
+                                : const Color(0xFFC0392B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'vs last week',
+                    style: _text(size: 11, color: _brown400),
+                  ),
+                ],
+              ),
+            ],
       child: Stack(
         children: [
           Positioned(
@@ -765,9 +1033,7 @@ class DashboardTab extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Icon(product.icon, color: _orangeDark, size: 22),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -804,6 +1070,83 @@ class DashboardTab extends StatelessWidget {
     );
   }
 
+
+
+  Widget _buildRecentTransactionsCard() {
+    return Container(
+      decoration: _cardDecoration(),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: _cardHeader(
+              title: 'Recent Transactions',
+              subtitle: "Today's activity",
+              trailing: TextButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.arrow_outward, size: 13),
+                label: const Text('View all'),
+                style: TextButton.styleFrom(
+                  foregroundColor: _orange,
+                  textStyle: _text(size: 12, weight: FontWeight.w900),
+                ),
+              ),
+            ),
+          ),
+          const Divider(height: 1, color: Color(0x1FFFB570)),
+          ...recentTransactions.map((transaction) {
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF0E0),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.shopping_bag,
+                          size: 16,
+                          color: _orange,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              transaction.customer,
+                              overflow: TextOverflow.ellipsis,
+                              style: _text(size: 14, weight: FontWeight.w800),
+                            ),
+                            Text(
+                              '${transaction.id} - ${transaction.items} items - ${transaction.method}',
+                              overflow: TextOverflow.ellipsis,
+                              style: _text(size: 11, color: _brown400),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            formatRpFull(transaction.total),
+                            style: _text(size: 13, weight: FontWeight.w900),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
   Widget _buildRecentTransactionsCard() {
     return Container(
       decoration: _cardDecoration(),
