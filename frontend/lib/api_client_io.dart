@@ -42,6 +42,7 @@ class ApiClient {
       final cleanPath = path.startsWith('/') ? path.substring(1) : path;
       final request = await client.getUrl(_baseUri.resolve(cleanPath));
       request.headers.set(HttpHeaders.acceptHeader, 'application/json');
+      _addNgrokHeader(request);
 
       _addAuthHeader(request);
 
@@ -49,7 +50,7 @@ class ApiClient {
       final body = await response.transform(utf8.decoder).join();
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw ApiException('HTTP ${response.statusCode}: $body');
+        throw ApiException(_formatHttpError(response.statusCode, body));
       }
 
       final decoded = jsonDecode(body);
@@ -81,6 +82,7 @@ class ApiClient {
       final request = await client.postUrl(_baseUri.resolve(cleanPath));
       request.headers.set(HttpHeaders.acceptHeader, 'application/json');
       request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
+      _addNgrokHeader(request);
 
       _addAuthHeader(request);
 
@@ -92,7 +94,7 @@ class ApiClient {
       final responseBody = await response.transform(utf8.decoder).join();
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw ApiException('HTTP ${response.statusCode}: $responseBody');
+        throw ApiException(_formatHttpError(response.statusCode, responseBody));
       }
 
       final decoded = jsonDecode(responseBody);
@@ -124,6 +126,7 @@ class ApiClient {
       final request = await client.putUrl(_baseUri.resolve(cleanPath));
       request.headers.set(HttpHeaders.acceptHeader, 'application/json');
       request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
+      _addNgrokHeader(request);
 
       _addAuthHeader(request);
 
@@ -135,7 +138,7 @@ class ApiClient {
       final responseBody = await response.transform(utf8.decoder).join();
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw ApiException('HTTP ${response.statusCode}: $responseBody');
+        throw ApiException(_formatHttpError(response.statusCode, responseBody));
       }
 
       final decoded = jsonDecode(responseBody);
@@ -163,6 +166,7 @@ class ApiClient {
       final cleanPath = path.startsWith('/') ? path.substring(1) : path;
       final request = await client.deleteUrl(_baseUri.resolve(cleanPath));
       request.headers.set(HttpHeaders.acceptHeader, 'application/json');
+      _addNgrokHeader(request);
 
       _addAuthHeader(request);
 
@@ -170,7 +174,7 @@ class ApiClient {
       final body = await response.transform(utf8.decoder).join();
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw ApiException('HTTP ${response.statusCode}: $body');
+        throw ApiException(_formatHttpError(response.statusCode, body));
       }
 
       final decoded = jsonDecode(body);
@@ -206,6 +210,7 @@ class ApiClient {
       final cleanPath = path.startsWith('/') ? path.substring(1) : path;
       final request = await client.postUrl(_baseUri.resolve(cleanPath));
       request.headers.set(HttpHeaders.acceptHeader, 'application/json');
+      _addNgrokHeader(request);
 
       _addAuthHeader(request);
 
@@ -267,7 +272,7 @@ class ApiClient {
       final responseBody = await response.transform(utf8.decoder).join();
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw ApiException('HTTP ${response.statusCode}: $responseBody');
+        throw ApiException(_formatHttpError(response.statusCode, responseBody));
       }
 
       final decoded = jsonDecode(responseBody);
@@ -291,6 +296,25 @@ class ApiClient {
     if (_token != null && _token!.isNotEmpty) {
       request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_token');
     }
+  }
+
+  void _addNgrokHeader(HttpClientRequest request) {
+    if (_baseUri.host.contains('ngrok')) {
+      request.headers.set('ngrok-skip-browser-warning', 'true');
+    }
+  }
+
+  String _formatHttpError(int status, String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map && decoded['message'] != null) {
+        return 'HTTP $status: ${decoded['message']}';
+      }
+    } catch (_) {
+      // Keep the raw response below if it is not JSON.
+    }
+
+    return 'HTTP $status: $body';
   }
 }
 

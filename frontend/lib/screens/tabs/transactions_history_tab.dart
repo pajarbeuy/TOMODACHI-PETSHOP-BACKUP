@@ -312,92 +312,122 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
           const SizedBox(height: 16),
 
           // Filters panel
-          Row(
+          Column(
             children: [
-              // Channel filter
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF9F2),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedChannel,
-                    hint: Text(
-                      'Filter Saluran',
-                      style: _plusJakarta(fontSize: 13, color: Colors.grey),
-                    ),
-                    items: [
-                      DropdownMenuItem<String>(
-                        value: null,
-                        child: Text(
-                          'Semua Saluran',
-                          style: _plusJakarta(fontSize: 13),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF9F2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _selectedChannel,
+                          isExpanded: true,
+                          hint: Text(
+                            'Filter Saluran',
+                            style: _plusJakarta(
+                              fontSize: 13,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          items: [
+                            DropdownMenuItem<String>(
+                              value: null,
+                              child: Text(
+                                'Semua Saluran',
+                                overflow: TextOverflow.ellipsis,
+                                style: _plusJakarta(fontSize: 13),
+                              ),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: 'offline',
+                              child: Text(
+                                'Offline (Toko)',
+                                overflow: TextOverflow.ellipsis,
+                                style: _plusJakarta(fontSize: 13),
+                              ),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: 'online',
+                              child: Text(
+                                'Online (App)',
+                                overflow: TextOverflow.ellipsis,
+                                style: _plusJakarta(fontSize: 13),
+                              ),
+                            ),
+                          ],
+                          onChanged: (v) {
+                            setState(() => _selectedChannel = v);
+                            _fetchTransactions();
+                          },
                         ),
                       ),
-                      DropdownMenuItem<String>(
-                        value: 'offline',
-                        child: Text(
-                          'Offline (Toko)',
-                          style: _plusJakarta(fontSize: 13),
-                        ),
-                      ),
-                      DropdownMenuItem<String>(
-                        value: 'online',
-                        child: Text(
-                          'Online (App)',
-                          style: _plusJakarta(fontSize: 13),
-                        ),
-                      ),
-                    ],
-                    onChanged: (v) {
-                      setState(() => _selectedChannel = v);
-                      _fetchTransactions();
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Start Date
-              Expanded(
-                child: TextField(
-                  controller: _startDateCtrl,
-                  style: _plusJakarta(fontSize: 13),
-                  decoration: InputDecoration(
-                    hintText: 'Mulai (YYYY-MM-DD)',
-                    filled: true,
-                    fillColor: const Color(0xFFFFF9F2),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
                     ),
                   ),
-                  onSubmitted: (_) => _fetchTransactions(),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // End Date
-              Expanded(
-                child: TextField(
-                  controller: _endDateCtrl,
-                  style: _plusJakarta(fontSize: 13),
-                  decoration: InputDecoration(
-                    hintText: 'Selesai (YYYY-MM-DD)',
-                    filled: true,
-                    fillColor: const Color(0xFFFFF9F2),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.refresh,
+                        color: Color(0xFFFFB570),
+                      ),
+                      onPressed: _fetchTransactions,
                     ),
                   ),
-                  onSubmitted: (_) => _fetchTransactions(),
-                ),
+                ],
               ),
-              const SizedBox(width: 12),
-              IconButton(
-                icon: const Icon(Icons.refresh, color: Color(0xFFFFB570)),
-                onPressed: _fetchTransactions,
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _startDateCtrl,
+                      style: _plusJakarta(fontSize: 13),
+                      decoration: InputDecoration(
+                        hintText: 'Mulai (YYYY-MM-DD)',
+                        hintStyle: _plusJakarta(
+                          fontSize: 13,
+                          color: Colors.grey,
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFFFFF9F2),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      onSubmitted: (_) => _fetchTransactions(),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: _endDateCtrl,
+                      style: _plusJakarta(fontSize: 13),
+                      decoration: InputDecoration(
+                        hintText: 'Selesai (YYYY-MM-DD)',
+                        hintStyle: _plusJakarta(
+                          fontSize: 13,
+                          color: Colors.grey,
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFFFFF9F2),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      onSubmitted: (_) => _fetchTransactions(),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

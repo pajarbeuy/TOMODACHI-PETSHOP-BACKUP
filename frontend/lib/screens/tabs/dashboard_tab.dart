@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '../../dashboard_service.dart';
 
 class SalesData {
   final String day;
@@ -77,9 +81,30 @@ class LowStockItem {
   });
 }
 
-class DashboardTab extends StatelessWidget {
-  DashboardTab({super.key});
+enum _SalesTrendRange { sevenDays, thirtyDays, threeMonths }
 
+class _SalesTrendPoint {
+  final DateTime date;
+  final double sales;
+  final int transactions;
+
+  const _SalesTrendPoint({
+    required this.date,
+    required this.sales,
+    required this.transactions,
+  });
+}
+
+class DashboardTab extends StatefulWidget {
+  final DashboardService? dashboardService;
+
+  const DashboardTab({super.key, this.dashboardService});
+
+  @override
+  State<DashboardTab> createState() => _DashboardTabState();
+}
+
+class _DashboardTabState extends State<DashboardTab> {
   static const _brown900 = Color(0xFF3D2314);
   static const _brown700 = Color(0xFF6B4F3E);
   static const _brown400 = Color(0xFF9B7B6B);
@@ -243,9 +268,168 @@ class DashboardTab extends StatelessWidget {
     decimalDigits: 0,
   );
 
+  List<RecentTransaction> _liveRecentTransactions = recentTransactions;
+  bool _recentTransactionsLoading = false;
+  Timer? _recentTransactionsTimer;
+  _SalesTrendRange _selectedSalesRange = _SalesTrendRange.sevenDays;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRecentTransactions();
+    _recentTransactionsTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _fetchRecentTransactions(silent: true),
+    );
+  }
+
+  @override
+  void dispose() {
+    _recentTransactionsTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchRecentTransactions({bool silent = false}) async {
+    final service = widget.dashboardService;
+    if (service == null) return;
+
+    if (!silent && mounted) {
+      setState(() => _recentTransactionsLoading = true);
+    }
+
+    try {
+      final res = await service.getRecentTransactions(limit: 5);
+      final data = res['data'];
+      final rows = data is List
+          ? data
+          : data is Map && data['data'] is List
+          ? data['data'] as List
+          : const [];
+
+      final transactions = rows
+          .whereType<Map>()
+          .map((row) => _recentTransactionFromJson(row))
+          .toList();
+
+      if (!mounted) return;
+      setState(() {
+        if (transactions.isNotEmpty) {
+          _liveRecentTransactions = transactions;
+        }
+        _recentTransactionsLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _recentTransactionsLoading = false);
+    }
+  }
+
+  RecentTransaction _recentTransactionFromJson(Map<dynamic, dynamic> row) {
+    final code = (row['transaction_code'] ?? row['transaction_id'] ?? '-')
+        .toString();
+    final cashier = row['cashier'];
+    final cashierName = cashier is Map
+        ? (cashier['name'] ?? '').toString()
+        : (row['kasir_name'] ?? row['cashier_name'] ?? '').toString();
+    final customer = cashierName.isNotEmpty ? cashierName : 'Transaksi Kasir';
+    final items = row['items'];
+    final itemCount = items is List
+        ? items.fold<int>(0, (sum, item) {
+            if (item is! Map) return sum;
+            return sum + (int.tryParse('${item['quantity'] ?? 0}') ?? 0);
+          })
+        : int.tryParse('${row['items_count'] ?? row['total_items'] ?? 0}') ?? 0;
+    final total =
+        double.tryParse('${row['total'] ?? row['grand_total'] ?? 0}') ?? 0;
+    final method = (row['payment_method'] ?? row['channel'] ?? '-')
+        .toString()
+        .toUpperCase();
+    final createdAt = DateTime.tryParse('${row['created_at'] ?? ''}');
+
+    return RecentTransaction(
+      id: code,
+      customer: customer,
+      items: itemCount,
+      total: total,
+      method: method,
+      time: _formatRelativeTime(createdAt),
+    );
+  }
+
+  String _formatRelativeTime(DateTime? value) {
+    if (value == null) return '-';
+    final now = DateTime.now();
+    final local = value.toLocal();
+    final diff = now.difference(local);
+
+    if (diff.inMinutes < 1) return 'baru saja';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return DateFormat('d MMM').format(local);
+  }
+
   String formatRp(double n) => _currency.format(n);
 
   String formatRpFull(double n) => _currency.format(n);
+
+  int get _selectedSalesTrendDays {
+    final today = DateTime.now();
+    final startOfToday = DateTime(today.year, today.month, today.day);
+
+    return switch (_selectedSalesRange) {
+      _SalesTrendRange.sevenDays => 7,
+      _SalesTrendRange.thirtyDays => 30,
+      _SalesTrendRange.threeMonths =>
+        startOfToday
+                .difference(DateTime(today.year, today.month - 3, today.day))
+                .inDays +
+            1,
+    };
+  }
+
+  String get _selectedSalesTrendSubtitle {
+    return switch (_selectedSalesRange) {
+      _SalesTrendRange.sevenDays => 'Last 7 days',
+      _SalesTrendRange.thirtyDays => 'Last 30 days',
+      _SalesTrendRange.threeMonths => 'Last 3 months',
+    };
+  }
+
+  List<_SalesTrendPoint> _buildSalesTrendPoints() {
+    final today = DateTime.now();
+    final startOfToday = DateTime(today.year, today.month, today.day);
+    final days = _selectedSalesTrendDays;
+
+    return List.generate(days, (index) {
+      final date = startOfToday.subtract(Duration(days: days - index - 1));
+      final base = salesData[index % salesData.length];
+      final weekPulse = ((index % 7) - 3) * 0.045;
+      final rangeGrowth = days == 1 ? 0.0 : (index / (days - 1)) * 0.16;
+      final sales = base.sales * (1 + weekPulse + rangeGrowth);
+      final transactions = (base.transactions * (sales / base.sales)).round();
+
+      return _SalesTrendPoint(
+        date: date,
+        sales: sales,
+        transactions: transactions,
+      );
+    });
+  }
+
+  String _formatTrendDate(DateTime date) {
+    return DateFormat('d MMM').format(date);
+  }
+
+  bool _showTrendDateLabel(int index, int total) {
+    if (total <= 7) return true;
+
+    final labelIndexes = total <= 30
+        ? <int>{0, total ~/ 3, (total * 2) ~/ 3, total - 1}
+        : <int>{0, total ~/ 4, total ~/ 2, (total * 3) ~/ 4, total - 1};
+
+    return labelIndexes.contains(index);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -585,7 +769,13 @@ class DashboardTab extends StatelessWidget {
   }
 
   Widget _buildSalesTrendCard() {
-    final spots = salesData.asMap().entries.map((entry) {
+    final trendPoints = _buildSalesTrendPoints();
+    final maxSales = trendPoints
+        .map((item) => item.sales)
+        .reduce((value, item) => value > item ? value : item);
+    final maxY = (maxSales * 1.2).clamp(1000000.0, double.infinity);
+    final leftInterval = maxY / 4;
+    final spots = trendPoints.asMap().entries.map((entry) {
       return FlSpot(entry.key.toDouble(), entry.value.sales);
     }).toList();
 
@@ -598,15 +788,39 @@ class DashboardTab extends StatelessWidget {
         children: [
           _cardHeader(
             title: 'Sales Trend',
-            subtitle: 'Last 7 days',
+            subtitle: _selectedSalesTrendSubtitle,
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _rangeButton('7D', selected: true),
+                _rangeButton(
+                  '7D',
+                  selected: _selectedSalesRange == _SalesTrendRange.sevenDays,
+                  onPressed: () {
+                    setState(() {
+                      _selectedSalesRange = _SalesTrendRange.sevenDays;
+                    });
+                  },
+                ),
                 const SizedBox(width: 6),
-                _rangeButton('30D'),
+                _rangeButton(
+                  '30D',
+                  selected: _selectedSalesRange == _SalesTrendRange.thirtyDays,
+                  onPressed: () {
+                    setState(() {
+                      _selectedSalesRange = _SalesTrendRange.thirtyDays;
+                    });
+                  },
+                ),
                 const SizedBox(width: 6),
-                _rangeButton('3M'),
+                _rangeButton(
+                  '3M',
+                  selected: _selectedSalesRange == _SalesTrendRange.threeMonths,
+                  onPressed: () {
+                    setState(() {
+                      _selectedSalesRange = _SalesTrendRange.threeMonths;
+                    });
+                  },
+                ),
               ],
             ),
           ),
@@ -615,9 +829,9 @@ class DashboardTab extends StatelessWidget {
             child: LineChart(
               LineChartData(
                 minX: 0,
-                maxX: (salesData.length - 1).toDouble(),
+                maxX: (trendPoints.length - 1).toDouble(),
                 minY: 0,
-                maxY: 2400000,
+                maxY: maxY,
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
@@ -641,14 +855,23 @@ class DashboardTab extends StatelessWidget {
                       interval: 1,
                       getTitlesWidget: (value, meta) {
                         final index = value.toInt();
-                        if (index < 0 || index >= salesData.length) {
+                        if (index < 0 ||
+                            index >= trendPoints.length ||
+                            !_showTrendDateLabel(index, trendPoints.length)) {
                           return const SizedBox.shrink();
                         }
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            salesData[index].day,
-                            style: _text(size: 10, color: _brown400),
+                        return SideTitleWidget(
+                          axisSide: meta.axisSide,
+                          space: 8,
+                          child: SizedBox(
+                            width: 44,
+                            child: Text(
+                              _formatTrendDate(trendPoints[index].date),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.visible,
+                              style: _text(size: 10, color: _brown400),
+                            ),
                           ),
                         );
                       },
@@ -658,7 +881,7 @@ class DashboardTab extends StatelessWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 46,
-                      interval: 600000,
+                      interval: leftInterval,
                       getTitlesWidget: (value, meta) => Text(
                         '${(value / 1000000).toStringAsFixed(1)}jt',
                         style: _text(size: 10, color: _brown400),
@@ -671,9 +894,9 @@ class DashboardTab extends StatelessWidget {
                     tooltipBgColor: Colors.white,
                     tooltipRoundedRadius: 12,
                     getTooltipItems: (items) => items.map((item) {
-                      final data = salesData[item.x.toInt()];
+                      final data = trendPoints[item.x.toInt()];
                       return LineTooltipItem(
-                        '${data.day}\n${formatRpFull(data.sales)}\n${data.transactions} transactions',
+                        '${_formatTrendDate(data.date)}\n${formatRpFull(data.sales)}\n${data.transactions} transactions',
                         _text(size: 11, weight: FontWeight.w800),
                       );
                     }).toList(),
@@ -698,6 +921,11 @@ class DashboardTab extends StatelessWidget {
                     ),
                     dotData: FlDotData(
                       show: true,
+                      checkToShowDot: (spot, barData) {
+                        final index = spot.x.toInt();
+                        return trendPoints.length <= 30 ||
+                            _showTrendDateLabel(index, trendPoints.length);
+                      },
                       getDotPainter: (spot, percent, bar, index) {
                         return FlDotCirclePainter(
                           radius: 4,
@@ -765,7 +993,9 @@ class DashboardTab extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
+                  Icon(product.icon, color: _orangeDark, size: 22),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -802,9 +1032,9 @@ class DashboardTab extends StatelessWidget {
     );
   }
 
-
-
   Widget _buildRecentTransactionsCard() {
+    final transactions = _liveRecentTransactions;
+
     return Container(
       decoration: _cardDecoration(),
       clipBehavior: Clip.antiAlias,
@@ -815,20 +1045,21 @@ class DashboardTab extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: _cardHeader(
               title: 'Recent Transactions',
-              subtitle: "Today's activity",
-              trailing: TextButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.arrow_outward, size: 13),
-                label: const Text('View all'),
-                style: TextButton.styleFrom(
-                  foregroundColor: _orange,
-                  textStyle: _text(size: 12, weight: FontWeight.w900),
-                ),
+              subtitle: _recentTransactionsLoading
+                  ? 'Memuat aktivitas terbaru...'
+                  : "Today's activity",
+              trailing: IconButton(
+                tooltip: 'Refresh',
+                onPressed: _recentTransactionsLoading
+                    ? null
+                    : () => _fetchRecentTransactions(),
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                color: _orange,
               ),
             ),
           ),
           const Divider(height: 1, color: Color(0x1FFFB570)),
-          ...recentTransactions.map((transaction) {
+          ...transactions.map((transaction) {
             return Column(
               children: [
                 Padding(
@@ -906,7 +1137,7 @@ class DashboardTab extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (transaction != recentTransactions.last)
+                if (transaction != transactions.last)
                   const Divider(height: 1, color: Color(0x11FFB570)),
               ],
             );
@@ -1030,18 +1261,6 @@ class DashboardTab extends StatelessWidget {
               ],
             );
           }),
-          const Divider(height: 1, color: Color(0x1FFFB570)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: SizedBox(
-              width: double.infinity,
-              child: _gradientButton(
-                label: 'Restock All',
-                dense: true,
-                onPressed: () {},
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -1203,19 +1422,30 @@ class DashboardTab extends StatelessWidget {
     );
   }
 
-  Widget _rangeButton(String label, {bool selected = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: selected ? _orange : const Color(0xFFFFF0E0),
+  Widget _rangeButton(
+    String label, {
+    bool selected = false,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
         borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: _text(
-          size: 11,
-          weight: FontWeight.w900,
-          color: selected ? Colors.white : _brown400,
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: selected ? _orange : const Color(0xFFFFF0E0),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            label,
+            style: _text(
+              size: 11,
+              weight: FontWeight.w900,
+              color: selected ? Colors.white : _brown400,
+            ),
+          ),
         ),
       ),
     );
