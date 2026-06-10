@@ -151,9 +151,6 @@ class _LoginScreenState extends State<LoginScreen>
   late final AnimationController _fadeCtrl;
   late final Animation<double> _fadeAnim;
   String? _errorMessage;
-
-  late final AnimationController _fadeCtrl;
-  late final Animation<double> _fadeAnim;
   late final AuthService _authService;
 
   @override
