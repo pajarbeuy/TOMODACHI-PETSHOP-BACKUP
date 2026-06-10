@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'product_management_screen.dart';
+import 'reports_screen.dart';
 import '../auth_service.dart';
 import 'home_screen.dart';
 
@@ -173,6 +175,56 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
+  void _handleLogin() {
+    setState(() => _loading = true);
+    Future.delayed(const Duration(milliseconds: 700), () {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      _onLoginSuccess(
+        CurrentUser(
+          id: '1',
+          name: 'Admin Utama',
+          email: _emailCtrl.text,
+          role: Role.admin,
+        ),
+      );
+    });
+  }
+
+  void _handleQuickLogin(_DemoRole demo) {
+    setState(() => _loading = true);
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      _onLoginSuccess(demo.user);
+    });
+  }
+
+ void _onLoginSuccess(CurrentUser user) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        'Welcome, ${user.name}! (${user.role.name})',
+        style: _iosStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      backgroundColor: _orange,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+    ),
+  );
+
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const ReportsScreen(),
+    ),
+  );
+}
   void _handleLogin() async {
     final email = _emailCtrl.text.trim();
     final password = _passCtrl.text.trim();
@@ -425,6 +477,7 @@ class _LoginScreenState extends State<LoginScreen>
                     style: _iosStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
+                      color: Colors.white.withOpacity(0.85),
                       color: Colors.white.withValues(alpha: 0.85),
                       height: 1.6,
                     ),
@@ -451,6 +504,9 @@ class _LoginScreenState extends State<LoginScreen>
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: Colors.white.withOpacity(0.3)),
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
@@ -525,6 +581,7 @@ class _LoginScreenState extends State<LoginScreen>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
+                color: _orange.withOpacity(0.4),
                 color: _orange.withValues(alpha: 0.4),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
@@ -556,6 +613,7 @@ class _LoginScreenState extends State<LoginScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
+            color: _orange.withOpacity(0.15),
             color: _orange.withValues(alpha: 0.15),
             blurRadius: 48,
             offset: const Offset(0, 8),
@@ -783,6 +841,7 @@ class _LoginScreenState extends State<LoginScreen>
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
+              color: _orange.withOpacity(0.4),
               color: _orange.withValues(alpha: 0.4),
               blurRadius: 20,
               offset: const Offset(0, 4),
@@ -918,6 +977,7 @@ class _AnimatedLogoBoxState extends State<_AnimatedLogoBox> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
+                  color: Colors.white.withOpacity(_hovered ? 0.5 : 0.3),
                   color: Colors.white.withValues(alpha: _hovered ? 0.5 : 0.3),
                   blurRadius: _hovered ? 48 : 32,
                   offset: const Offset(0, 8),
@@ -1083,6 +1143,7 @@ class _DemoRoleButtonState extends State<_DemoRoleButton> {
             boxShadow: _hovered
                 ? [
                     BoxShadow(
+                      color: demo.hoverBorder.withOpacity(0.18),
                       color: demo.hoverBorder.withValues(alpha: 0.18),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
