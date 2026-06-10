@@ -42,6 +42,7 @@ class ApiClient {
     final url = _baseUri.resolve(cleanPath).toString();
 
     final headers = {'Accept': 'application/json'};
+    _addNgrokHeader(headers);
     _addAuthHeader(headers);
 
     try {
@@ -64,6 +65,7 @@ class ApiClient {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
     };
+    _addNgrokHeader(headers);
     _addAuthHeader(headers);
 
     try {
@@ -87,6 +89,7 @@ class ApiClient {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
     };
+    _addNgrokHeader(headers);
     _addAuthHeader(headers);
 
     try {
@@ -104,6 +107,7 @@ class ApiClient {
     final url = _baseUri.resolve(cleanPath).toString();
 
     final headers = {'Accept': 'application/json'};
+    _addNgrokHeader(headers);
     _addAuthHeader(headers);
 
     try {
@@ -133,7 +137,7 @@ class ApiClient {
           if (status < 200 || status >= 300) {
             final responseText = request.responseText;
             completer.completeError(
-              ApiException('HTTP $status: $responseText'),
+              ApiException(_formatHttpError(status, responseText)),
             );
             return;
           }
@@ -225,7 +229,7 @@ class ApiClient {
           if (status < 200 || status >= 300) {
             final responseText = request.responseText;
             completer.completeError(
-              ApiException('HTTP $status: $responseText'),
+              ApiException(_formatHttpError(status, responseText)),
             );
             return;
           }
@@ -261,6 +265,7 @@ class ApiClient {
         request.setRequestHeader('Authorization', 'Bearer $_token');
       }
       request.setRequestHeader('Accept', 'application/json');
+      request.setRequestHeader('ngrok-skip-browser-warning', 'true');
 
       request.send(formData);
 
@@ -278,6 +283,25 @@ class ApiClient {
     if (_token != null && _token!.isNotEmpty) {
       headers['Authorization'] = 'Bearer $_token';
     }
+  }
+
+  void _addNgrokHeader(Map<String, String> headers) {
+    if (_baseUri.host.contains('ngrok')) {
+      headers['ngrok-skip-browser-warning'] = 'true';
+    }
+  }
+
+  String _formatHttpError(int status, String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map && decoded['message'] != null) {
+        return 'HTTP $status: ${decoded['message']}';
+      }
+    } catch (_) {
+      // Keep the raw response below if it is not JSON.
+    }
+
+    return 'HTTP $status: $body';
   }
 }
 
