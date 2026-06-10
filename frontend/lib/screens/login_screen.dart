@@ -162,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen>
 
     // Override with: flutter run -d chrome --dart-define=API_BASE_URL=https://your-api.example.com
     _authService = AuthService();
-    _authService.initialize(_apiBaseUrl);
+    _authService.initialize('https://crusher-vaguely-tyke.ngrok-free.dev');
   }
 
   @override
