@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\AiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -87,5 +88,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('reports/sales/summary', [ReportController::class, 'salesSummary']);
         Route::get('reports/top-products', [ReportController::class, 'topProducts']);
         Route::get('dashboard/analytics', [ReportController::class, 'analytics']);
+    });
+
+    // 6. AI Chatbot — semua role yang sudah login bisa akses
+    Route::prefix('ai')->group(function () {
+        Route::post('chat', [AiController::class, 'chat']);
+        Route::get('chat/history', [AiController::class, 'history']);
+        Route::get('restock', [AiController::class, 'restock']);
     });
 });

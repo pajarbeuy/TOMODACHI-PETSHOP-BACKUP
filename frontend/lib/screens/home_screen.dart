@@ -8,7 +8,9 @@ import 'tabs/pos_tab.dart';
 import 'tabs/products_tab.dart';
 import 'tabs/transactions_history_tab.dart';
 import 'tabs/dashboard_owner.dart';
+import 'ai_chat_screen.dart';
 import 'login_screen.dart';
+import '../ai_chat_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final AuthService authService;
@@ -48,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late final ProductService _productService;
   late final TransactionService _transactionService;
   late final DashboardService _dashboardService;
+  late final AiChatService _aiChatService;
 
   int _currentIndex = 0;
   bool _loadingLogout = false;
@@ -60,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _productService = ProductService(client);
     _transactionService = TransactionService(client);
     _dashboardService = DashboardService(client);
+    _aiChatService = AiChatService(client);
   }
 
   List<_NavigationItem> _getNavigationItems(String role) {
@@ -94,6 +98,11 @@ class _HomeScreenState extends State<HomeScreen> {
               transactionService: _transactionService,
             ),
           ),
+          _NavigationItem(
+            label: 'AI Asisten',
+            icon: Icons.auto_awesome,
+            widget: AiChatScreen(chatService: _aiChatService),
+          ),
         ];
 
       case 'admin':
@@ -120,6 +129,11 @@ class _HomeScreenState extends State<HomeScreen> {
             widget: TransactionsHistoryTab(
               transactionService: _transactionService,
             ),
+          ),
+          _NavigationItem(
+            label: 'AI Asisten',
+            icon: Icons.auto_awesome,
+            widget: AiChatScreen(chatService: _aiChatService),
           ),
         ];
 
@@ -242,6 +256,8 @@ class _HomeScreenState extends State<HomeScreen> {
         return 'Riwayat';
       case 'POS Kasir':
         return 'POS';
+      case 'AI Asisten':
+        return 'AI';
       default:
         return label;
     }
