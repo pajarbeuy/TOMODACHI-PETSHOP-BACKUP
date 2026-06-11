@@ -259,79 +259,98 @@ class _AiChatScreenState extends State<AiChatScreen>
   }
 
   Widget _buildChatHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: const BoxDecoration(
-        color: _surface,
-        border: Border(bottom: BorderSide(color: _divider)),
-      ),
-      child: Row(
-        children: [
-          // Tommi avatar
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFB570), Color(0xFFFF6B35)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Center(
-              child: Text('🐾', style: TextStyle(fontSize: 20)),
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 430;
+        final horizontalPadding = isCompact ? 16.0 : 20.0;
+
+        return Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: 14,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Tommi AI Assistant',
-                  style: _font(
-                    size: 15,
-                    weight: FontWeight.w700,
-                    color: _textPrimary,
+          decoration: const BoxDecoration(
+            color: _surface,
+            border: Border(bottom: BorderSide(color: _divider)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: isCompact ? 40 : 42,
+                height: isCompact ? 40 : 42,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFB570), Color(0xFFFF6B35)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                Row(
+                child: const Center(
+                  child: Text('🐾', style: TextStyle(fontSize: 20)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF4ADE80),
-                        shape: BoxShape.circle,
+                    Text(
+                      'Tommi AI Assistant',
+                      maxLines: isCompact ? 2 : 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _font(
+                        size: isCompact ? 14 : 15,
+                        weight: FontWeight.w700,
+                        color: _textPrimary,
+                        height: 1.25,
                       ),
                     ),
-                    const SizedBox(width: 5),
-                    Text(
-                      'Online • Powered by OpenRouter',
-                      style: _font(size: 11, color: _textSecondary),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF4ADE80),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            'Online • Powered by OpenRouter',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: _font(size: 11, color: _textSecondary),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 8),
+              _headerBtn(
+                icon: Icons.inventory_2_outlined,
+                label: 'Restock',
+                onTap: _loadRestockData,
+                active: _showRestockPanel,
+                compact: isCompact,
+              ),
+              const SizedBox(width: 6),
+              _headerBtn(
+                icon: Icons.refresh_rounded,
+                label: 'Reset',
+                onTap: _resetChat,
+                compact: isCompact,
+              ),
+            ],
           ),
-          // Restock button
-          _headerBtn(
-            icon: Icons.inventory_2_outlined,
-            label: 'Restock',
-            onTap: _loadRestockData,
-            active: _showRestockPanel,
-          ),
-          const SizedBox(width: 8),
-          // Reset button
-          _headerBtn(
-            icon: Icons.refresh_rounded,
-            label: 'Reset',
-            onTap: _resetChat,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -340,31 +359,40 @@ class _AiChatScreenState extends State<AiChatScreen>
     required String label,
     required VoidCallback onTap,
     bool active = false,
+    bool compact = false,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        width: compact ? 38 : null,
+        height: compact ? 38 : null,
+        padding: compact
+            ? EdgeInsets.zero
+            : const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? _accent.withOpacity(0.15) : _card,
+          color: active ? _accent.withValues(alpha: 0.15) : _card,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: active ? _accent.withOpacity(0.5) : _divider,
+            color: active ? _accent.withValues(alpha: 0.5) : _divider,
           ),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 15, color: active ? _accent : _textSecondary),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: _font(
-                size: 12,
-                weight: FontWeight.w600,
-                color: active ? _accent : _textSecondary,
+            if (!compact) ...[
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: _font(
+                  size: 12,
+                  weight: FontWeight.w600,
+                  color: active ? _accent : _textSecondary,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -372,18 +400,28 @@ class _AiChatScreenState extends State<AiChatScreen>
   }
 
   Widget _buildMessageList() {
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      itemCount: _messages.length + (_isLoading ? 1 : 0),
-      itemBuilder: (ctx, i) {
-        if (i == _messages.length) return _buildTypingIndicator();
-        return _buildMessageBubble(_messages[i]);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return ListView.builder(
+          controller: _scrollController,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          itemCount: _messages.length + (_isLoading ? 1 : 0),
+          itemBuilder: (ctx, i) {
+            if (i == _messages.length) return _buildTypingIndicator();
+            return _buildMessageBubble(
+              _messages[i],
+              maxBubbleWidth: constraints.maxWidth * 0.76,
+            );
+          },
+        );
       },
     );
   }
 
-  Widget _buildMessageBubble(ChatMessage msg) {
+  Widget _buildMessageBubble(
+    ChatMessage msg, {
+    required double maxBubbleWidth,
+  }) {
     final isUser = msg.isUser;
 
     return Padding(
@@ -428,7 +466,7 @@ class _AiChatScreenState extends State<AiChatScreen>
               },
               child: Container(
                 constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.72,
+                  maxWidth: maxBubbleWidth.clamp(220.0, 620.0),
                 ),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -444,7 +482,7 @@ class _AiChatScreenState extends State<AiChatScreen>
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
+                      color: Colors.black.withValues(alpha: 0.15),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -508,7 +546,7 @@ class _AiChatScreenState extends State<AiChatScreen>
       }
     }
 
-    return RichText(text: TextSpan(children: spans));
+    return RichText(softWrap: true, text: TextSpan(children: spans));
   }
 
   Widget _buildTypingIndicator() {
@@ -569,17 +607,27 @@ class _AiChatScreenState extends State<AiChatScreen>
             children: _suggestions.map((s) {
               return GestureDetector(
                 onTap: () => _sendMessage(s),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 7,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width - 48,
                   ),
-                  decoration: BoxDecoration(
-                    color: _card,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: _divider),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _card,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: _divider),
+                    ),
+                    child: Text(
+                      s,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _font(size: 12, color: _textSecondary),
+                    ),
                   ),
-                  child: Text(s, style: _font(size: 12, color: _textSecondary)),
                 ),
               );
             }).toList(),
@@ -651,7 +699,7 @@ class _AiChatScreenState extends State<AiChatScreen>
                     ? null
                     : [
                         BoxShadow(
-                          color: _accent.withOpacity(0.4),
+                          color: _accent.withValues(alpha: 0.4),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -699,7 +747,7 @@ class _AiChatScreenState extends State<AiChatScreen>
               Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B35).withOpacity(0.15),
+                  color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -815,9 +863,9 @@ class _AiChatScreenState extends State<AiChatScreen>
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -851,7 +899,7 @@ class _AiChatScreenState extends State<AiChatScreen>
       decoration: BoxDecoration(
         color: _card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: statusColor.withOpacity(0.2)),
+        border: Border.all(color: statusColor.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -871,7 +919,7 @@ class _AiChatScreenState extends State<AiChatScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.15),
+                  color: statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -970,7 +1018,7 @@ class _TypingDotsState extends State<_TypingDots>
               width: 7,
               height: 7,
               decoration: BoxDecoration(
-                color: const Color(0xFFFFB570).withOpacity(opacity),
+                color: const Color(0xFFFFB570).withValues(alpha: opacity),
                 shape: BoxShape.circle,
               ),
             );

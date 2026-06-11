@@ -186,7 +186,7 @@ class ProductAndTransactionSeeder extends Seeder
             }
         }
 
-        // ─── 4. Generate transaksi Feb–Jun 2026 (>100 per bulan, random) ─────
+        // ─── 4. Generate transaksi dummy Mar-May 2026 (>100 per bulan, random) ─────
         $allProductIds = DB::table('products')->pluck('sell_price', 'id')->toArray();
         if (empty($allProductIds)) {
             $this->command->warn('Tidak ada produk ditemukan, transaksi tidak dibuat.');
@@ -197,21 +197,26 @@ class ProductAndTransactionSeeder extends Seeder
         $channels  = ['offline', 'offline', 'offline', 'online'];   // offline lebih dominan
         $payMethods= ['cash', 'cash', 'qris', 'transfer'];
 
-        // Bulan: Feb, Mar, Apr, May, Jun 2026
+        DB::table('transactions')
+            ->where(function ($query) {
+                $query->where('transaction_code', 'like', 'DMY-202603%')
+                    ->orWhere('transaction_code', 'like', 'DMY-202604%')
+                    ->orWhere('transaction_code', 'like', 'DMY-202605%');
+            })
+            ->delete();
+
+        // Bulan: Mar, Apr, May 2026
         $months = [
-            ['start' => Carbon::create(2026, 2,  1, 0, 0, 0), 'end' => Carbon::create(2026, 2, 28, 23, 59, 59)],
-            ['start' => Carbon::create(2026, 3,  1, 0, 0, 0), 'end' => Carbon::create(2026, 3, 31, 23, 59, 59)],
-            ['start' => Carbon::create(2026, 4,  1, 0, 0, 0), 'end' => Carbon::create(2026, 4, 30, 23, 59, 59)],
-            ['start' => Carbon::create(2026, 5,  1, 0, 0, 0), 'end' => Carbon::create(2026, 5, 31, 23, 59, 59)],
-            ['start' => Carbon::create(2026, 6,  1, 0, 0, 0), 'end' => Carbon::create(2026, 6, 10, 23, 59, 59)],
+            ['start' => Carbon::create(2026, 3,  1, 0, 0, 0), 'end' => Carbon::create(2026, 3, 31, 23, 59, 59), 'count' => 125],
+            ['start' => Carbon::create(2026, 4,  1, 0, 0, 0), 'end' => Carbon::create(2026, 4, 30, 23, 59, 59), 'count' => 135],
+            ['start' => Carbon::create(2026, 5,  1, 0, 0, 0), 'end' => Carbon::create(2026, 5, 31, 23, 59, 59), 'count' => 145],
         ];
 
         $txCounter = DB::table('transactions')->max('id') ?? 0; // hindari duplikat kode
         $productList = array_keys($allProductIds);
 
         foreach ($months as $month) {
-            // Random antara 110–160 transaksi per bulan
-            $txCount = rand(110, 160);
+            $txCount = $month['count'];
 
             // Generate timestamp acak di dalam rentang bulan
             $timestamps = [];
@@ -232,7 +237,7 @@ class ProductAndTransactionSeeder extends Seeder
                     $payMethod = (rand(0, 1) === 0) ? 'qris' : 'transfer';
                 }
 
-                $txCode = 'TRX-' . $ts->format('Ymd') . '-' . str_pad($txCounter, 5, '0', STR_PAD_LEFT);
+                $txCode = 'DMY-' . $ts->format('Ymd') . '-' . str_pad($txCounter, 5, '0', STR_PAD_LEFT);
 
                 // Pilih 1–3 produk acak
                 $numItems    = rand(1, 3);

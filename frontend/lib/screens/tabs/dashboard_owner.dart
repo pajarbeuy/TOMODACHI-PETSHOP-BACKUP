@@ -10,6 +10,6 @@ class DashboardOwner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DashboardTab();
+    return DashboardTab(dashboardService: dashboardService);
   }
 }

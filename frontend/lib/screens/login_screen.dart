@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../auth_service.dart';
 import 'home_screen.dart';
 
 const _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://127.0.0.1:8000',
+  defaultValue: 'http://localhost:8000',
+);
+const _mobileApiBaseUrl = String.fromEnvironment(
+  'MOBILE_API_BASE_URL',
+  defaultValue: 'https://crusher-vaguely-tyke.ngrok-free.dev',
 );
 
 // ── Models ──────────────────────────────────────────────────────────────────
@@ -160,9 +165,12 @@ class _LoginScreenState extends State<LoginScreen>
     )..forward();
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
 
-    // Override with: flutter run -d chrome --dart-define=API_BASE_URL=https://your-api.example.com
+    // Chrome/web uses local backend, while phone/native builds use ngrok.
+    // Override with:
+    // flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000
+    // flutter run --dart-define=MOBILE_API_BASE_URL=https://your-ngrok-url
     _authService = AuthService();
-    _authService.initialize(_apiBaseUrl);
+    _authService.initialize(kIsWeb ? _apiBaseUrl : _mobileApiBaseUrl);
   }
 
   @override
@@ -425,7 +433,7 @@ class _LoginScreenState extends State<LoginScreen>
                     style: _iosStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white.withOpacity(0.85),
+                      color: Colors.white.withValues(alpha: 0.85),
                       height: 1.6,
                     ),
                   ),
@@ -451,9 +459,11 @@ class _LoginScreenState extends State<LoginScreen>
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: Colors.white.withOpacity(0.3)),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Text(
                       '💕 Because every pet deserves the best',
@@ -523,7 +533,7 @@ class _LoginScreenState extends State<LoginScreen>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: _orange.withOpacity(0.4),
+                color: _orange.withValues(alpha: 0.4),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -554,7 +564,7 @@ class _LoginScreenState extends State<LoginScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: _orange.withOpacity(0.15),
+            color: _orange.withValues(alpha: 0.15),
             blurRadius: 48,
             offset: const Offset(0, 8),
           ),
@@ -781,7 +791,7 @@ class _LoginScreenState extends State<LoginScreen>
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: _orange.withOpacity(0.4),
+              color: _orange.withValues(alpha: 0.4),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -916,7 +926,7 @@ class _AnimatedLogoBoxState extends State<_AnimatedLogoBox> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.white.withOpacity(_hovered ? 0.5 : 0.3),
+                  color: Colors.white.withValues(alpha: _hovered ? 0.5 : 0.3),
                   blurRadius: _hovered ? 48 : 32,
                   offset: const Offset(0, 8),
                 ),
@@ -1081,7 +1091,7 @@ class _DemoRoleButtonState extends State<_DemoRoleButton> {
             boxShadow: _hovered
                 ? [
                     BoxShadow(
-                      color: demo.hoverBorder.withOpacity(0.18),
+                      color: demo.hoverBorder.withValues(alpha: 0.18),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
