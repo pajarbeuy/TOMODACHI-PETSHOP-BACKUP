@@ -214,11 +214,39 @@ class ReportController extends Controller
     public function analytics(Request $request)
     {
         $todayStr = now()->toDateString();
+        $yesterdayStr = now()->subDay()->toDateString();
+        $currentMonthStart = now()->startOfMonth()->toDateString();
+        $currentMonthEnd = now()->endOfMonth()->toDateString();
+        $previousMonthStart = now()->subMonthNoOverflow()->startOfMonth()->toDateString();
+        $previousMonthEnd = now()->subMonthNoOverflow()->endOfMonth()->toDateString();
+        $percentChange = function (float $current, float $previous): float {
+            if ($previous <= 0) {
+                return $current > 0 ? 100.0 : 0.0;
+            }
+
+            return round((($current - $previous) / $previous) * 100, 1);
+        };
 
         // 1. KPI cards data
         $todaySalesQuery = Transaction::whereDate('created_at', $todayStr)->where('status', 'completed');
         $todaySales = floatval($todaySalesQuery->sum('total'));
         $todayCount = $todaySalesQuery->count();
+        $yesterdaySalesQuery = Transaction::whereDate('created_at', $yesterdayStr)->where('status', 'completed');
+        $yesterdaySales = floatval($yesterdaySalesQuery->sum('total'));
+        $yesterdayCount = $yesterdaySalesQuery->count();
+
+        $monthlySalesQuery = Transaction::whereDate('created_at', '>=', $currentMonthStart)
+            ->whereDate('created_at', '<=', $currentMonthEnd)
+            ->where('status', 'completed');
+        $monthlySales = floatval($monthlySalesQuery->sum('total'));
+        $previousMonthlySales = floatval(Transaction::whereDate('created_at', '>=', $previousMonthStart)
+            ->whereDate('created_at', '<=', $previousMonthEnd)
+            ->where('status', 'completed')
+            ->sum('total'));
+        $activeProducts = Product::count();
+        $lowStockProducts = Product::join('stocks', 'products.id', '=', 'stocks.product_id')
+            ->whereRaw('(stocks.offline_qty + stocks.online_qty) <= stocks.min_threshold')
+            ->count();
 
         $todayItemsQuery = TransactionItem::whereIn('transaction_id', $todaySalesQuery->pluck('id'));
         $todayItemsSold = intval($todayItemsQuery->sum('quantity'));
@@ -284,6 +312,15 @@ class ReportController extends Controller
                 'total_transactions_today' => $todayCount,
                 'items_sold_today' => $todayItemsSold,
                 'average_transaction_value' => round($avgTodayVal, 2),
+                'yesterday_sales' => $yesterdaySales,
+                'transactions_yesterday' => $yesterdayCount,
+                'today_sales_change_percent' => $percentChange($todaySales, $yesterdaySales),
+                'transactions_change' => $todayCount - $yesterdayCount,
+                'monthly_revenue' => $monthlySales,
+                'previous_monthly_revenue' => $previousMonthlySales,
+                'monthly_revenue_change_percent' => $percentChange($monthlySales, $previousMonthlySales),
+                'active_products' => $activeProducts,
+                'low_stock_products' => $lowStockProducts,
             ],
             'sales_trend' => $trendData,
             'top_products' => $topProds->map(function ($item) {
