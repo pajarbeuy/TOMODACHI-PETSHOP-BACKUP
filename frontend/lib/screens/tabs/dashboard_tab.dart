@@ -270,17 +270,20 @@ class _DashboardTabState extends State<DashboardTab> {
 
   List<RecentTransaction> _liveRecentTransactions = recentTransactions;
   bool _recentTransactionsLoading = false;
+  Map<String, dynamic>? _analyticsData;
+  bool _analyticsLoading = false;
   Timer? _recentTransactionsTimer;
   _SalesTrendRange _selectedSalesRange = _SalesTrendRange.sevenDays;
 
   @override
   void initState() {
     super.initState();
+    _fetchAnalytics();
     _fetchRecentTransactions();
-    _recentTransactionsTimer = Timer.periodic(
-      const Duration(seconds: 30),
-      (_) => _fetchRecentTransactions(silent: true),
-    );
+    _recentTransactionsTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _fetchAnalytics(silent: true);
+      _fetchRecentTransactions(silent: true);
+    });
   }
 
   @override
@@ -322,6 +325,55 @@ class _DashboardTabState extends State<DashboardTab> {
       if (!mounted) return;
       setState(() => _recentTransactionsLoading = false);
     }
+  }
+
+  Future<void> _fetchAnalytics({bool silent = false}) async {
+    final service = widget.dashboardService;
+    if (service == null) return;
+
+    if (!silent && mounted) {
+      setState(() => _analyticsLoading = true);
+    }
+
+    try {
+      final res = await service.getAnalytics();
+      final data = res['data'];
+
+      if (!mounted) return;
+      setState(() {
+        if (data is Map<String, dynamic>) {
+          _analyticsData = data;
+        } else if (data is Map) {
+          _analyticsData = Map<String, dynamic>.from(data);
+        }
+        _analyticsLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _analyticsLoading = false);
+    }
+  }
+
+  Map<String, dynamic> _mapValue(Object? value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return const {};
+  }
+
+  double _doubleValue(Object? value, [double fallback = 0]) {
+    if (value is num) return value.toDouble();
+    return double.tryParse('$value') ?? fallback;
+  }
+
+  int _intValue(Object? value, [int fallback = 0]) {
+    if (value is int) return value;
+    if (value is num) return value.round();
+    return int.tryParse('$value') ?? fallback;
+  }
+
+  String _formatSignedPercent(double value) {
+    final prefix = value > 0 ? '+' : '';
+    return '$prefix${value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 1)}%';
   }
 
   RecentTransaction _recentTransactionFromJson(Map<dynamic, dynamic> row) {
@@ -540,6 +592,20 @@ class _DashboardTabState extends State<DashboardTab> {
   }
 
   Widget _buildStats(BuildContext context) {
+    final kpi = _mapValue(_analyticsData?['kpi']);
+    final todaySales = _doubleValue(kpi['today_sales'], 0);
+    final todayTransactions = _intValue(kpi['total_transactions_today'], 0);
+    final transactionsChange = _intValue(kpi['transactions_change'], 0);
+    final monthlyRevenue = _doubleValue(kpi['monthly_revenue'], 0);
+    final activeProducts = _intValue(kpi['active_products'], 0);
+    final lowStockProducts = _intValue(kpi['low_stock_products'], 0);
+    final todaySalesTrend = _doubleValue(kpi['today_sales_change_percent'], 0);
+    final monthlyRevenueTrend = _doubleValue(
+      kpi['monthly_revenue_change_percent'],
+      0,
+    );
+    final monthLabel = DateFormat('MMMM yyyy').format(DateTime.now());
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -557,44 +623,46 @@ class _DashboardTabState extends State<DashboardTab> {
             _buildStatCard(
               width: cardWidth,
               label: "Today's Sales",
-              value: formatRp(1890000),
-              sub: 'From 28 transactions',
+              value: _analyticsLoading ? 'Memuat...' : formatRp(todaySales),
+              sub: 'From $todayTransactions transactions',
               icon: Icons.attach_money,
               iconColor: _orangeDark,
-              trend: 12,
+              trend: todaySalesTrend.round(),
               gradient: const [Color(0xFFFFF6E9), Color(0xFFFFE8CC)],
               iconBg: const Color(0x33FFB570),
             ),
             _buildStatCard(
               width: cardWidth,
               label: 'Total Transactions',
-              value: '28',
-              sub: '8 more than yesterday',
+              value: _analyticsLoading ? '...' : '$todayTransactions',
+              sub: transactionsChange == 0
+                  ? 'Same as yesterday'
+                  : '${transactionsChange.abs()} ${transactionsChange > 0 ? 'more' : 'less'} than yesterday',
               icon: Icons.shopping_bag_outlined,
               iconColor: _pink,
-              trend: 8,
+              trend: transactionsChange,
               gradient: const [Color(0xFFFFF0F5), Color(0xFFFFE0EC)],
               iconBg: const Color(0x4DFFC7D1),
             ),
             _buildStatCard(
               width: cardWidth,
               label: 'Monthly Revenue',
-              value: formatRp(42000000),
-              sub: 'June 2024',
+              value: _analyticsLoading ? 'Memuat...' : formatRp(monthlyRevenue),
+              sub: '$monthLabel (${_formatSignedPercent(monthlyRevenueTrend)})',
               icon: Icons.trending_up,
               iconColor: _green,
-              trend: 15,
+              trend: monthlyRevenueTrend.round(),
               gradient: const [Color(0xFFF0FDF9), Color(0xFFD4F5EE)],
               iconBg: const Color(0x80B8F2E6),
             ),
             _buildStatCard(
               width: cardWidth,
               label: 'Active Products',
-              value: '48',
-              sub: '4 need restocking',
+              value: _analyticsLoading ? '...' : '$activeProducts',
+              sub: '$lowStockProducts need restocking',
               icon: Icons.inventory_2_outlined,
               iconColor: _blue,
-              trend: -2,
+              trend: -lowStockProducts,
               gradient: const [Color(0xFFF0FAFE), Color(0xFFD4EFFD)],
               iconBg: const Color(0x66A0E7E5),
             ),

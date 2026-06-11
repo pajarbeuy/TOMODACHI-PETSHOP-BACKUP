@@ -110,6 +110,33 @@ class AiService
             ->where('status', 'completed')
             ->count();
 
+        // Ringkasan penjualan 6 bulan terakhir, supaya AI bisa menjawab bulan historis seperti Mei.
+        $sixMonthsAgo = now()->startOfMonth()->subMonths(5);
+        $monthlyBreakdown = Transaction::where('status', 'completed')
+            ->where('created_at', '>=', $sixMonthsAgo)
+            ->select(
+                DB::raw('YEAR(created_at) as year'),
+                DB::raw('MONTH(created_at) as month'),
+                DB::raw('SUM(total) as total_sales'),
+                DB::raw('COUNT(id) as transaction_count')
+            )
+            ->groupBy('year', 'month')
+            ->orderBy('year')
+            ->orderBy('month')
+            ->get()
+            ->map(function ($row) {
+                $date = now()->setDate((int) $row->year, (int) $row->month, 1);
+
+                return [
+                    'year' => (int) $row->year,
+                    'month' => (int) $row->month,
+                    'month_name' => $date->locale('id')->translatedFormat('F'),
+                    'total_sales' => floatval($row->total_sales),
+                    'transaction_count' => intval($row->transaction_count),
+                ];
+            })
+            ->toArray();
+
         // Total penjualan hari ini
         $todaySales = Transaction::whereDate('created_at', now()->toDateString())
             ->where('status', 'completed')
@@ -143,6 +170,7 @@ class AiService
         return compact(
             'monthlySales',
             'monthlyTxCount',
+            'monthlyBreakdown',
             'todaySales',
             'topProducts',
             'restockAnalysis',
@@ -161,6 +189,19 @@ class AiService
         $monthName   = now()->setMonth($ctx['currentMonth'])->format('F');
         $monthlySalesFmt = 'Rp ' . number_format($ctx['monthlySales'], 0, ',', '.');
         $todaySalesFmt   = 'Rp ' . number_format($ctx['todaySales'],   0, ',', '.');
+
+        // Format monthly sales history
+        $monthlyBreakdownLines = '';
+        foreach ($ctx['monthlyBreakdown'] as $month) {
+            $sales = 'Rp ' . number_format($month['total_sales'], 0, ',', '.');
+            $monthlyBreakdownLines .= sprintf(
+                "  - %s %d: %s (%d transaksi)\n",
+                $month['month_name'],
+                $month['year'],
+                $sales,
+                $month['transaction_count']
+            );
+        }
 
         // Format restock data
         $restockLines = '';
@@ -199,6 +240,9 @@ DATA INVENTARIS & PENJUALAN SAAT INI ({$monthName} {$ctx['currentYear']}):
 **Ringkasan Penjualan:**
 - Penjualan hari ini: {$todaySalesFmt}
 - Total penjualan bulan ini: {$monthlySalesFmt} ({$ctx['monthlyTxCount']} transaksi)
+
+**Ringkasan Penjualan Bulanan 6 Bulan Terakhir:**
+{$monthlyBreakdownLines}
 
 **Top 5 Produk Terlaris Bulan Ini:**
 {$topLines}
@@ -242,6 +286,8 @@ ATURAN YANG WAJIB DIIKUTI:
 5. Berikan jawaban yang konkret, spesifik, dan actionable berdasarkan data di atas.
 
 6. Jangan mengarang data. Semua angka harus bersumber dari DATA DI ATAS.
+   Jika user bertanya bulan tertentu seperti Maret, April, atau Mei, gunakan bagian "Ringkasan Penjualan Bulanan 6 Bulan Terakhir".
+   Jika user bertanya "bulan Mei hingga sekarang", jumlahkan Mei sampai bulan berjalan berdasarkan ringkasan bulanan yang tersedia.
 PROMPT;
     }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../auth_service.dart';
 import 'home_screen.dart';
@@ -6,6 +7,10 @@ import 'home_screen.dart';
 const _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
   defaultValue: 'http://localhost:8000',
+);
+const _mobileApiBaseUrl = String.fromEnvironment(
+  'MOBILE_API_BASE_URL',
+  defaultValue: 'https://crusher-vaguely-tyke.ngrok-free.dev',
 );
 
 // ── Models ──────────────────────────────────────────────────────────────────
@@ -160,9 +165,12 @@ class _LoginScreenState extends State<LoginScreen>
     )..forward();
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
 
-    // Override with: flutter run -d chrome --dart-define=API_BASE_URL=https://your-api.example.com
+    // Chrome/web uses local backend, while phone/native builds use ngrok.
+    // Override with:
+    // flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000
+    // flutter run --dart-define=MOBILE_API_BASE_URL=https://your-ngrok-url
     _authService = AuthService();
-    _authService.initialize('https://crusher-vaguely-tyke.ngrok-free.dev');
+    _authService.initialize(kIsWeb ? _apiBaseUrl : _mobileApiBaseUrl);
   }
 
   @override
