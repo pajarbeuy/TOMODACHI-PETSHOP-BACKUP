@@ -538,9 +538,9 @@ class _DashboardTabState extends State<DashboardTab> {
             OutlinedButton(
               onPressed: () {},
               style: OutlinedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: _brown700,
-                side: const BorderSide(color: Color(0x4DFFB570)),
+                backgroundColor: _orange,
+                foregroundColor: Colors.white,
+                side: const BorderSide(color: _orange),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -550,11 +550,6 @@ class _DashboardTabState extends State<DashboardTab> {
                 ),
               ),
               child: const Text('Today'),
-            ),
-            _gradientButton(
-              icon: Icons.add,
-              label: 'New Transaction',
-              onPressed: () {},
             ),
           ],
         );
@@ -1513,56 +1508,6 @@ class _DashboardTabState extends State<DashboardTab> {
               weight: FontWeight.w900,
               color: selected ? Colors.white : _brown400,
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _gradientButton({
-    required String label,
-    required VoidCallback onPressed,
-    IconData? icon,
-    bool dense = false,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: Ink(
-          padding: EdgeInsets.symmetric(
-            horizontal: dense ? 12 : 16,
-            vertical: dense ? 9 : 11,
-          ),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [_orange, _orangeDark]),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFFF9650).withValues(alpha: 0.3),
-                blurRadius: 14,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 16, color: Colors.white),
-                const SizedBox(width: 6),
-              ],
-              Text(
-                label,
-                style: _text(
-                  size: dense ? 12 : 13,
-                  weight: FontWeight.w900,
-                  color: Colors.white,
-                ),
-              ),
-            ],
           ),
         ),
       ),
