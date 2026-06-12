@@ -195,9 +195,13 @@ class _LoginScreenState extends State<LoginScreen>
       _errorMessage = null;
     });
 
+    _showLoadingDialog();
+
     final success = await _authService.login(email, password);
 
     if (!mounted) return;
+
+    Navigator.of(context).pop(); // Close loading dialog
 
     if (success && _authService.currentUser != null) {
       final user = _authService.currentUser!;
@@ -226,9 +230,13 @@ class _LoginScreenState extends State<LoginScreen>
       _errorMessage = null;
     });
 
+    _showLoadingDialog();
+
     final success = await _authService.login(demo.user.email, 'password123');
 
     if (!mounted) return;
+
+    Navigator.of(context).pop(); // Close loading dialog
 
     if (success && _authService.currentUser != null) {
       final user = _authService.currentUser!;
@@ -274,6 +282,70 @@ class _LoginScreenState extends State<LoginScreen>
             child: const Text('OK'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => WillPopScope(
+        onWillPop: () async => false,
+        child: Dialog(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(40),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: _orange.withValues(alpha: 0.2),
+                    blurRadius: 48,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 4,
+                      color: _orange,
+                      backgroundColor: _orange.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Signing in...',
+                    style: _iosStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: _brown900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Please wait while we verify your credentials',
+                    textAlign: TextAlign.center,
+                    style: _iosStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      color: _brown400,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -436,21 +508,6 @@ class _LoginScreenState extends State<LoginScreen>
                       color: Colors.white.withValues(alpha: 0.85),
                       height: 1.6,
                     ),
-                  ),
-                  const SizedBox(height: 40),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('🐕', style: TextStyle(fontSize: 44)),
-                      SizedBox(width: 16),
-                      Text('🐈', style: TextStyle(fontSize: 44)),
-                      SizedBox(width: 16),
-                      Text('🐠', style: TextStyle(fontSize: 44)),
-                      SizedBox(width: 16),
-                      Text('🐹', style: TextStyle(fontSize: 44)),
-                      SizedBox(width: 16),
-                      Text('🦜', style: TextStyle(fontSize: 44)),
-                    ],
                   ),
                   const SizedBox(height: 40),
                   Container(
