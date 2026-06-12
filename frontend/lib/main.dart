@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/login_screen.dart';
+import 'screens/splash_screen.dart';
 
 void main() {
   runApp(const TomodachiApp());
@@ -25,7 +25,7 @@ class TomodachiApp extends StatelessWidget {
         fontFamily: 'Poppins',
       ),
 
-      home: const LoginScreen(),
+      home: const SplashScreen(),
     );
   }
 }
