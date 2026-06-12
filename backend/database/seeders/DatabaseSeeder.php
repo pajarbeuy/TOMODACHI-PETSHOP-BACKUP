@@ -195,6 +195,8 @@ class DatabaseSeeder extends Seeder
             ],
         ], ['product_id'], ['offline_qty', 'online_qty', 'min_threshold', 'last_updated', 'updated_at']);
 
+        $this->call(ProductAndTransactionSeeder::class);
+
         // \App\Models\User::factory(10)->create();
 
         // \App\Models\User::factory()->create([
@@ -203,4 +205,3 @@ class DatabaseSeeder extends Seeder
         // ]);
     }
 }
-
