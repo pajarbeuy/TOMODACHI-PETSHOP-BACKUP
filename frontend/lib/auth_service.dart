@@ -79,8 +79,16 @@ class AuthService extends ChangeNotifier {
           _apiClient.setToken(token);
           _currentUser = UserModel.fromJson(userData);
 
-          // Save token to secure storage
-          await _secureStorage.write(key: 'auth_token', value: token);
+          // On insecure Flutter Web origins, secure storage can be unavailable.
+          // Keep the in-memory session usable even when persistence fails.
+          try {
+            await _secureStorage.write(key: 'auth_token', value: token);
+          } catch (e) {
+            if (!kIsWeb) {
+              rethrow;
+            }
+            debugPrint('Token persistence skipped on web: $e');
+          }
 
           _isLoading = false;
           notifyListeners();
