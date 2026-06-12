@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'product_management_screen.dart';
-import 'reports_screen.dart';
 import '../auth_service.dart';
 import 'home_screen.dart';
 
 const _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
   defaultValue: 'http://localhost:8000',
+);
+const _mobileApiBaseUrl = String.fromEnvironment(
+  'MOBILE_API_BASE_URL',
+  defaultValue: 'https://crusher-vaguely-tyke.ngrok-free.dev',
 );
 
 // ── Models ──────────────────────────────────────────────────────────────────
@@ -151,9 +154,6 @@ class _LoginScreenState extends State<LoginScreen>
   late final AnimationController _fadeCtrl;
   late final Animation<double> _fadeAnim;
   String? _errorMessage;
-
-  late final AnimationController _fadeCtrl;
-  late final Animation<double> _fadeAnim;
   late final AuthService _authService;
 
   @override
@@ -165,9 +165,12 @@ class _LoginScreenState extends State<LoginScreen>
     )..forward();
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
 
-    // Override with: flutter run -d chrome --dart-define=API_BASE_URL=https://your-api.example.com
+    // Chrome/web uses local backend, while phone/native builds use ngrok.
+    // Override with:
+    // flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000
+    // flutter run --dart-define=MOBILE_API_BASE_URL=https://your-ngrok-url
     _authService = AuthService();
-    _authService.initialize('https://crusher-vaguely-tyke.ngrok-free.dev');
+    _authService.initialize(kIsWeb ? _apiBaseUrl : _mobileApiBaseUrl);
   }
 
   @override
@@ -178,56 +181,6 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
-  void _handleLogin() {
-    setState(() => _loading = true);
-    Future.delayed(const Duration(milliseconds: 700), () {
-      if (!mounted) return;
-      setState(() => _loading = false);
-      _onLoginSuccess(
-        CurrentUser(
-          id: '1',
-          name: 'Admin Utama',
-          email: _emailCtrl.text,
-          role: Role.admin,
-        ),
-      );
-    });
-  }
-
-  void _handleQuickLogin(_DemoRole demo) {
-    setState(() => _loading = true);
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (!mounted) return;
-      setState(() => _loading = false);
-      _onLoginSuccess(demo.user);
-    });
-  }
-
- void _onLoginSuccess(CurrentUser user) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        'Welcome, ${user.name}! (${user.role.name})',
-        style: _iosStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      backgroundColor: _orange,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
-    ),
-  );
-
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(
-      builder: (context) => const ReportsScreen(),
-    ),
-  );
-}
   void _handleLogin() async {
     final email = _emailCtrl.text.trim();
     final password = _passCtrl.text.trim();
@@ -242,9 +195,13 @@ class _LoginScreenState extends State<LoginScreen>
       _errorMessage = null;
     });
 
+    _showLoadingDialog();
+
     final success = await _authService.login(email, password);
 
     if (!mounted) return;
+
+    Navigator.of(context).pop(); // Close loading dialog
 
     if (success && _authService.currentUser != null) {
       final user = _authService.currentUser!;
@@ -273,9 +230,13 @@ class _LoginScreenState extends State<LoginScreen>
       _errorMessage = null;
     });
 
+    _showLoadingDialog();
+
     final success = await _authService.login(demo.user.email, 'password123');
 
     if (!mounted) return;
+
+    Navigator.of(context).pop(); // Close loading dialog
 
     if (success && _authService.currentUser != null) {
       final user = _authService.currentUser!;
@@ -321,6 +282,70 @@ class _LoginScreenState extends State<LoginScreen>
             child: const Text('OK'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => WillPopScope(
+        onWillPop: () async => false,
+        child: Dialog(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(40),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: _orange.withValues(alpha: 0.2),
+                    blurRadius: 48,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 4,
+                      color: _orange,
+                      backgroundColor: _orange.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Signing in...',
+                    style: _iosStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: _brown900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Please wait while we verify your credentials',
+                    textAlign: TextAlign.center,
+                    style: _iosStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      color: _brown400,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -480,25 +505,9 @@ class _LoginScreenState extends State<LoginScreen>
                     style: _iosStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white.withOpacity(0.85),
                       color: Colors.white.withValues(alpha: 0.85),
                       height: 1.6,
                     ),
-                  ),
-                  const SizedBox(height: 40),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('🐕', style: TextStyle(fontSize: 44)),
-                      SizedBox(width: 16),
-                      Text('🐈', style: TextStyle(fontSize: 44)),
-                      SizedBox(width: 16),
-                      Text('🐠', style: TextStyle(fontSize: 44)),
-                      SizedBox(width: 16),
-                      Text('🐹', style: TextStyle(fontSize: 44)),
-                      SizedBox(width: 16),
-                      Text('🦜', style: TextStyle(fontSize: 44)),
-                    ],
                   ),
                   const SizedBox(height: 40),
                   Container(
@@ -507,9 +516,6 @@ class _LoginScreenState extends State<LoginScreen>
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: Colors.white.withOpacity(0.3)),
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
@@ -584,7 +590,6 @@ class _LoginScreenState extends State<LoginScreen>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: _orange.withOpacity(0.4),
                 color: _orange.withValues(alpha: 0.4),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
@@ -616,7 +621,6 @@ class _LoginScreenState extends State<LoginScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: _orange.withOpacity(0.15),
             color: _orange.withValues(alpha: 0.15),
             blurRadius: 48,
             offset: const Offset(0, 8),
@@ -844,7 +848,6 @@ class _LoginScreenState extends State<LoginScreen>
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: _orange.withOpacity(0.4),
               color: _orange.withValues(alpha: 0.4),
               blurRadius: 20,
               offset: const Offset(0, 4),
@@ -980,7 +983,6 @@ class _AnimatedLogoBoxState extends State<_AnimatedLogoBox> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.white.withOpacity(_hovered ? 0.5 : 0.3),
                   color: Colors.white.withValues(alpha: _hovered ? 0.5 : 0.3),
                   blurRadius: _hovered ? 48 : 32,
                   offset: const Offset(0, 8),
@@ -1146,7 +1148,6 @@ class _DemoRoleButtonState extends State<_DemoRoleButton> {
             boxShadow: _hovered
                 ? [
                     BoxShadow(
-                      color: demo.hoverBorder.withOpacity(0.18),
                       color: demo.hoverBorder.withValues(alpha: 0.18),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
