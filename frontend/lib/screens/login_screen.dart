@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../auth_service.dart';
+import '../widgets/app_logo.dart';
 import 'home_screen.dart';
 
 const _apiBaseUrl = String.fromEnvironment(
@@ -53,6 +54,7 @@ class _DemoRole {
   });
 }
 
+// ignore: unused_element
 final _demoRoles = [
   _DemoRole(
     role: Role.admin,
@@ -218,39 +220,6 @@ class _LoginScreenState extends State<LoginScreen>
         _errorMessage =
             _authService.errorMessage ??
             'Login failed. Please check your credentials.';
-        _loading = false;
-      });
-      _showErrorDialog(_errorMessage ?? 'Login failed');
-    }
-  }
-
-  void _handleQuickLogin(_DemoRole demo) async {
-    setState(() {
-      _loading = true;
-      _errorMessage = null;
-    });
-
-    _showLoadingDialog();
-
-    final success = await _authService.login(demo.user.email, 'password123');
-
-    if (!mounted) return;
-
-    Navigator.of(context).pop(); // Close loading dialog
-
-    if (success && _authService.currentUser != null) {
-      final user = _authService.currentUser!;
-      _onLoginSuccess(
-        CurrentUser(
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: _roleFromString(user.role),
-        ),
-      );
-    } else {
-      setState(() {
-        _errorMessage = _authService.errorMessage ?? 'Login failed';
         _loading = false;
       });
       _showErrorDialog(_errorMessage ?? 'Login failed');
@@ -578,26 +547,7 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildMobileLogo() {
     return Column(
       children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [_orange, _orangeDark],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: _orange.withValues(alpha: 0.4),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Icon(Icons.pets, size: 32, color: Colors.white),
-        ),
+        const AppLogo(size: 92),
         const SizedBox(height: 12),
         Text(
           'TOMODACHI PETSHOP',
@@ -737,10 +687,6 @@ class _LoginScreenState extends State<LoginScreen>
           const SizedBox(height: 24),
 
           _buildSignInButton(),
-          const SizedBox(height: 24),
-          _buildDivider(),
-          const SizedBox(height: 16),
-          _buildDemoGrid(),
         ],
       ),
     );
@@ -893,51 +839,6 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildDivider() {
-    return Row(
-      children: [
-        Expanded(child: Container(height: 1, color: _borderLight)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            color: Colors.white,
-            child: Text(
-              'Quick Demo Login',
-              style: _iosStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: _brown400,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ),
-        ),
-        Expanded(child: Container(height: 1, color: _borderLight)),
-      ],
-    );
-  }
-
-  Widget _buildDemoGrid() {
-    return Row(
-      children: _demoRoles.map((demo) {
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: demo == _demoRoles.first ? 0 : 6,
-              right: demo == _demoRoles.last ? 0 : 6,
-            ),
-            child: _DemoRoleButton(
-              demo: demo,
-              loading: _loading,
-              onTap: () => _handleQuickLogin(demo),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
   Widget _buildFooter() {
     return Text(
       '© 2024 Tomodachi Petshop · All rights reserved',
@@ -993,7 +894,7 @@ class _AnimatedLogoBoxState extends State<_AnimatedLogoBox> {
               turns: _hovered ? -0.03 : 0.0,
               duration: const Duration(milliseconds: 240),
               curve: Curves.easeOut,
-              child: const Icon(Icons.pets, size: 48, color: Colors.white),
+              child: const AppLogo(size: 86),
             ),
           ),
         ),

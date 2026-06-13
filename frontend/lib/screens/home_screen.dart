@@ -11,6 +11,7 @@ import 'tabs/dashboard_owner.dart';
 import 'ai_chat_screen.dart';
 import 'login_screen.dart';
 import '../ai_chat_service.dart';
+import '../widgets/app_logo.dart';
 
 class HomeScreen extends StatefulWidget {
   final AuthService authService;
@@ -286,23 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
       titleSpacing: isCompact ? 12 : 16,
       title: Row(
         children: [
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: isCompact ? 8 : 10,
-              vertical: 4,
-            ),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFB570), Color(0xFFFF9A4D)],
-              ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              Icons.pets,
-              size: isCompact ? 18 : 20,
-              color: Colors.white,
-            ),
-          ),
+          AppLogo(size: isCompact ? 36 : 42),
           SizedBox(width: isCompact ? 8 : 10),
           Flexible(
             child: Text(

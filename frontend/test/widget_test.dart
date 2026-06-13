@@ -3,16 +3,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:frontendd/main.dart';
 
 void main() {
-  testWidgets('shows Tomodachi API connection screen', (WidgetTester tester) async {
+  testWidgets('shows splash screen then login screen', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(const TomodachiApp());
     await tester.pump();
 
-    expect(find.text('Tomodachi Pet Shop'), findsOneWidget);
-    expect(find.text('Base URL API'), findsOneWidget);
-    expect(find.text('Connect'), findsOneWidget);
-    expect(find.text('Produk'), findsWidgets);
-    expect(find.text('Kategori'), findsOneWidget);
+    expect(find.text('TOMODACHI'), findsOneWidget);
+    expect(find.text('PETSHOP'), findsOneWidget);
 
-    await tester.pump(const Duration(seconds: 11));
+    await tester.pump(const Duration(milliseconds: 3100));
+    await tester.pumpAndSettle();
+
+    expect(find.text('TOMODACHI PETSHOP'), findsOneWidget);
+    expect(find.text('Sign In'), findsOneWidget);
   });
 }

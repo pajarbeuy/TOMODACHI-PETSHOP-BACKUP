@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import '../widgets/app_logo.dart';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -33,8 +34,15 @@ class _TopProduct {
   final int revenue;
   final int trend;
   final String emoji;
-  const _TopProduct(this.rank, this.name, this.category, this.unitsSold,
-      this.revenue, this.trend, this.emoji);
+  const _TopProduct(
+    this.rank,
+    this.name,
+    this.category,
+    this.unitsSold,
+    this.revenue,
+    this.trend,
+    this.emoji,
+  );
 }
 
 class _Transaction {
@@ -44,8 +52,14 @@ class _Transaction {
   final int total;
   final String method;
   final int items;
-  const _Transaction(this.id, this.customer, this.date, this.total,
-      this.method, this.items);
+  const _Transaction(
+    this.id,
+    this.customer,
+    this.date,
+    this.total,
+    this.method,
+    this.items,
+  );
 }
 
 const _monthly = [
@@ -82,14 +96,46 @@ const _categories = [
 ];
 
 const _topProducts = [
-  _TopProduct(1, 'Royal Canin Adult Dog Food 2kg', 'Food', 124, 17980000, 12, '🐕'),
+  _TopProduct(
+    1,
+    'Royal Canin Adult Dog Food 2kg',
+    'Food',
+    124,
+    17980000,
+    12,
+    '🐕',
+  ),
   _TopProduct(2, 'Whiskas Tuna Cat Food 1.2kg', 'Food', 98, 6370000, 8, '🐈'),
-  _TopProduct(3, 'Frontline Plus Antiparasitic', 'Medicine', 65, 9425000, 15, '💊'),
+  _TopProduct(
+    3,
+    'Frontline Plus Antiparasitic',
+    'Medicine',
+    65,
+    9425000,
+    15,
+    '💊',
+  ),
   _TopProduct(4, 'Kong Classic Dog Toy', 'Toys', 87, 7569000, -3, '🦴'),
-  _TopProduct(5, 'Aquarium Starter Kit 20L', 'Accessories', 22, 7700000, 20, '🐠'),
+  _TopProduct(
+    5,
+    'Aquarium Starter Kit 20L',
+    'Accessories',
+    22,
+    7700000,
+    20,
+    '🐠',
+  ),
   _TopProduct(6, 'Dog Shampoo Premium 500ml', 'Grooming', 54, 2970000, 5, '🛁'),
   _TopProduct(7, 'Pedigree Puppy Food 1.5kg', 'Food', 68, 6460000, 3, '🐕'),
-  _TopProduct(8, 'Bird Cage Medium Decorative', 'Accessories', 18, 4950000, 7, '🦜'),
+  _TopProduct(
+    8,
+    'Bird Cage Medium Decorative',
+    'Accessories',
+    18,
+    4950000,
+    7,
+    '🦜',
+  ),
 ];
 
 const _transactions = [
@@ -97,7 +143,14 @@ const _transactions = [
   _Transaction('TRX-0240', 'Siti Rahayu', '16 May 2024', 155000, 'QRIS', 2),
   _Transaction('TRX-0239', 'Ahmad Fadli', '15 May 2024', 520000, 'Card', 5),
   _Transaction('TRX-0238', 'Dewi Kusuma', '15 May 2024', 89000, 'Cash', 1),
-  _Transaction('TRX-0237', 'Rizki Pratama', '14 May 2024', 375000, 'Transfer', 4),
+  _Transaction(
+    'TRX-0237',
+    'Rizki Pratama',
+    '14 May 2024',
+    375000,
+    'Transfer',
+    4,
+  ),
   _Transaction('TRX-0236', 'Maya Indah', '14 May 2024', 212000, 'QRIS', 3),
 ];
 
@@ -147,11 +200,17 @@ class _HoverCardState extends State<_HoverCard>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 200));
-    _scale = Tween<double>(begin: 1.0, end: 1.015).animate(
-        CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
-    _shadow = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _scale = Tween<double>(
+      begin: 1.0,
+      end: 1.015,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+    _shadow = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
   }
 
   @override
@@ -221,7 +280,9 @@ class _AnimatedSummaryCardState extends State<_AnimatedSummaryCard>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 500));
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
     _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
     _slide = Tween<Offset>(
       begin: const Offset(0, 0.2),
@@ -286,8 +347,7 @@ class _AnimatedSummaryCardState extends State<_AnimatedSummaryCard>
                     width: _hovered ? 96 : 80,
                     height: _hovered ? 96 : 80,
                     decoration: BoxDecoration(
-                      color: Colors.white
-                          .withOpacity(_hovered ? 0.30 : 0.20),
+                      color: Colors.white.withOpacity(_hovered ? 0.30 : 0.20),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -308,12 +368,17 @@ class _AnimatedSummaryCardState extends State<_AnimatedSummaryCard>
                                 : widget.data.iconBg,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Icon(widget.data.icon,
-                              size: 20, color: widget.data.iconColor),
+                          child: Icon(
+                            widget.data.icon,
+                            size: 20,
+                            color: widget.data.iconColor,
+                          ),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: widget.data.trend >= 0
                                 ? const Color(0xFFB8F2E6)
@@ -349,21 +414,31 @@ class _AnimatedSummaryCardState extends State<_AnimatedSummaryCard>
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Text(widget.data.label,
-                        style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF9B7B6B))),
+                    Text(
+                      widget.data.label,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF9B7B6B),
+                      ),
+                    ),
                     const SizedBox(height: 3),
-                    Text(widget.data.value,
-                        style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF3D2314))),
+                    Text(
+                      widget.data.value,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF3D2314),
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text(widget.data.sub,
-                        style: const TextStyle(
-                            fontSize: 11, color: Color(0xFF9B7B6B))),
+                    Text(
+                      widget.data.sub,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF9B7B6B),
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -389,13 +464,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
   bool _chartWeekly = false;
 
   static const _periods = [
-    'This Week', 'This Month', 'Last 3 Months', 'This Year'
+    'This Week',
+    'This Month',
+    'Last 3 Months',
+    'This Year',
   ];
 
-  int get _totalRevenue =>
-      _monthly.fold(0, (s, m) => s + m.revenue);
-  int get _totalTx =>
-      _monthly.fold(0, (s, m) => s + m.transactions);
+  int get _totalRevenue => _monthly.fold(0, (s, m) => s + m.revenue);
+  int get _totalTx => _monthly.fold(0, (s, m) => s + m.transactions);
   int get _avgTx => (_totalRevenue / _totalTx).round();
   _MonthlyData get _bestMonth =>
       _monthly.reduce((a, b) => b.revenue > a.revenue ? b : a);
@@ -431,18 +507,34 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return Row(
       children: [
         const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Text('Reports & Analytics',
-                  style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF3D2314))),
-              SizedBox(height: 2),
-              Text('Business performance overview',
-                  style:
-                      TextStyle(fontSize: 13, color: Color(0xFF9B7B6B))),
+              AppLogo(size: 44),
+              SizedBox(width: 12),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Reports & Analytics',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF3D2314),
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Business performance overview',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13, color: Color(0xFF9B7B6B)),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -455,9 +547,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
             border: Border.all(color: const Color(0x33FFB570)),
             boxShadow: const [
               BoxShadow(
-                  color: Color(0x08000000),
-                  blurRadius: 6,
-                  offset: Offset(0, 2))
+                color: Color(0x08000000),
+                blurRadius: 6,
+                offset: Offset(0, 2),
+              ),
             ],
           ),
           child: Row(
@@ -469,7 +562,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: active
                         ? const Color(0xFFFFB570)
@@ -477,9 +572,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: active
                         ? const [
-                            BoxShadow(
-                                color: Color(0x30FF9650),
-                                blurRadius: 6)
+                            BoxShadow(color: Color(0x30FF9650), blurRadius: 6),
                           ]
                         : null,
                   ),
@@ -488,9 +581,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: active
-                          ? Colors.white
-                          : const Color(0xFF9B7B6B),
+                      color: active ? Colors.white : const Color(0xFF9B7B6B),
                     ),
                   ),
                 ),
@@ -506,11 +597,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
             children: [
               Icon(Icons.download_outlined, size: 16, color: Colors.white),
               SizedBox(width: 6),
-              Text('Export',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white)),
+              Text(
+                'Export',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ],
           ),
         ),
@@ -534,7 +628,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
       _SummaryCardData(
         label: 'Total Transactions',
         value: _totalTx.toString().replaceAllMapped(
-            RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},'),
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (m) => '${m[1]},',
+        ),
         sub: 'All time',
         icon: Icons.shopping_bag_outlined,
         iconColor: const Color(0xFFE07B9E),
@@ -566,21 +662,21 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
     return Column(
       children: [
-        Row(children: [
-          Expanded(
-              child: _AnimatedSummaryCard(data: cards[0], delay: 0)),
-          const SizedBox(width: 12),
-          Expanded(
-              child: _AnimatedSummaryCard(data: cards[1], delay: 80)),
-        ]),
+        Row(
+          children: [
+            Expanded(child: _AnimatedSummaryCard(data: cards[0], delay: 0)),
+            const SizedBox(width: 12),
+            Expanded(child: _AnimatedSummaryCard(data: cards[1], delay: 80)),
+          ],
+        ),
         const SizedBox(height: 12),
-        Row(children: [
-          Expanded(
-              child: _AnimatedSummaryCard(data: cards[2], delay: 160)),
-          const SizedBox(width: 12),
-          Expanded(
-              child: _AnimatedSummaryCard(data: cards[3], delay: 240)),
-        ]),
+        Row(
+          children: [
+            Expanded(child: _AnimatedSummaryCard(data: cards[2], delay: 160)),
+            const SizedBox(width: 12),
+            Expanded(child: _AnimatedSummaryCard(data: cards[3], delay: 240)),
+          ],
+        ),
       ],
     );
   }
@@ -609,22 +705,26 @@ class _ReportsScreenState extends State<ReportsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Revenue Overview',
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF3D2314))),
-                    const SizedBox(height: 2),
-                    Text(
-                      _chartWeekly
-                          ? 'Last 7 days'
-                          : 'January – December 2024',
-                      style: const TextStyle(
-                          fontSize: 11, color: Color(0xFF9B7B6B)),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Revenue Overview',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF3D2314),
                     ),
-                  ]),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _chartWeekly ? 'Last 7 days' : 'January – December 2024',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF9B7B6B),
+                    ),
+                  ),
+                ],
+              ),
               Container(
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
@@ -634,10 +734,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _chartTab('Weekly', _chartWeekly,
-                        () => setState(() => _chartWeekly = true)),
-                    _chartTab('Monthly', !_chartWeekly,
-                        () => setState(() => _chartWeekly = false)),
+                    _chartTab(
+                      'Weekly',
+                      _chartWeekly,
+                      () => setState(() => _chartWeekly = true),
+                    ),
+                    _chartTab(
+                      'Monthly',
+                      !_chartWeekly,
+                      () => setState(() => _chartWeekly = false),
+                    ),
                   ],
                 ),
               ),
@@ -672,16 +778,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: active ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           boxShadow: active
-              ? const [
-                  BoxShadow(
-                      color: Color(0x15000000), blurRadius: 4)
-                ]
+              ? const [BoxShadow(color: Color(0x15000000), blurRadius: 4)]
               : null,
         ),
         child: Text(
@@ -689,9 +791,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
-            color: active
-                ? const Color(0xFFFF9A4D)
-                : const Color(0xFF9B7B6B),
+            color: active ? const Color(0xFFFF9A4D) : const Color(0xFF9B7B6B),
           ),
         ),
       ),
@@ -705,20 +805,21 @@ class _ReportsScreenState extends State<ReportsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Sales by Category',
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF3D2314))),
-          const SizedBox(height: 2),
-          const Text('Revenue distribution',
-              style:
-                  TextStyle(fontSize: 11, color: Color(0xFF9B7B6B))),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 160,
-            child: _AnimatedPieChart(data: _categories),
+          const Text(
+            'Sales by Category',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF3D2314),
+            ),
           ),
+          const SizedBox(height: 2),
+          const Text(
+            'Revenue distribution',
+            style: TextStyle(fontSize: 11, color: Color(0xFF9B7B6B)),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(height: 160, child: _AnimatedPieChart(data: _categories)),
           const SizedBox(height: 12),
           ..._categories.map((c) => _PieLegendItem(cat: c)),
         ],
@@ -738,21 +839,28 @@ class _ReportsScreenState extends State<ReportsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text('Transaction Volume Trend',
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF3D2314))),
-                    SizedBox(height: 2),
-                    Text('Monthly transaction count',
-                        style: TextStyle(
-                            fontSize: 11, color: Color(0xFF9B7B6B))),
-                  ]),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'Transaction Volume Trend',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF3D2314),
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Monthly transaction count',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF9B7B6B)),
+                  ),
+                ],
+              ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 6),
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0x66B8F2E6),
                   borderRadius: BorderRadius.circular(8),
@@ -760,14 +868,20 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.trending_up_rounded,
-                        size: 12, color: Color(0xFF1B7A65)),
+                    Icon(
+                      Icons.trending_up_rounded,
+                      size: 12,
+                      color: Color(0xFF1B7A65),
+                    ),
                     SizedBox(width: 4),
-                    Text('+23.8% vs last year',
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1B7A65))),
+                    Text(
+                      '+23.8% vs last year',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1B7A65),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -807,24 +921,28 @@ class _ReportsScreenState extends State<ReportsScreen> {
           const Padding(
             padding: EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Top Products',
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF3D2314))),
-                  SizedBox(height: 2),
-                  Text('Best performing products this period',
-                      style: TextStyle(
-                          fontSize: 11, color: Color(0xFF9B7B6B))),
-                ]),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Top Products',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF3D2314),
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Best performing products this period',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF9B7B6B)),
+                ),
+              ],
+            ),
           ),
           const Divider(height: 1, color: Color(0x1FFFB570)),
           Container(
             color: const Color(0xFFFFF8F2),
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
                 _th('#', flex: 1),
@@ -844,17 +962,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   Widget _th(String label, {required int flex}) => Expanded(
-        flex: flex,
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.w900,
-            color: Color(0xFF9B7B6B),
-            letterSpacing: 0.6,
-          ),
-        ),
-      );
+    flex: flex,
+    child: Text(
+      label,
+      style: const TextStyle(
+        fontSize: 9,
+        fontWeight: FontWeight.w900,
+        color: Color(0xFF9B7B6B),
+        letterSpacing: 0.6,
+      ),
+    ),
+  );
 
   Widget _buildRecentTransactions() {
     return _HoverCard(
@@ -865,18 +983,23 @@ class _ReportsScreenState extends State<ReportsScreen> {
           const Padding(
             padding: EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Recent Transactions',
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF3D2314))),
-                  SizedBox(height: 2),
-                  Text('Latest activity',
-                      style: TextStyle(
-                          fontSize: 11, color: Color(0xFF9B7B6B))),
-                ]),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Recent Transactions',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF3D2314),
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Latest activity',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF9B7B6B)),
+                ),
+              ],
+            ),
           ),
           const Divider(height: 1, color: Color(0x1FFFB570)),
           ..._transactions.map((tx) => _HoverTransactionRow(tx: tx)),
@@ -893,16 +1016,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   BoxDecoration _cardDeco() => BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x1FFFB570)),
-        boxShadow: const [
-          BoxShadow(
-              color: Color(0x08000000),
-              blurRadius: 8,
-              offset: Offset(0, 2))
-        ],
-      );
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16),
+    border: Border.all(color: const Color(0x1FFFB570)),
+    boxShadow: const [
+      BoxShadow(color: Color(0x08000000), blurRadius: 8, offset: Offset(0, 2)),
+    ],
+  );
 }
 
 // ─── Hover Button ─────────────────────────────────────────────────────────────
@@ -928,12 +1048,9 @@ class _HoverButtonState extends State<_HoverButton> {
         onTap: widget.onPressed,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(
-              horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: _hovered
-                ? const Color(0xFF5A3824)
-                : const Color(0xFF3D2314),
+            color: _hovered ? const Color(0xFF5A3824) : const Color(0xFF3D2314),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -942,7 +1059,7 @@ class _HoverButtonState extends State<_HoverButton> {
                     : const Color(0x33000000),
                 blurRadius: _hovered ? 16 : 8,
                 offset: Offset(0, _hovered ? 6 : 3),
-              )
+              ),
             ],
           ),
           child: widget.child,
@@ -974,14 +1091,10 @@ class _HoverProductRowState extends State<_HoverProductRow> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         decoration: BoxDecoration(
-          color: _hovered
-              ? const Color(0xFFFFF8F2)
-              : Colors.transparent,
-          border: const Border(
-              bottom: BorderSide(color: Color(0x0DFFB570))),
+          color: _hovered ? const Color(0xFFFFF8F2) : Colors.transparent,
+          border: const Border(bottom: BorderSide(color: Color(0x0DFFB570))),
         ),
-        padding: const EdgeInsets.symmetric(
-            horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: [
             Expanded(
@@ -993,11 +1106,11 @@ class _HoverProductRowState extends State<_HoverProductRow> {
                 decoration: BoxDecoration(
                   color: p.rank <= 3
                       ? (_hovered
-                          ? const Color(0xFFFF9A4D)
-                          : const Color(0xFFFFB570))
+                            ? const Color(0xFFFF9A4D)
+                            : const Color(0xFFFFB570))
                       : (_hovered
-                          ? const Color(0xFFFFE4C4)
-                          : const Color(0xFFF5E8D5)),
+                            ? const Color(0xFFFFE4C4)
+                            : const Color(0xFFF5E8D5)),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Center(
@@ -1020,8 +1133,7 @@ class _HoverProductRowState extends State<_HoverProductRow> {
                 children: [
                   AnimatedDefaultTextStyle(
                     duration: const Duration(milliseconds: 150),
-                    style: TextStyle(
-                        fontSize: _hovered ? 22 : 18),
+                    style: TextStyle(fontSize: _hovered ? 22 : 18),
                     child: Text(p.emoji),
                   ),
                   const SizedBox(width: 8),
@@ -1031,11 +1143,12 @@ class _HoverProductRowState extends State<_HoverProductRow> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: _hovered
-                              ? const Color(0xFFFF9A4D)
-                              : const Color(0xFF3D2314)),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: _hovered
+                            ? const Color(0xFFFF9A4D)
+                            : const Color(0xFF3D2314),
+                      ),
                     ),
                   ),
                 ],
@@ -1044,8 +1157,7 @@ class _HoverProductRowState extends State<_HoverProductRow> {
             Expanded(
               flex: 2,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: _hovered
                       ? const Color(0xFFFFE4C4)
@@ -1055,9 +1167,10 @@ class _HoverProductRowState extends State<_HoverProductRow> {
                 child: Text(
                   p.category,
                   style: const TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFFFF9A4D)),
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFFF9A4D),
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -1067,11 +1180,12 @@ class _HoverProductRowState extends State<_HoverProductRow> {
               child: Text(
                 '${p.unitsSold}',
                 style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    color: _hovered
-                        ? const Color(0xFFFF9A4D)
-                        : const Color(0xFF3D2314)),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: _hovered
+                      ? const Color(0xFFFF9A4D)
+                      : const Color(0xFF3D2314),
+                ),
               ),
             ),
             Expanded(
@@ -1079,9 +1193,10 @@ class _HoverProductRowState extends State<_HoverProductRow> {
               child: Text(
                 formatRpShort(p.revenue),
                 style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF3D2314)),
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF3D2314),
+                ),
               ),
             ),
             Expanded(
@@ -1140,26 +1255,25 @@ class _HoverTransactionRowState extends State<_HoverTransactionRow> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         decoration: BoxDecoration(
-          color: _hovered
-              ? const Color(0xFFFFF8F2)
-              : Colors.transparent,
-          border: const Border(
-              bottom: BorderSide(color: Color(0x0DFFB570))),
+          color: _hovered ? const Color(0xFFFFF8F2) : Colors.transparent,
+          border: const Border(bottom: BorderSide(color: Color(0x0DFFB570))),
         ),
-        padding: const EdgeInsets.symmetric(
-            horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(tx.customer,
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: _hovered
-                            ? const Color(0xFFFF9A4D)
-                            : const Color(0xFF3D2314))),
+                Text(
+                  tx.customer,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: _hovered
+                        ? const Color(0xFFFF9A4D)
+                        : const Color(0xFF3D2314),
+                  ),
+                ),
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 150),
                   style: TextStyle(
@@ -1175,31 +1289,46 @@ class _HoverTransactionRowState extends State<_HoverTransactionRow> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: _hovered
-                          ? const Color(0xFFFFE4C4)
-                          : const Color(0xFFF5E8D5),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(tx.method,
+                Row(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _hovered
+                            ? const Color(0xFFFFE4C4)
+                            : const Color(0xFFF5E8D5),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        tx.method,
                         style: const TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF9B7B6B))),
-                  ),
-                  const SizedBox(width: 6),
-                  Text('${tx.items} items',
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF9B7B6B),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${tx.items} items',
                       style: const TextStyle(
-                          fontSize: 10, color: Color(0xFF9B7B6B))),
-                ]),
-                Text(tx.date,
-                    style: const TextStyle(
-                        fontSize: 10, color: Color(0xFF9B7B6B))),
+                        fontSize: 10,
+                        color: Color(0xFF9B7B6B),
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  tx.date,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFF9B7B6B),
+                  ),
+                ),
               ],
             ),
           ],
@@ -1235,37 +1364,40 @@ class _HoverTextButtonState extends State<_HoverTextButton> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: _hovered
-                ? const Color(0xFFFFE4C4)
-                : const Color(0xFFFFF0E0),
+            color: _hovered ? const Color(0xFFFFE4C4) : const Color(0xFFFFF0E0),
             borderRadius: BorderRadius.circular(12),
             boxShadow: _hovered
                 ? const [
                     BoxShadow(
-                        color: Color(0x20FF9A4D),
-                        blurRadius: 8,
-                        offset: Offset(0, 3))
+                      color: Color(0x20FF9A4D),
+                      blurRadius: 8,
+                      offset: Offset(0, 3),
+                    ),
                   ]
                 : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('View All Transactions',
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: _hovered
-                          ? const Color(0xFFE07B00)
-                          : const Color(0xFFFF9A4D))),
+              Text(
+                'View All Transactions',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: _hovered
+                      ? const Color(0xFFE07B00)
+                      : const Color(0xFFFF9A4D),
+                ),
+              ),
               const SizedBox(width: 4),
               AnimatedSlide(
                 duration: const Duration(milliseconds: 180),
-                offset: _hovered
-                    ? const Offset(0.2, 0)
-                    : Offset.zero,
-                child: const Icon(Icons.arrow_outward_rounded,
-                    size: 12, color: Color(0xFFFF9A4D)),
+                offset: _hovered ? const Offset(0.2, 0) : Offset.zero,
+                child: const Icon(
+                  Icons.arrow_outward_rounded,
+                  size: 12,
+                  color: Color(0xFFFF9A4D),
+                ),
               ),
             ],
           ),
@@ -1310,30 +1442,34 @@ class _PieLegendItemState extends State<_PieLegendItem> {
               duration: const Duration(milliseconds: 150),
               width: _hovered ? 12 : 10,
               height: _hovered ? 12 : 10,
-              decoration: BoxDecoration(
-                  color: c.color, shape: BoxShape.circle),
+              decoration: BoxDecoration(color: c.color, shape: BoxShape.circle),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(c.name,
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: _hovered
-                          ? FontWeight.w800
-                          : FontWeight.w600,
-                      color: _hovered
-                          ? const Color(0xFF3D2314)
-                          : const Color(0xFF6B4F3E))),
+              child: Text(
+                c.name,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: _hovered ? FontWeight.w800 : FontWeight.w600,
+                  color: _hovered
+                      ? const Color(0xFF3D2314)
+                      : const Color(0xFF6B4F3E),
+                ),
+              ),
             ),
-            Text('${c.value}%',
-                style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF3D2314))),
+            Text(
+              '${c.value}%',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF3D2314),
+              ),
+            ),
             const SizedBox(width: 6),
-            Text(formatRpShort(c.amount),
-                style: const TextStyle(
-                    fontSize: 10, color: Color(0xFF9B7B6B))),
+            Text(
+              formatRpShort(c.amount),
+              style: const TextStyle(fontSize: 10, color: Color(0xFF9B7B6B)),
+            ),
           ],
         ),
       ),
@@ -1393,7 +1529,9 @@ class _AnimatedBarChartState extends State<_AnimatedBarChart>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 900));
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
     _progress = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
     _ctrl.forward();
   }
@@ -1424,9 +1562,12 @@ class _AnimatedBarChartState extends State<_AnimatedBarChart>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: yLabels.reversed
-              .map((v) => Text('${v}jt',
-                  style: const TextStyle(
-                      fontSize: 9, color: Color(0xFF9B7B6B))))
+              .map(
+                (v) => Text(
+                  '${v}jt',
+                  style: const TextStyle(fontSize: 9, color: Color(0xFF9B7B6B)),
+                ),
+              )
               .toList(),
         ),
         const SizedBox(width: 8),
@@ -1474,102 +1615,104 @@ class _InteractiveBarChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final n = values.length;
-    return LayoutBuilder(builder: (_, constraints) {
-      final w = constraints.maxWidth;
-      final h = constraints.maxHeight;
-      final chartH = h - 20;
-      final spacing = w / n;
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
+        final chartH = h - 20;
+        final spacing = w / n;
 
-      return Stack(
-        children: [
-          // Grid + bars via CustomPaint
-          CustomPaint(
-            size: Size(w, h),
-            painter: _BarChartGridPainter(chartH: chartH),
-          ),
-          // Bars and tooltip triggers
-          ...List.generate(n, (i) {
-            final barH =
-                (values[i] / maxVal) * chartH * progress;
-            final x =
-                spacing * i + (spacing - barWidth) / 2;
-            final y = chartH - barH;
-            final isHovered = hoveredIndex == i;
-            final isHighlight = i == highlightIndex;
+        return Stack(
+          children: [
+            // Grid + bars via CustomPaint
+            CustomPaint(
+              size: Size(w, h),
+              painter: _BarChartGridPainter(chartH: chartH),
+            ),
+            // Bars and tooltip triggers
+            ...List.generate(n, (i) {
+              final barH = (values[i] / maxVal) * chartH * progress;
+              final x = spacing * i + (spacing - barWidth) / 2;
+              final y = chartH - barH;
+              final isHovered = hoveredIndex == i;
+              final isHighlight = i == highlightIndex;
 
-            return Positioned(
-              left: x,
-              top: y,
-              width: barWidth,
-              height: barH,
-              child: MouseRegion(
-                onEnter: (_) => onHover(i),
-                onExit: (_) => onHover(null),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      decoration: BoxDecoration(
-                        color: isHovered
-                            ? const Color(0xFFFF7A1A)
-                            : isHighlight
-                                ? const Color(0xFFFF9A4D)
-                                : const Color(0xFFFFD4A8),
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(5)),
-                        boxShadow: isHovered
-                            ? [
-                                BoxShadow(
-                                  color: const Color(0xFFFF9A4D)
-                                      .withOpacity(0.4),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, -2),
-                                )
-                              ]
-                            : null,
-                      ),
-                    ),
-                    // Tooltip
-                    if (isHovered)
-                      Positioned(
-                        bottom: barH + 6,
-                        left: barWidth / 2 - 45,
-                        child: _Tooltip(
-                          label: labels[i],
-                          value: formatRpShort(values[i]),
+              return Positioned(
+                left: x,
+                top: y,
+                width: barWidth,
+                height: barH,
+                child: MouseRegion(
+                  onEnter: (_) => onHover(i),
+                  onExit: (_) => onHover(null),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        decoration: BoxDecoration(
+                          color: isHovered
+                              ? const Color(0xFFFF7A1A)
+                              : isHighlight
+                              ? const Color(0xFFFF9A4D)
+                              : const Color(0xFFFFD4A8),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(5),
+                          ),
+                          boxShadow: isHovered
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFFFF9A4D,
+                                    ).withOpacity(0.4),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, -2),
+                                  ),
+                                ]
+                              : null,
                         ),
                       ),
-                  ],
+                      // Tooltip
+                      if (isHovered)
+                        Positioned(
+                          bottom: barH + 6,
+                          left: barWidth / 2 - 45,
+                          child: _Tooltip(
+                            label: labels[i],
+                            value: formatRpShort(values[i]),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }),
-          // X labels
-          ...List.generate(n, (i) {
-            final x = spacing * i + spacing / 2;
-            return Positioned(
-              bottom: 0,
-              left: x - 16,
-              width: 32,
-              child: Text(
-                labels[i],
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 9,
-                  color: hoveredIndex == i
-                      ? const Color(0xFFFF9A4D)
-                      : const Color(0xFF9B7B6B),
-                  fontWeight: hoveredIndex == i
-                      ? FontWeight.bold
-                      : FontWeight.normal,
+              );
+            }),
+            // X labels
+            ...List.generate(n, (i) {
+              final x = spacing * i + spacing / 2;
+              return Positioned(
+                bottom: 0,
+                left: x - 16,
+                width: 32,
+                child: Text(
+                  labels[i],
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: hoveredIndex == i
+                        ? const Color(0xFFFF9A4D)
+                        : const Color(0xFF9B7B6B),
+                    fontWeight: hoveredIndex == i
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
                 ),
-              ),
-            );
-          }),
-        ],
-      );
-    });
+              );
+            }),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -1608,24 +1751,31 @@ class _Tooltip extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x33000000),
-              blurRadius: 12,
-              offset: Offset(0, 4))
+            color: Color(0x33000000),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 9,
-                  color: Color(0xFFFFD4A8),
-                  fontWeight: FontWeight.w600)),
-          Text(value,
-              style: const TextStyle(
-                  fontSize: 11,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 9,
+              color: Color(0xFFFFD4A8),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
         ],
       ),
     );
@@ -1652,8 +1802,9 @@ class _AnimatedPieChartState extends State<_AnimatedPieChart>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 1000));
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
     _progress = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) _ctrl.forward();
@@ -1689,15 +1840,12 @@ class _AnimatedPieChartState extends State<_AnimatedPieChart>
           double angle = math.atan2(dy, dx) + math.pi / 2;
           if (angle < 0) angle += math.pi * 2;
 
-          final total =
-              widget.data.fold(0, (s, d) => s + d.value);
+          final total = widget.data.fold(0, (s, d) => s + d.value);
           double startA = 0;
           for (int i = 0; i < widget.data.length; i++) {
-            final sweep =
-                (widget.data[i].value / total) * math.pi * 2;
+            final sweep = (widget.data[i].value / total) * math.pi * 2;
             if (angle >= startA && angle < startA + sweep) {
-              setState(() => _hoveredSlice =
-                  _hoveredSlice == i ? null : i);
+              setState(() => _hoveredSlice = _hoveredSlice == i ? null : i);
               break;
             }
             startA += sweep;
@@ -1705,10 +1853,8 @@ class _AnimatedPieChartState extends State<_AnimatedPieChart>
         },
         child: MouseRegion(
           onHover: (event) {
-            final box =
-                context.findRenderObject() as RenderBox;
-            final local =
-                box.globalToLocal(event.position);
+            final box = context.findRenderObject() as RenderBox;
+            final local = box.globalToLocal(event.position);
             final w = box.size.width;
             final h = box.size.height;
             final cx = w / 2;
@@ -1725,16 +1871,13 @@ class _AnimatedPieChartState extends State<_AnimatedPieChart>
               return;
             }
 
-            double angle =
-                math.atan2(dy, dx) + math.pi / 2;
+            double angle = math.atan2(dy, dx) + math.pi / 2;
             if (angle < 0) angle += math.pi * 2;
 
-            final total =
-                widget.data.fold(0, (s, d) => s + d.value);
+            final total = widget.data.fold(0, (s, d) => s + d.value);
             double startA = 0;
             for (int i = 0; i < widget.data.length; i++) {
-              final sweep =
-                  (widget.data[i].value / total) * math.pi * 2;
+              final sweep = (widget.data[i].value / total) * math.pi * 2;
               if (angle >= startA && angle < startA + sweep) {
                 if (_hoveredSlice != i) {
                   setState(() => _hoveredSlice = i);
@@ -1744,8 +1887,7 @@ class _AnimatedPieChartState extends State<_AnimatedPieChart>
               startA += sweep;
             }
           },
-          onExit: (_) =>
-              setState(() => _hoveredSlice = null),
+          onExit: (_) => setState(() => _hoveredSlice = null),
           child: CustomPaint(
             painter: _PieChartPainter(
               data: widget.data,
@@ -1782,8 +1924,7 @@ class _PieChartPainter extends CustomPainter {
 
     for (int i = 0; i < data.length; i++) {
       final cat = data[i];
-      final sweep =
-          ((cat.value / total) * math.pi * 2).clamp(0.0, totalSweep);
+      final sweep = ((cat.value / total) * math.pi * 2).clamp(0.0, totalSweep);
       final isHovered = hoveredSlice == i;
 
       // Explode hovered slice outward
@@ -1834,14 +1975,14 @@ class _PieChartPainter extends CustomPainter {
           text: TextSpan(
             text: '${cat.value}%',
             style: TextStyle(
-                fontSize: isHovered ? 12 : 10,
-                fontWeight: FontWeight.bold,
-                color: Colors.white),
+              fontSize: isHovered ? 12 : 10,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
           textDirection: TextDirection.ltr,
         )..layout();
-        tp.paint(
-            canvas, Offset(lx - tp.width / 2, ly - tp.height / 2));
+        tp.paint(canvas, Offset(lx - tp.width / 2, ly - tp.height / 2));
       }
 
       startAngle += sweep;
@@ -1859,8 +2000,7 @@ class _PieChartPainter extends CustomPainter {
 class _AnimatedLineChart extends StatefulWidget {
   final List<String> labels;
   final List<int> values;
-  const _AnimatedLineChart(
-      {required this.labels, required this.values});
+  const _AnimatedLineChart({required this.labels, required this.values});
 
   @override
   State<_AnimatedLineChart> createState() => _AnimatedLineChartState();
@@ -1876,8 +2016,9 @@ class _AnimatedLineChartState extends State<_AnimatedLineChart>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 1200));
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
     _progress = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
     Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) _ctrl.forward();
@@ -1958,8 +2099,7 @@ class _LineChartPainter extends CustomPainter {
       ..strokeWidth = 1;
     for (int i = 0; i <= 3; i++) {
       final y = chartH * i / 3;
-      canvas.drawLine(
-          Offset(0, y), Offset(size.width, y), gridPaint);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
     }
 
     // Build all points
@@ -1994,8 +2134,7 @@ class _LineChartPainter extends CustomPainter {
             const Color(0xFFA0E7E5).withOpacity(0.35),
             const Color(0xFFA0E7E5).withOpacity(0.0),
           ],
-        ).createShader(
-            Rect.fromLTWH(0, 0, size.width, size.height)),
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
     );
 
     // Line
@@ -2004,13 +2143,14 @@ class _LineChartPainter extends CustomPainter {
       linePath.lineTo(pts[i].dx, pts[i].dy);
     }
     canvas.drawPath(
-        linePath,
-        Paint()
-          ..color = const Color(0xFFA0E7E5)
-          ..strokeWidth = 2.5
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round
-          ..strokeJoin = StrokeJoin.round);
+      linePath,
+      Paint()
+        ..color = const Color(0xFFA0E7E5)
+        ..strokeWidth = 2.5
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
 
     // Dots and hover
     for (int i = 0; i < drawCount; i++) {
@@ -2020,26 +2160,29 @@ class _LineChartPainter extends CustomPainter {
       // Glow on hover
       if (isHovered) {
         canvas.drawCircle(
-            allPts[i],
-            12,
-            Paint()
-              ..color = const Color(0xFFA0E7E5).withOpacity(0.2)
-              ..style = PaintingStyle.fill);
+          allPts[i],
+          12,
+          Paint()
+            ..color = const Color(0xFFA0E7E5).withOpacity(0.2)
+            ..style = PaintingStyle.fill,
+        );
       }
 
       canvas.drawCircle(
-          allPts[i],
-          dotR,
-          Paint()
-            ..color = const Color(0xFFA0E7E5)
-            ..style = PaintingStyle.fill);
+        allPts[i],
+        dotR,
+        Paint()
+          ..color = const Color(0xFFA0E7E5)
+          ..style = PaintingStyle.fill,
+      );
       canvas.drawCircle(
-          allPts[i],
-          dotR,
-          Paint()
-            ..color = Colors.white
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = isHovered ? 3 : 2);
+        allPts[i],
+        dotR,
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = isHovered ? 3 : 2,
+      );
 
       // Tooltip
       if (isHovered) {
@@ -2049,16 +2192,18 @@ class _LineChartPainter extends CustomPainter {
               TextSpan(
                 text: '${labels[i]}\n',
                 style: const TextStyle(
-                    fontSize: 9,
-                    color: Color(0xFFB8F2E6),
-                    fontWeight: FontWeight.w600),
+                  fontSize: 9,
+                  color: Color(0xFFB8F2E6),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               TextSpan(
                 text: '${values[i]} trx',
                 style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900),
+                  fontSize: 11,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ],
           ),
@@ -2069,8 +2214,7 @@ class _LineChartPainter extends CustomPainter {
         const padV = 6.0;
         final boxW = tp.width + padH * 2;
         final boxH = tp.height + padV * 2;
-        double bx =
-            allPts[i].dx - boxW / 2;
+        double bx = allPts[i].dx - boxW / 2;
         double by = allPts[i].dy - boxH - 14;
 
         bx = bx.clamp(0, size.width - boxW);
@@ -2081,20 +2225,22 @@ class _LineChartPainter extends CustomPainter {
           const Radius.circular(8),
         );
         canvas.drawRRect(
-            rrect,
-            Paint()
-              ..color = const Color(0xFF3D2314)
-              ..style = PaintingStyle.fill);
+          rrect,
+          Paint()
+            ..color = const Color(0xFF3D2314)
+            ..style = PaintingStyle.fill,
+        );
         tp.paint(canvas, Offset(bx + padH, by + padV));
 
         // Vertical line to dot
         canvas.drawLine(
-            Offset(allPts[i].dx, by + boxH),
-            Offset(allPts[i].dx, allPts[i].dy - dotR),
-            Paint()
-              ..color = const Color(0xFFA0E7E5).withOpacity(0.5)
-              ..strokeWidth = 1
-              ..style = PaintingStyle.stroke);
+          Offset(allPts[i].dx, by + boxH),
+          Offset(allPts[i].dx, allPts[i].dy - dotR),
+          Paint()
+            ..color = const Color(0xFFA0E7E5).withOpacity(0.5)
+            ..strokeWidth = 1
+            ..style = PaintingStyle.stroke,
+        );
       }
     }
 
@@ -2103,19 +2249,18 @@ class _LineChartPainter extends CustomPainter {
       final isHovered = hoveredPoint == i;
       final tp = TextPainter(
         text: TextSpan(
-            text: labels[i],
-            style: TextStyle(
-                fontSize: 9,
-                color: isHovered
-                    ? const Color(0xFFA0E7E5)
-                    : const Color(0xFF9B7B6B),
-                fontWeight: isHovered
-                    ? FontWeight.bold
-                    : FontWeight.normal)),
+          text: labels[i],
+          style: TextStyle(
+            fontSize: 9,
+            color: isHovered
+                ? const Color(0xFFA0E7E5)
+                : const Color(0xFF9B7B6B),
+            fontWeight: isHovered ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
         textDirection: TextDirection.ltr,
       )..layout();
-      tp.paint(canvas,
-          Offset(i * stepX - tp.width / 2, chartH + 4));
+      tp.paint(canvas, Offset(i * stepX - tp.width / 2, chartH + 4));
     }
   }
 
