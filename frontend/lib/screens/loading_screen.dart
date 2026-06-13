@@ -4,10 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'login_screen.dart';
+import '../widgets/app_logo.dart';
 
-const _bgPage = Color(0xFFFFF6E9);
 const _brown900 = Color(0xFF3D2314);
-const _orange = Color(0xFFFFB570);
 
 TextStyle _iosStyle({
   double fontSize = 14,
@@ -135,9 +134,7 @@ class _LoadingScreenState extends State<LoadingScreen>
                         ),
                       ],
                     ),
-                    child: const Center(
-                      child: Icon(Icons.pets, size: 52, color: _orange),
-                    ),
+                    child: const Center(child: AppLogo(size: 104)),
                   ),
                 ),
                 const SizedBox(height: 28),
