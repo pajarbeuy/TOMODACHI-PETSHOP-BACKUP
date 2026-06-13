@@ -4,15 +4,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:frontendd/main.dart';
 
 void main() {
-  test('TomodachiApp is a stateless widget', () {
-    expect(const TomodachiApp(), isA<StatelessWidget>());
-  });
+  testWidgets('shows splash screen then login screen', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const TomodachiApp());
+    await tester.pump();
 
-  test('TomodachiApp builds a MaterialApp shell', () {
-    final app = const TomodachiApp().build(_FakeBuildContext()) as MaterialApp;
+    expect(find.text('TOMODACHI'), findsOneWidget);
+    expect(find.text('PETSHOP'), findsOneWidget);
 
-    expect(app.debugShowCheckedModeBanner, isFalse);
-    expect(app.title, 'Tomodachi Pet Shop');
+    await tester.pump(const Duration(milliseconds: 3100));
+    await tester.pumpAndSettle();
+
+    expect(find.text('TOMODACHI PETSHOP'), findsOneWidget);
+    expect(find.text('Sign In'), findsOneWidget);
   });
 }
 

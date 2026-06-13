@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../widgets/app_logo.dart';
 
 // ─── Model ────────────────────────────────────────────────────────────────────
 class Product {
@@ -34,38 +35,170 @@ class Product {
     int? minStock,
     String? status,
     String? emoji,
-  }) =>
-      Product(
-        id: id,
-        name: name ?? this.name,
-        category: category ?? this.category,
-        description: description ?? this.description,
-        price: price ?? this.price,
-        stock: stock ?? this.stock,
-        minStock: minStock ?? this.minStock,
-        status: status ?? this.status,
-        emoji: emoji ?? this.emoji,
-      );
+  }) => Product(
+    id: id,
+    name: name ?? this.name,
+    category: category ?? this.category,
+    description: description ?? this.description,
+    price: price ?? this.price,
+    stock: stock ?? this.stock,
+    minStock: minStock ?? this.minStock,
+    status: status ?? this.status,
+    emoji: emoji ?? this.emoji,
+  );
 }
 
 // ─── Initial data ─────────────────────────────────────────────────────────────
 final _initialProducts = <Product>[
-  Product(id: 1, name: 'Royal Canin Adult Dog Food 2kg', category: 'Food', description: 'Premium dog food for adult dogs', price: 145000, stock: 24, minStock: 10, status: 'active', emoji: '🐕'),
-  Product(id: 2, name: 'Whiskas Tuna Cat Food 1.2kg', category: 'Food', description: 'Delicious tuna flavor cat food', price: 65000, stock: 8, minStock: 15, status: 'active', emoji: '🐈'),
-  Product(id: 3, name: 'Kong Classic Dog Toy', category: 'Toys', description: 'Durable chew toy for dogs', price: 89000, stock: 35, minStock: 8, status: 'active', emoji: '🦴'),
-  Product(id: 4, name: 'Cat Scratching Post Premium', category: 'Accessories', description: 'Tall scratching post with base', price: 125000, stock: 0, minStock: 5, status: 'inactive', emoji: '🐈'),
-  Product(id: 5, name: 'Dog Shampoo Premium 500ml', category: 'Grooming', description: 'Gentle formula for all breeds', price: 55000, stock: 15, minStock: 10, status: 'active', emoji: '🛁'),
-  Product(id: 6, name: 'Aquarium Starter Kit 20L', category: 'Accessories', description: 'Complete starter kit for fish', price: 350000, stock: 5, minStock: 3, status: 'active', emoji: '🐠'),
-  Product(id: 7, name: 'Hamster Running Wheel 20cm', category: 'Accessories', description: 'Silent spinner for hamsters', price: 45000, stock: 20, minStock: 8, status: 'active', emoji: '🐹'),
-  Product(id: 8, name: 'Frontline Plus Antiparasitic', category: 'Medicine', description: 'Monthly flea & tick treatment', price: 145000, stock: 18, minStock: 10, status: 'active', emoji: '💊'),
-  Product(id: 9, name: 'Cat Litter Silica Gel 5kg', category: 'Accessories', description: 'Odor control silica gel litter', price: 85000, stock: 3, minStock: 10, status: 'active', emoji: '🐈'),
-  Product(id: 10, name: 'Bird Cage Medium Decorative', category: 'Accessories', description: 'Elegant cage for parrots', price: 275000, stock: 7, minStock: 5, status: 'active', emoji: '🦜'),
-  Product(id: 11, name: 'Pedigree Puppy Food 1.5kg', category: 'Food', description: 'Nutritious food for puppies', price: 95000, stock: 12, minStock: 10, status: 'active', emoji: '🐕'),
-  Product(id: 12, name: 'Cat Treat Temptations 85g', category: 'Food', description: 'Irresistible cat treats', price: 25000, stock: 45, minStock: 15, status: 'active', emoji: '🐈'),
+  Product(
+    id: 1,
+    name: 'Royal Canin Adult Dog Food 2kg',
+    category: 'Food',
+    description: 'Premium dog food for adult dogs',
+    price: 145000,
+    stock: 24,
+    minStock: 10,
+    status: 'active',
+    emoji: '🐕',
+  ),
+  Product(
+    id: 2,
+    name: 'Whiskas Tuna Cat Food 1.2kg',
+    category: 'Food',
+    description: 'Delicious tuna flavor cat food',
+    price: 65000,
+    stock: 8,
+    minStock: 15,
+    status: 'active',
+    emoji: '🐈',
+  ),
+  Product(
+    id: 3,
+    name: 'Kong Classic Dog Toy',
+    category: 'Toys',
+    description: 'Durable chew toy for dogs',
+    price: 89000,
+    stock: 35,
+    minStock: 8,
+    status: 'active',
+    emoji: '🦴',
+  ),
+  Product(
+    id: 4,
+    name: 'Cat Scratching Post Premium',
+    category: 'Accessories',
+    description: 'Tall scratching post with base',
+    price: 125000,
+    stock: 0,
+    minStock: 5,
+    status: 'inactive',
+    emoji: '🐈',
+  ),
+  Product(
+    id: 5,
+    name: 'Dog Shampoo Premium 500ml',
+    category: 'Grooming',
+    description: 'Gentle formula for all breeds',
+    price: 55000,
+    stock: 15,
+    minStock: 10,
+    status: 'active',
+    emoji: '🛁',
+  ),
+  Product(
+    id: 6,
+    name: 'Aquarium Starter Kit 20L',
+    category: 'Accessories',
+    description: 'Complete starter kit for fish',
+    price: 350000,
+    stock: 5,
+    minStock: 3,
+    status: 'active',
+    emoji: '🐠',
+  ),
+  Product(
+    id: 7,
+    name: 'Hamster Running Wheel 20cm',
+    category: 'Accessories',
+    description: 'Silent spinner for hamsters',
+    price: 45000,
+    stock: 20,
+    minStock: 8,
+    status: 'active',
+    emoji: '🐹',
+  ),
+  Product(
+    id: 8,
+    name: 'Frontline Plus Antiparasitic',
+    category: 'Medicine',
+    description: 'Monthly flea & tick treatment',
+    price: 145000,
+    stock: 18,
+    minStock: 10,
+    status: 'active',
+    emoji: '💊',
+  ),
+  Product(
+    id: 9,
+    name: 'Cat Litter Silica Gel 5kg',
+    category: 'Accessories',
+    description: 'Odor control silica gel litter',
+    price: 85000,
+    stock: 3,
+    minStock: 10,
+    status: 'active',
+    emoji: '🐈',
+  ),
+  Product(
+    id: 10,
+    name: 'Bird Cage Medium Decorative',
+    category: 'Accessories',
+    description: 'Elegant cage for parrots',
+    price: 275000,
+    stock: 7,
+    minStock: 5,
+    status: 'active',
+    emoji: '🦜',
+  ),
+  Product(
+    id: 11,
+    name: 'Pedigree Puppy Food 1.5kg',
+    category: 'Food',
+    description: 'Nutritious food for puppies',
+    price: 95000,
+    stock: 12,
+    minStock: 10,
+    status: 'active',
+    emoji: '🐕',
+  ),
+  Product(
+    id: 12,
+    name: 'Cat Treat Temptations 85g',
+    category: 'Food',
+    description: 'Irresistible cat treats',
+    price: 25000,
+    stock: 45,
+    minStock: 15,
+    status: 'active',
+    emoji: '🐈',
+  ),
 ];
 
 const _categories = ['Food', 'Toys', 'Grooming', 'Accessories', 'Medicine'];
-const _emojiOptions = ['🐕', '🐈', '🦴', '🎾', '🛁', '💊', '🐠', '🐹', '🦜', '🌿', '📦', '✂️'];
+const _emojiOptions = [
+  '🐕',
+  '🐈',
+  '🦴',
+  '🎾',
+  '🛁',
+  '💊',
+  '🐠',
+  '🐹',
+  '🦜',
+  '🌿',
+  '📦',
+  '✂️',
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 String formatRp(int n) {
@@ -152,7 +285,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
   List<Product> get _filtered {
     return _products.where((p) {
       final matchSearch = p.name.toLowerCase().contains(_search.toLowerCase());
-      final matchCat = _categoryFilter == 'All' || p.category == _categoryFilter;
+      final matchCat =
+          _categoryFilter == 'All' || p.category == _categoryFilter;
       bool matchStatus;
       switch (_statusFilter) {
         case 'active':
@@ -206,18 +340,21 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
               // Generate new ID
               final newId = _products.isEmpty
                   ? 1
-                  : _products.map((x) => x.id).reduce((a, b) => a > b ? a : b) + 1;
-              _products.add(Product(
-                id: newId,
-                name: updated.name,
-                category: updated.category,
-                description: updated.description,
-                price: updated.price,
-                stock: updated.stock,
-                minStock: updated.minStock,
-                status: updated.status,
-                emoji: updated.emoji,
-              ));
+                  : _products.map((x) => x.id).reduce((a, b) => a > b ? a : b) +
+                        1;
+              _products.add(
+                Product(
+                  id: newId,
+                  name: updated.name,
+                  category: updated.category,
+                  description: updated.description,
+                  price: updated.price,
+                  stock: updated.stock,
+                  minStock: updated.minStock,
+                  status: updated.status,
+                  emoji: updated.emoji,
+                ),
+              );
             }
           });
         },
@@ -234,7 +371,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
 
     final statsTotal = _products.length;
     final statsActive = _products.where((p) => p.status == 'active').length;
-    final statsLow = _products.where((p) => p.stock > 0 && p.stock <= p.minStock).length;
+    final statsLow = _products
+        .where((p) => p.stock > 0 && p.stock <= p.minStock)
+        .length;
     final statsOut = _products.where((p) => p.stock == 0).length;
 
     // ✅ Wrap with Material so Dropdown & other Material widgets work
@@ -249,24 +388,42 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'Product Management',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF3D2314),
+                Expanded(
+                  child: Row(
+                    children: const [
+                      AppLogo(size: 44),
+                      SizedBox(width: 12),
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Product Management',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF3D2314),
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Manage your petshop inventory',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF9B7B6B),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Manage your petshop inventory',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF9B7B6B)),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 16),
                 _GradientButton(
                   onPressed: _openAdd,
                   child: const Row(
@@ -293,17 +450,37 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
             // ── Stats cards ──────────────────────────────────────────────────
             Row(
               children: [
-                _statCard('Total Products', statsTotal, '📦',
-                    const Color(0xFFFFF6E9), const Color(0xFFFF9A4D)),
+                _statCard(
+                  'Total Products',
+                  statsTotal,
+                  '📦',
+                  const Color(0xFFFFF6E9),
+                  const Color(0xFFFF9A4D),
+                ),
                 const SizedBox(width: 12),
-                _statCard('Active', statsActive, '✅',
-                    const Color(0xFFF0FDF9), const Color(0xFF1B7A65)),
+                _statCard(
+                  'Active',
+                  statsActive,
+                  '✅',
+                  const Color(0xFFF0FDF9),
+                  const Color(0xFF1B7A65),
+                ),
                 const SizedBox(width: 12),
-                _statCard('Low Stock', statsLow, '⚠️',
-                    const Color(0xFFFFF8E8), const Color(0xFF8B6914)),
+                _statCard(
+                  'Low Stock',
+                  statsLow,
+                  '⚠️',
+                  const Color(0xFFFFF8E8),
+                  const Color(0xFF8B6914),
+                ),
                 const SizedBox(width: 12),
-                _statCard('Out of Stock', statsOut, '❌',
-                    const Color(0xFFFFF0F0), const Color(0xFFC0392B)),
+                _statCard(
+                  'Out of Stock',
+                  statsOut,
+                  '❌',
+                  const Color(0xFFFFF0F0),
+                  const Color(0xFFC0392B),
+                ),
               ],
             ),
 
@@ -317,9 +494,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 border: Border.all(color: const Color(0x1FFFB570), width: 1),
                 boxShadow: const [
                   BoxShadow(
-                      color: Color(0x08000000),
-                      blurRadius: 8,
-                      offset: Offset(0, 2))
+                    color: Color(0x08000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
                 ],
               ),
               padding: const EdgeInsets.all(16),
@@ -329,29 +507,44 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                   Expanded(
                     child: TextField(
                       controller: _searchCtrl,
-                      onChanged: (v) =>
-                          setState(() { _search = v; _currentPage = 1; }),
+                      onChanged: (v) => setState(() {
+                        _search = v;
+                        _currentPage = 1;
+                      }),
                       style: const TextStyle(
-                          fontSize: 13, color: Color(0xFF3D2314)),
+                        fontSize: 13,
+                        color: Color(0xFF3D2314),
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Search products by name...',
                         hintStyle: const TextStyle(
-                            color: Color(0xFFC5A882), fontSize: 13),
-                        prefixIcon: const Icon(Icons.search,
-                            color: Color(0xFFC5A882), size: 18),
+                          color: Color(0xFFC5A882),
+                          fontSize: 13,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Color(0xFFC5A882),
+                          size: 18,
+                        ),
                         filled: true,
                         fillColor: const Color(0xFFFFF8F2),
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(
-                              color: Color(0x33FFB570), width: 2),
+                            color: Color(0x33FFB570),
+                            width: 2,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(
-                              color: Color(0xFFFFB570), width: 2),
+                            color: Color(0xFFFFB570),
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
@@ -360,19 +553,43 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                   // Category dropdown
                   _FilterDropdown(
                     value: _categoryFilter,
-                    items: const ['All', 'Food', 'Toys', 'Grooming', 'Accessories', 'Medicine'],
-                    labels: const ['All Categories', 'Food', 'Toys', 'Grooming', 'Accessories', 'Medicine'],
-                    onChanged: (v) =>
-                        setState(() { _categoryFilter = v; _currentPage = 1; }),
+                    items: const [
+                      'All',
+                      'Food',
+                      'Toys',
+                      'Grooming',
+                      'Accessories',
+                      'Medicine',
+                    ],
+                    labels: const [
+                      'All Categories',
+                      'Food',
+                      'Toys',
+                      'Grooming',
+                      'Accessories',
+                      'Medicine',
+                    ],
+                    onChanged: (v) => setState(() {
+                      _categoryFilter = v;
+                      _currentPage = 1;
+                    }),
                   ),
                   const SizedBox(width: 12),
                   // Status dropdown
                   _FilterDropdown(
                     value: _statusFilter,
                     items: const ['All', 'active', 'inactive', 'low', 'out'],
-                    labels: const ['All Status', 'Active', 'Inactive', 'Low Stock', 'Out of Stock'],
-                    onChanged: (v) =>
-                        setState(() { _statusFilter = v; _currentPage = 1; }),
+                    labels: const [
+                      'All Status',
+                      'Active',
+                      'Inactive',
+                      'Low Stock',
+                      'Out of Stock',
+                    ],
+                    onChanged: (v) => setState(() {
+                      _statusFilter = v;
+                      _currentPage = 1;
+                    }),
                   ),
                 ],
               ),
@@ -388,9 +605,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 border: Border.all(color: const Color(0x1FFFB570), width: 1),
                 boxShadow: const [
                   BoxShadow(
-                      color: Color(0x08000000),
-                      blurRadius: 8,
-                      offset: Offset(0, 2))
+                    color: Color(0x08000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
                 ],
               ),
               child: Column(
@@ -398,7 +616,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 14),
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
                     child: Text(
                       '${filtered.length} products found',
                       style: const TextStyle(
@@ -411,61 +631,59 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
 
                   const Divider(height: 1, color: Color(0x1FFFB570)),
 
-                  if (filtered.isEmpty)
-                    _emptyState()
-                  else
-                    _buildTable(paged),
+                  if (filtered.isEmpty) _emptyState() else _buildTable(paged),
 
                   const Divider(height: 1, color: Color(0x1AFFB570)),
 
                   // Pagination
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 14),
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Showing ${paged.length} of ${_products.length} products',
                           style: const TextStyle(
-                              fontSize: 11, color: Color(0xFF9B7B6B)),
+                            fontSize: 11,
+                            color: Color(0xFF9B7B6B),
+                          ),
                         ),
                         Row(
-                          children: List.generate(
-                            totalPages.clamp(1, 10),
-                            (i) {
-                              final n = i + 1;
-                              final active = n == page;
-                              return Padding(
-                                padding: const EdgeInsets.only(left: 4),
-                                child: GestureDetector(
-                                  onTap: () => setState(() => _currentPage = n),
-                                  child: Container(
-                                    width: 28,
-                                    height: 28,
-                                    decoration: BoxDecoration(
-                                      color: active
-                                          ? const Color(0xFFFFB570)
-                                          : const Color(0xFFFFF0E0),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        '$n',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: active
-                                              ? Colors.white
-                                              : const Color(0xFF9B7B6B),
-                                        ),
+                          children: List.generate(totalPages.clamp(1, 10), (i) {
+                            final n = i + 1;
+                            final active = n == page;
+                            return Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: GestureDetector(
+                                onTap: () => setState(() => _currentPage = n),
+                                child: Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: active
+                                        ? const Color(0xFFFFB570)
+                                        : const Color(0xFFFFF0E0),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '$n',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: active
+                                            ? Colors.white
+                                            : const Color(0xFF9B7B6B),
                                       ),
                                     ),
                                   ),
                                 ),
-                              );
-                            },
-                          ),
+                              ),
+                            );
+                          }),
                         ),
                       ],
                     ),
@@ -491,9 +709,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
           border: Border.all(color: const Color(0x26FFB570), width: 1),
           boxShadow: const [
             BoxShadow(
-                color: Color(0x06000000),
-                blurRadius: 6,
-                offset: Offset(0, 2))
+              color: Color(0x06000000),
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
           ],
         ),
         child: Column(
@@ -505,9 +724,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 Text(
                   label,
                   style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF9B7B6B)),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF9B7B6B),
+                  ),
                 ),
                 Text(icon, style: const TextStyle(fontSize: 18)),
               ],
@@ -532,7 +752,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
       scrollDirection: Axis.horizontal,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-            minWidth: MediaQuery.of(context).size.width - 48),
+          minWidth: MediaQuery.of(context).size.width - 48,
+        ),
         child: Table(
           columnWidths: const {
             0: FlexColumnWidth(3),
@@ -547,23 +768,29 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
               decoration: const BoxDecoration(
                 color: Color(0xFFFFF8F2),
                 border: Border(
-                    bottom: BorderSide(color: Color(0x1FFFB570), width: 1)),
+                  bottom: BorderSide(color: Color(0x1FFFB570), width: 1),
+                ),
               ),
-              children: ['PRODUCT', 'CATEGORY', 'PRICE', 'STOCK', 'STATUS', 'ACTIONS']
-                  .map((h) => Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
-                        child: Text(
-                          h,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF9B7B6B),
-                            letterSpacing: 0.8,
+              children:
+                  ['PRODUCT', 'CATEGORY', 'PRICE', 'STOCK', 'STATUS', 'ACTIONS']
+                      .map(
+                        (h) => Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          child: Text(
+                            h,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF9B7B6B),
+                              letterSpacing: 0.8,
+                            ),
                           ),
                         ),
-                      ))
-                  .toList(),
+                      )
+                      .toList(),
             ),
             ...rows.map((p) => _buildRow(p)),
           ],
@@ -576,8 +803,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     final ss = getStockStatus(p.stock, p.minStock);
     return TableRow(
       decoration: const BoxDecoration(
-        border: Border(
-            bottom: BorderSide(color: Color(0x0DFFB570), width: 1)),
+        border: Border(bottom: BorderSide(color: Color(0x0DFFB570), width: 1)),
       ),
       children: [
         // Product
@@ -593,8 +819,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
-                    child: Text(p.emoji,
-                        style: const TextStyle(fontSize: 20))),
+                  child: Text(p.emoji, style: const TextStyle(fontSize: 20)),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -614,7 +840,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                     Text(
                       p.description,
                       style: const TextStyle(
-                          fontSize: 11, color: Color(0xFF9B7B6B)),
+                        fontSize: 11,
+                        color: Color(0xFF9B7B6B),
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -630,8 +858,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
           child: Align(
             alignment: Alignment.centerLeft,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFFFFF0E0),
                 borderRadius: BorderRadius.circular(20),
@@ -667,8 +894,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
               Container(
                 width: 8,
                 height: 8,
-                decoration:
-                    BoxDecoration(color: ss.dot, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: ss.dot,
+                  shape: BoxShape.circle,
+                ),
               ),
               const SizedBox(width: 6),
               Text(
@@ -682,8 +911,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
               const SizedBox(width: 4),
               Text(
                 '/ min ${p.minStock}',
-                style: const TextStyle(
-                    fontSize: 11, color: Color(0xFF9B7B6B)),
+                style: const TextStyle(fontSize: 11, color: Color(0xFF9B7B6B)),
               ),
             ],
           ),
@@ -694,8 +922,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
           child: Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: ss.bg,
                   borderRadius: BorderRadius.circular(20),
@@ -712,8 +942,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
               if (p.status == 'inactive') ...[
                 const SizedBox(width: 6),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF0F0F0),
                     borderRadius: BorderRadius.circular(20),
@@ -762,19 +994,23 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.inventory_2_outlined,
-                size: 48, color: Color(0xFFC5A882)),
+            Icon(
+              Icons.inventory_2_outlined,
+              size: 48,
+              color: Color(0xFFC5A882),
+            ),
             SizedBox(height: 12),
             Text(
               'No products found',
               style: TextStyle(
-                  fontWeight: FontWeight.bold, color: Color(0xFFC5A882)),
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFC5A882),
+              ),
             ),
             SizedBox(height: 4),
             Text(
               'Try adjusting your search or filters',
-              style:
-                  TextStyle(fontSize: 12, color: Color(0xFFC5A882)),
+              style: TextStyle(fontSize: 12, color: Color(0xFFC5A882)),
             ),
           ],
         ),
@@ -800,9 +1036,10 @@ class _GradientButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x4DFF9650),
-              blurRadius: 14,
-              offset: Offset(0, 4))
+            color: Color(0x4DFF9650),
+            blurRadius: 14,
+            offset: Offset(0, 4),
+          ),
         ],
       ),
       child: ElevatedButton(
@@ -812,7 +1049,8 @@ class _GradientButton extends StatelessWidget {
           shadowColor: Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         child: child,
       ),
@@ -848,16 +1086,16 @@ class _FilterDropdown extends StatelessWidget {
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
             value: value,
-            icon: const Icon(Icons.keyboard_arrow_down,
-                size: 18, color: Color(0xFFC5A882)),
+            icon: const Icon(
+              Icons.keyboard_arrow_down,
+              size: 18,
+              color: Color(0xFFC5A882),
+            ),
             style: const TextStyle(fontSize: 13, color: Color(0xFF3D2314)),
             dropdownColor: Colors.white,
             items: List.generate(
               items.length,
-              (i) => DropdownMenuItem(
-                value: items[i],
-                child: Text(labels[i]),
-              ),
+              (i) => DropdownMenuItem(value: items[i], child: Text(labels[i])),
             ),
             onChanged: (v) {
               if (v != null) onChanged(v);
@@ -900,13 +1138,10 @@ class _ActionBtnState extends State<_ActionBtn> {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: _hover
-                ? widget.color.withOpacity(0.7)
-                : widget.color,
+            color: _hover ? widget.color.withOpacity(0.7) : widget.color,
             borderRadius: BorderRadius.circular(8),
           ),
-          child:
-              Icon(widget.icon, size: 15, color: widget.iconColor),
+          child: Icon(widget.icon, size: 15, color: widget.iconColor),
         ),
       ),
     );
@@ -955,11 +1190,14 @@ class _ProductModalState extends State<_ProductModal> {
     _nameCtrl = TextEditingController(text: _name);
     _descCtrl = TextEditingController(text: _description);
     _priceCtrl = TextEditingController(
-        text: (p?.price ?? 0) == 0 ? '' : '${p!.price}');
+      text: (p?.price ?? 0) == 0 ? '' : '${p!.price}',
+    );
     _stockCtrl = TextEditingController(
-        text: (p?.stock ?? 0) == 0 ? '' : '${p!.stock}');
+      text: (p?.stock ?? 0) == 0 ? '' : '${p!.stock}',
+    );
     _minStockCtrl = TextEditingController(
-        text: p?.minStock == null ? '5' : '${p!.minStock}');
+      text: p?.minStock == null ? '5' : '${p!.minStock}',
+    );
   }
 
   @override
@@ -1000,9 +1238,10 @@ class _ProductModalState extends State<_ProductModal> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: const [
             BoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 60,
-                offset: Offset(0, 20))
+              color: Color(0x33000000),
+              blurRadius: 60,
+              offset: Offset(0, 20),
+            ),
           ],
         ),
         child: Column(
@@ -1010,15 +1249,13 @@ class _ProductModalState extends State<_ProductModal> {
           children: [
             // Sticky header
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius:
-                    BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 border: Border(
-                    bottom:
-                        BorderSide(color: Color(0x26FFB570), width: 1)),
+                  bottom: BorderSide(color: Color(0x26FFB570), width: 1),
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1040,8 +1277,11 @@ class _ProductModalState extends State<_ProductModal> {
                         color: const Color(0xFFFFF0E0),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.close,
-                          size: 16, color: Color(0xFF6B4F3E)),
+                      child: const Icon(
+                        Icons.close,
+                        size: 16,
+                        color: Color(0xFF6B4F3E),
+                      ),
                     ),
                   ),
                 ],
@@ -1063,19 +1303,21 @@ class _ProductModalState extends State<_ProductModal> {
                         color: const Color(0xFFFFF8F2),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                            color: const Color(0x66FFB570), width: 1),
+                          color: const Color(0x66FFB570),
+                          width: 1,
+                        ),
                       ),
                       child: Column(
                         children: [
-                          Text(_emoji,
-                              style: const TextStyle(fontSize: 48)),
+                          Text(_emoji, style: const TextStyle(fontSize: 48)),
                           const SizedBox(height: 8),
                           const Text(
                             'Select icon below',
                             style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF9B7B6B)),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF9B7B6B),
+                            ),
                           ),
                         ],
                       ),
@@ -1104,8 +1346,10 @@ class _ProductModalState extends State<_ProductModal> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Center(
-                              child: Text(e,
-                                  style: const TextStyle(fontSize: 18)),
+                              child: Text(
+                                e,
+                                style: const TextStyle(fontSize: 18),
+                              ),
                             ),
                           ),
                         );
@@ -1132,8 +1376,7 @@ class _ProductModalState extends State<_ProductModal> {
                               _dropField(
                                 value: _category,
                                 items: _categories,
-                                onChanged: (v) =>
-                                    setState(() => _category = v),
+                                onChanged: (v) => setState(() => _category = v),
                               ),
                             ],
                           ),
@@ -1149,8 +1392,7 @@ class _ProductModalState extends State<_ProductModal> {
                                 value: _status,
                                 items: const ['active', 'inactive'],
                                 labels: const ['Active', 'Inactive'],
-                                onChanged: (v) =>
-                                    setState(() => _status = v),
+                                onChanged: (v) => setState(() => _status = v),
                               ),
                             ],
                           ),
@@ -1166,7 +1408,9 @@ class _ProductModalState extends State<_ProductModal> {
                       controller: _descCtrl,
                       maxLines: 2,
                       style: const TextStyle(
-                          fontSize: 13, color: Color(0xFF3D2314)),
+                        fontSize: 13,
+                        color: Color(0xFF3D2314),
+                      ),
                       decoration: _inputDeco('Short product description'),
                     ),
 
@@ -1181,8 +1425,7 @@ class _ProductModalState extends State<_ProductModal> {
                             children: [
                               _label('Price (Rp) *'),
                               const SizedBox(height: 6),
-                              _textField(_priceCtrl, '0',
-                                  isNumber: true),
+                              _textField(_priceCtrl, '0', isNumber: true),
                             ],
                           ),
                         ),
@@ -1193,8 +1436,7 @@ class _ProductModalState extends State<_ProductModal> {
                             children: [
                               _label('Stock'),
                               const SizedBox(height: 6),
-                              _textField(_stockCtrl, '0',
-                                  isNumber: true),
+                              _textField(_stockCtrl, '0', isNumber: true),
                             ],
                           ),
                         ),
@@ -1205,8 +1447,7 @@ class _ProductModalState extends State<_ProductModal> {
                             children: [
                               _label('Min. Stock'),
                               const SizedBox(height: 6),
-                              _textField(_minStockCtrl, '5',
-                                  isNumber: true),
+                              _textField(_minStockCtrl, '5', isNumber: true),
                             ],
                           ),
                         ),
@@ -1219,15 +1460,15 @@ class _ProductModalState extends State<_ProductModal> {
 
             // Sticky footer
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius:
-                    BorderRadius.vertical(bottom: Radius.circular(24)),
+                borderRadius: BorderRadius.vertical(
+                  bottom: Radius.circular(24),
+                ),
                 border: Border(
-                    top:
-                        BorderSide(color: Color(0x26FFB570), width: 1)),
+                  top: BorderSide(color: Color(0x26FFB570), width: 1),
+                ),
               ),
               child: Row(
                 children: [
@@ -1237,30 +1478,34 @@ class _ProductModalState extends State<_ProductModal> {
                       style: TextButton.styleFrom(
                         backgroundColor: const Color(0xFFFFF0E0),
                         foregroundColor: const Color(0xFF6B4F3E),
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      child: const Text('Cancel',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 13)),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [
-                          Color(0xFFFFB570),
-                          Color(0xFFFF9A4D)
-                        ]),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFB570), Color(0xFFFF9A4D)],
+                        ),
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: const [
                           BoxShadow(
-                              color: Color(0x4DFF9650),
-                              blurRadius: 14,
-                              offset: Offset(0, 4))
+                            color: Color(0x4DFF9650),
+                            blurRadius: 14,
+                            offset: Offset(0, 4),
+                          ),
                         ],
                       ),
                       child: ElevatedButton(
@@ -1270,7 +1515,8 @@ class _ProductModalState extends State<_ProductModal> {
                           shadowColor: Colors.transparent,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         child: Text(
                           widget.isEdit ? 'Save Changes' : 'Add Product',
@@ -1293,42 +1539,41 @@ class _ProductModalState extends State<_ProductModal> {
   }
 
   Widget _label(String text) => Text(
-        text,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF5A3D2B),
-        ),
-      );
+    text,
+    style: const TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.bold,
+      color: Color(0xFF5A3D2B),
+    ),
+  );
 
   InputDecoration _inputDeco(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle:
-            const TextStyle(color: Color(0xFFC5A882), fontSize: 13),
-        filled: true,
-        fillColor: const Color(0xFFFFF8F2),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: Color(0x40FFB570), width: 2),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: Color(0xFFFFB570), width: 2),
-        ),
-      );
+    hintText: hint,
+    hintStyle: const TextStyle(color: Color(0xFFC5A882), fontSize: 13),
+    filled: true,
+    fillColor: const Color(0xFFFFF8F2),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0x40FFB570), width: 2),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFFFFB570), width: 2),
+    ),
+  );
 
-  Widget _textField(TextEditingController ctrl, String hint,
-      {bool isNumber = false}) {
+  Widget _textField(
+    TextEditingController ctrl,
+    String hint, {
+    bool isNumber = false,
+  }) {
     return TextField(
       controller: ctrl,
-      keyboardType:
-          isNumber ? TextInputType.number : TextInputType.text,
-      inputFormatters:
-          isNumber ? [FilteringTextInputFormatter.digitsOnly] : null,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      inputFormatters: isNumber
+          ? [FilteringTextInputFormatter.digitsOnly]
+          : null,
       style: const TextStyle(fontSize: 13, color: Color(0xFF3D2314)),
       decoration: _inputDeco(hint),
     );
@@ -1348,18 +1593,19 @@ class _ProductModalState extends State<_ProductModal> {
         decoration: BoxDecoration(
           color: const Color(0xFFFFF8F2),
           borderRadius: BorderRadius.circular(12),
-          border:
-              Border.all(color: const Color(0x40FFB570), width: 2),
+          border: Border.all(color: const Color(0x40FFB570), width: 2),
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
             value: value,
             isExpanded: true,
             dropdownColor: Colors.white,
-            icon: const Icon(Icons.keyboard_arrow_down,
-                size: 16, color: Color(0xFFC5A882)),
-            style: const TextStyle(
-                fontSize: 13, color: Color(0xFF3D2314)),
+            icon: const Icon(
+              Icons.keyboard_arrow_down,
+              size: 16,
+              color: Color(0xFFC5A882),
+            ),
+            style: const TextStyle(fontSize: 13, color: Color(0xFF3D2314)),
             items: List.generate(
               items.length,
               (i) => DropdownMenuItem(
@@ -1396,9 +1642,10 @@ class _DeleteDialog extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: const [
             BoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 60,
-                offset: Offset(0, 20))
+              color: Color(0x33000000),
+              blurRadius: 60,
+              offset: Offset(0, 20),
+            ),
           ],
         ),
         child: Column(
@@ -1411,8 +1658,11 @@ class _DeleteDialog extends StatelessWidget {
                 color: const Color(0xFFFFD4D4),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.delete_outline,
-                  size: 28, color: Color(0xFFC0392B)),
+              child: const Icon(
+                Icons.delete_outline,
+                size: 28,
+                color: Color(0xFFC0392B),
+              ),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -1454,11 +1704,16 @@ class _DeleteDialog extends StatelessWidget {
                       foregroundColor: const Color(0xFF6B4F3E),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: const Text('Cancel',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 13)),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1466,7 +1721,8 @@ class _DeleteDialog extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                          colors: [Color(0xFFFF6B6B), Color(0xFFE05252)]),
+                        colors: [Color(0xFFFF6B6B), Color(0xFFE05252)],
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: ElevatedButton(
@@ -1479,7 +1735,8 @@ class _DeleteDialog extends StatelessWidget {
                         shadowColor: Colors.transparent,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       child: const Text(
                         'Delete',
