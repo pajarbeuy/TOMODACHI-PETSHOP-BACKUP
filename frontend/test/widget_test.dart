@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:frontendd/main.dart';
@@ -18,4 +19,9 @@ void main() {
     expect(find.text('TOMODACHI PETSHOP'), findsOneWidget);
     expect(find.text('Sign In'), findsOneWidget);
   });
+}
+
+class _FakeBuildContext implements BuildContext {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
