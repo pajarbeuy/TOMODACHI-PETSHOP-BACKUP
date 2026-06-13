@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\AiController;
 
 // ── Public Auth Routes ──────────────────────────────────────────────────────
 
+Route::get('/auth/captcha', [AuthController::class, 'captcha']);
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
 Route::get('/health', function () {
@@ -36,17 +37,19 @@ Route::get('/health', function () {
     ]);
 });
 
-Route::post('/midtrans/notification', [TransactionController::class, 'midtransNotification']);
+Route::post('/midtrans/notification', [TransactionController::class, 'midtransNotification'])
+    ->middleware('throttle:webhook');
 Route::get('/product-images/{path}', [ProductController::class, 'image'])->where('path', '.*');
 
 // ── Protected Auth & User Routes ─────────────────────────────────────────────
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('throttle:logout');
     Route::get('/auth/me', [AuthController::class, 'me']);
     
     // Registering new users is restricted to owner
-    Route::post('/auth/register', [AuthController::class, 'register']);
+    Route::post('/auth/register', [AuthController::class, 'register'])
+        ->middleware(['check.role:owner', 'throttle:register']);
     
     Route::get('/user', function (Request $request) {
         return $request->user();
@@ -58,7 +61,14 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     
     // 1. Categories
-    Route::apiResource('categories', CategoryController::class);
+    Route::get('categories', [CategoryController::class, 'index']);
+    Route::get('categories/{category}', [CategoryController::class, 'show']);
+    Route::middleware('check.role:owner,admin')->group(function () {
+        Route::post('categories', [CategoryController::class, 'store']);
+        Route::put('categories/{category}', [CategoryController::class, 'update']);
+        Route::patch('categories/{category}', [CategoryController::class, 'update']);
+        Route::delete('categories/{category}', [CategoryController::class, 'destroy']);
+    });
     
     // Grouped categories endpoint (required before products show route)
     Route::get('products/categories', [CategoryController::class, 'productCategories']);
@@ -92,7 +102,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // 6. AI Chatbot — semua role yang sudah login bisa akses
     Route::prefix('ai')->group(function () {
-        Route::post('chat', [AiController::class, 'chat']);
+        Route::post('chat', [AiController::class, 'chat'])->middleware('throttle:ai');
         Route::get('chat/history', [AiController::class, 'history']);
         Route::get('restock', [AiController::class, 'restock']);
     });

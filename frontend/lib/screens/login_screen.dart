@@ -147,13 +147,16 @@ class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   final _emailCtrl = TextEditingController(text: 'admin@tomodachi.com');
   final _passCtrl = TextEditingController(text: 'password123');
+  final _captchaCtrl = TextEditingController();
   bool _showPassword = false;
   bool _rememberMe = false;
   bool _loading = false;
+  bool _captchaLoading = false;
 
   late final AnimationController _fadeCtrl;
   late final Animation<double> _fadeAnim;
   String? _errorMessage;
+  CaptchaChallenge? _captchaChallenge;
   late final AuthService _authService;
 
   @override
@@ -171,6 +174,7 @@ class _LoginScreenState extends State<LoginScreen>
     // flutter run --dart-define=MOBILE_API_BASE_URL=https://your-ngrok-url
     _authService = AuthService();
     _authService.initialize(kIsWeb ? _apiBaseUrl : _mobileApiBaseUrl);
+    _loadCaptcha();
   }
 
   @override
@@ -178,15 +182,44 @@ class _LoginScreenState extends State<LoginScreen>
     _fadeCtrl.dispose();
     _emailCtrl.dispose();
     _passCtrl.dispose();
+    _captchaCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadCaptcha() async {
+    if (mounted) {
+      setState(() => _captchaLoading = true);
+    }
+
+    try {
+      final challenge = await _authService.fetchCaptcha();
+      if (!mounted) return;
+      setState(() {
+        _captchaChallenge = challenge;
+        _captchaCtrl.clear();
+        _captchaLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _captchaLoading = false;
+        _errorMessage = 'Failed to load captcha: $e';
+      });
+    }
   }
 
   void _handleLogin() async {
     final email = _emailCtrl.text.trim();
     final password = _passCtrl.text.trim();
+    final captchaAnswer = _captchaCtrl.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
       setState(() => _errorMessage = 'Email and password are required');
+      return;
+    }
+
+    if (_captchaChallenge == null || captchaAnswer.isEmpty) {
+      setState(() => _errorMessage = 'Captcha answer is required');
       return;
     }
 
@@ -197,7 +230,13 @@ class _LoginScreenState extends State<LoginScreen>
 
     _showLoadingDialog();
 
-    final success = await _authService.login(email, password);
+    final success = await _authService.login(
+      email,
+      password,
+      captchaKey: _captchaChallenge!.key,
+      captchaAnswer: captchaAnswer,
+      rememberMe: _rememberMe,
+    );
 
     if (!mounted) return;
 
@@ -220,6 +259,7 @@ class _LoginScreenState extends State<LoginScreen>
             'Login failed. Please check your credentials.';
         _loading = false;
       });
+      await _loadCaptcha();
       _showErrorDialog(_errorMessage ?? 'Login failed');
     }
   }
@@ -232,7 +272,27 @@ class _LoginScreenState extends State<LoginScreen>
 
     _showLoadingDialog();
 
-    final success = await _authService.login(demo.user.email, 'password123');
+    bool success = false;
+    try {
+      final challenge = await _authService.fetchCaptcha();
+      success = await _authService.login(
+        demo.user.email,
+        'password123',
+        captchaKey: challenge.key,
+        captchaAnswer: _solveCaptcha(challenge.question),
+        rememberMe: true,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      setState(() {
+        _errorMessage = 'Login failed: $e';
+        _loading = false;
+      });
+      await _loadCaptcha();
+      _showErrorDialog(_errorMessage ?? 'Login failed');
+      return;
+    }
 
     if (!mounted) return;
 
@@ -253,8 +313,20 @@ class _LoginScreenState extends State<LoginScreen>
         _errorMessage = _authService.errorMessage ?? 'Login failed';
         _loading = false;
       });
+      await _loadCaptcha();
       _showErrorDialog(_errorMessage ?? 'Login failed');
     }
+  }
+
+  String _solveCaptcha(String question) {
+    final parts = question.split('+');
+    if (parts.length != 2) {
+      return '';
+    }
+
+    final left = int.tryParse(parts[0].trim()) ?? 0;
+    final right = int.tryParse(parts[1].trim()) ?? 0;
+    return (left + right).toString();
   }
 
   Role _roleFromString(String roleString) {
@@ -687,6 +759,11 @@ class _LoginScreenState extends State<LoginScreen>
           _buildPasswordField(),
           const SizedBox(height: 18),
 
+          _buildLabel('Captcha Verification'),
+          const SizedBox(height: 6),
+          _buildCaptchaField(),
+          const SizedBox(height: 18),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -829,6 +906,54 @@ class _LoginScreenState extends State<LoginScreen>
         suffixIcon: _AnimatedVisibilityIcon(
           visible: _showPassword,
           onToggle: () => setState(() => _showPassword = !_showPassword),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCaptchaField() {
+    return TextField(
+      controller: _captchaCtrl,
+      keyboardType: TextInputType.number,
+      style: _iosStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      decoration: InputDecoration(
+        hintText: _captchaLoading
+            ? 'Loading captcha...'
+            : 'Answer: ${_captchaChallenge?.question ?? '-'}',
+        hintStyle: _iosStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: _brown200,
+        ),
+        filled: true,
+        fillColor: _bgInput,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _borderLight, width: 2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _borderLight, width: 2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _orange, width: 2),
+        ),
+        suffixIcon: IconButton(
+          tooltip: 'Refresh captcha',
+          onPressed: _captchaLoading ? null : _loadCaptcha,
+          icon: _captchaLoading
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.refresh_rounded),
+          color: _brown400,
         ),
       ),
     );

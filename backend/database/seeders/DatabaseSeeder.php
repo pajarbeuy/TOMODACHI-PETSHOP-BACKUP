@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
                     'name' => 'Pak Heri',
                     'password' => Hash::make('password123'),
                     'role_id' => $ownerRole->id,
+                    'email_verified_at' => now(),
                 ]
             );
 
@@ -44,6 +45,7 @@ class DatabaseSeeder extends Seeder
                     'name' => 'Budi Santoso',
                     'password' => Hash::make('password123'),
                     'role_id' => $kasirRole->id,
+                    'email_verified_at' => now(),
                 ]
             );
 
@@ -53,6 +55,7 @@ class DatabaseSeeder extends Seeder
                     'name' => 'Admin Utama',
                     'password' => Hash::make('password123'),
                     'role_id' => $adminRole->id,
+                    'email_verified_at' => now(),
                 ]
             );
         }
