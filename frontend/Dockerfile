@@ -8,7 +8,8 @@ RUN flutter pub get
 COPY . .
 
 # Build Flutter Web dengan target release
-RUN flutter build web --release --base-href "/"
+ARG API_BASE_URL=/
+RUN flutter build web --release --base-href "/" --dart-define=API_BASE_URL=${API_BASE_URL}
 
 # ─── Copy ke volume output ───────────────────────────────
 # Stage ini hanya untuk copy hasil build ke named volume
