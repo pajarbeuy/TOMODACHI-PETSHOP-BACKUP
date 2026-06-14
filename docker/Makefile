@@ -1,21 +1,26 @@
-.PHONY: help build up down logs shell-laravel shell-mysql migrate fresh
+.PHONY: help build-backend push-backend up down logs shell-laravel db migrate fresh
+
+COMPOSE_PROD=docker compose -f docker-compose.prod.yml
 
 help:
 	@echo ""
-	@echo "  make build       — Build ulang semua image"
-	@echo "  make up          — Jalankan semua container"
+	@echo "  ── Development ──────────────────────────────────────"
+	@echo "  make up          — Jalankan semua container (dev)"
 	@echo "  make down        — Matikan semua container"
 	@echo "  make logs        — Lihat logs semua service"
-	@echo "  make shell       — Masuk ke shell Laravel"
+	@echo "  make shell       — Masuk ke shell Laravel container"
 	@echo "  make db          — Masuk ke MySQL CLI"
 	@echo "  make migrate     — Jalankan php artisan migrate"
 	@echo "  make fresh       — migrate:fresh --seed (HAPUS data!)"
 	@echo ""
+	@echo "  ── Production ───────────────────────────────────────"
+	@echo "  make build-backend  — Build & push image backend ke Docker Hub"
+	@echo "  make prod-up        — Jalankan stack production"
+	@echo "  make prod-down      — Matikan stack production"
+	@echo "  make prod-logs      — Lihat logs production"
+	@echo ""
 
-build:
-	docker compose --profile build up flutter_builder --build
-	docker compose build laravel nginx
-
+# ─── Development ──────────────────────────────────────────────
 up:
 	docker compose up -d
 
@@ -37,3 +42,21 @@ migrate:
 fresh:
 	@echo "⚠️  Ini akan menghapus semua data!"
 	docker exec tomodachi_laravel php artisan migrate:fresh --seed
+
+# ─── Production ───────────────────────────────────────────────
+build-backend:
+	docker build -f backend.Dockerfile ../backend -t $${BACKEND_IMAGE}
+	docker push $${BACKEND_IMAGE}
+
+build-backend-no-cache:
+	docker build --no-cache -f backend.Dockerfile ../backend -t $${BACKEND_IMAGE}
+	docker push $${BACKEND_IMAGE}
+
+prod-up:
+	$(COMPOSE_PROD) up -d
+
+prod-down:
+	$(COMPOSE_PROD) down
+
+prod-logs:
+	$(COMPOSE_PROD) logs -f

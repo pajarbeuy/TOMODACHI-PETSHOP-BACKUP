@@ -6,11 +6,42 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    private const CAPTCHA_TTL_MINUTES = 10;
+
+    /**
+     * GET /api/auth/captcha
+     * Generate captcha sederhana untuk flow login API.
+     */
+    public function captcha()
+    {
+        $left = random_int(1, 9);
+        $right = random_int(1, 9);
+        $key = (string) Str::uuid();
+
+        Cache::put(
+            $this->captchaCacheKey($key),
+            (string) ($left + $right),
+            now()->addMinutes(self::CAPTCHA_TTL_MINUTES)
+        );
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Captcha generated',
+            'data' => [
+                'captcha_key' => $key,
+                'question' => "{$left} + {$right}",
+                'expires_in' => self::CAPTCHA_TTL_MINUTES * 60,
+            ],
+        ]);
+    }
+
     /**
      * POST /api/auth/login
      * Validasi email & password, kembalikan token Sanctum
@@ -20,9 +51,22 @@ class AuthController extends Controller
         try {
             // 422: field kosong / format email salah / password kurang dari 6 karakter
             $validated = $request->validate([
-                'email'    => 'required|email',
+                'email' => 'required|email',
                 'password' => 'required|string|min:6',
+                'captcha_key' => 'required|string',
+                'captcha_answer' => 'required|string',
+                'remember_me' => 'nullable|boolean',
             ]);
+
+            if (!$this->captchaIsValid($validated['captcha_key'], $validated['captcha_answer'])) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Captcha verification failed.',
+                    'errors' => [
+                        'captcha_answer' => ['Captcha is incorrect or expired.'],
+                    ],
+                ], 422);
+            }
 
             $user = User::where('email', $validated['email'])->first();
 
@@ -33,6 +77,12 @@ class AuthController extends Controller
                     'message' => 'Invalid credentials. Email or password is incorrect.',
                 ], 401);
             }
+
+            $rememberMe = (bool) ($validated['remember_me'] ?? false);
+            $user->forceFill([
+                'email_verified_at' => $user->email_verified_at ?? now(),
+                'remember_token' => $rememberMe ? Str::random(60) : null,
+            ])->save();
 
             // Revoke existing tokens
             $user->tokens()->delete();
@@ -122,6 +172,7 @@ class AuthController extends Controller
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'role_id' => $validated['role_id'],
+                'email_verified_at' => now(),
             ]);
 
             return response()->json([
@@ -182,5 +233,21 @@ class AuthController extends Controller
                 'message' => 'Failed to retrieve user: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    private function captchaCacheKey(string $key): string
+    {
+        return 'auth_captcha:' . $key;
+    }
+
+    private function captchaIsValid(string $key, string $answer): bool
+    {
+        $expectedAnswer = Cache::pull($this->captchaCacheKey($key));
+
+        if ($expectedAnswer === null) {
+            return false;
+        }
+
+        return hash_equals((string) $expectedAnswer, trim($answer));
     }
 }

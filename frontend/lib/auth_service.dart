@@ -35,6 +35,20 @@ class UserModel {
   };
 }
 
+class CaptchaChallenge {
+  final String key;
+  final String question;
+
+  const CaptchaChallenge({required this.key, required this.question});
+
+  factory CaptchaChallenge.fromJson(Map<String, dynamic> json) {
+    return CaptchaChallenge(
+      key: json['captcha_key']?.toString() ?? '',
+      question: json['question']?.toString() ?? '',
+    );
+  }
+}
+
 /// Authentication Service
 class AuthService extends ChangeNotifier {
   late final ApiClient _apiClient;
@@ -58,7 +72,24 @@ class AuthService extends ChangeNotifier {
   }
 
   /// Login with email and password
-  Future<bool> login(String email, String password) async {
+  Future<CaptchaChallenge> fetchCaptcha() async {
+    final response = await _apiClient.get('/api/auth/captcha');
+    final data = response['data'];
+
+    if (response['status'] == true && data is Map<String, dynamic>) {
+      return CaptchaChallenge.fromJson(data);
+    }
+
+    throw Exception(response['message'] ?? 'Failed to load captcha');
+  }
+
+  Future<bool> login(
+    String email,
+    String password, {
+    required String captchaKey,
+    required String captchaAnswer,
+    bool rememberMe = false,
+  }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -66,7 +97,13 @@ class AuthService extends ChangeNotifier {
     try {
       final response = await _apiClient.post(
         '/api/auth/login',
-        body: {'email': email, 'password': password},
+        body: {
+          'email': email,
+          'password': password,
+          'captcha_key': captchaKey,
+          'captcha_answer': captchaAnswer,
+          'remember_me': rememberMe,
+        },
       );
 
       if (response['status'] == true) {
