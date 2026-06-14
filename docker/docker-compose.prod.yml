@@ -15,9 +15,11 @@ services:
 
   laravel:
     image: ${BACKEND_IMAGE:-tomodachi-backend:local}
+    image: ${BACKEND_IMAGE:-tomodachi-backend:local}
     container_name: tomodachi_laravel
     volumes:
       - ./.env.laravel:/var/www/laravel/.env:ro
+      - laravel_public_storage:/var/www/laravel/storage/app/public
       - laravel_public_storage:/var/www/laravel/storage/app/public
     depends_on:
       mysql:
