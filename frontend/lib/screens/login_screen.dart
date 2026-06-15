@@ -784,11 +784,6 @@ class _LoginScreenState extends State<LoginScreen>
           _buildCaptchaField(),
           const SizedBox(height: 18),
 
-          _buildLabel('Captcha Verification'),
-          const SizedBox(height: 6),
-          _buildCaptchaField(),
-          const SizedBox(height: 18),
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
