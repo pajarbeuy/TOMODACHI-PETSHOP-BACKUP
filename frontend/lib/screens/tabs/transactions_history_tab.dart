@@ -374,10 +374,7 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
                     width: 50,
                     height: 50,
                     child: IconButton(
-                      icon: const Icon(
-                        Icons.refresh,
-                        color: Color(0xFFFFB570),
-                      ),
+                      icon: const Icon(Icons.refresh, color: Color(0xFFFFB570)),
                       onPressed: _fetchTransactions,
                     ),
                   ),
@@ -387,44 +384,114 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
               Row(
                 children: [
                   Expanded(
-                    child: TextField(
-                      controller: _startDateCtrl,
-                      style: _plusJakarta(fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: 'Mulai (YYYY-MM-DD)',
-                        hintStyle: _plusJakarta(
-                          fontSize: 13,
-                          color: Colors.grey,
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFFFF9F2),
-                        border: OutlineInputBorder(
+                    child: GestureDetector(
+                      onTap: () async {
+                        final selected = await showDatePicker(
+                          context: context,
+                          initialDate: _startDateCtrl.text.isNotEmpty
+                              ? DateTime.parse(_startDateCtrl.text)
+                              : DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 365),
+                          ),
+                        );
+                        if (selected != null) {
+                          setState(() {
+                            _startDateCtrl.text = selected.toString().split(
+                              ' ',
+                            )[0];
+                          });
+                          _fetchTransactions();
+                        }
+                      },
+                      child: Container(
+                        height: 50,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF9F2),
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _startDateCtrl.text.isNotEmpty
+                                    ? _startDateCtrl.text
+                                    : 'Mulai',
+                                style: _plusJakarta(
+                                  fontSize: 13,
+                                  color: _startDateCtrl.text.isNotEmpty
+                                      ? const Color(0xFF3D2314)
+                                      : Colors.grey,
+                                ),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.calendar_today,
+                              color: Color(0xFFFFB570),
+                              size: 20,
+                            ),
+                          ],
                         ),
                       ),
-                      onSubmitted: (_) => _fetchTransactions(),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: TextField(
-                      controller: _endDateCtrl,
-                      style: _plusJakarta(fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: 'Selesai (YYYY-MM-DD)',
-                        hintStyle: _plusJakarta(
-                          fontSize: 13,
-                          color: Colors.grey,
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFFFF9F2),
-                        border: OutlineInputBorder(
+                    child: GestureDetector(
+                      onTap: () async {
+                        final selected = await showDatePicker(
+                          context: context,
+                          initialDate: _endDateCtrl.text.isNotEmpty
+                              ? DateTime.parse(_endDateCtrl.text)
+                              : DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 365),
+                          ),
+                        );
+                        if (selected != null) {
+                          setState(() {
+                            _endDateCtrl.text = selected.toString().split(
+                              ' ',
+                            )[0];
+                          });
+                          _fetchTransactions();
+                        }
+                      },
+                      child: Container(
+                        height: 50,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF9F2),
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _endDateCtrl.text.isNotEmpty
+                                    ? _endDateCtrl.text
+                                    : 'Selesai',
+                                style: _plusJakarta(
+                                  fontSize: 13,
+                                  color: _endDateCtrl.text.isNotEmpty
+                                      ? const Color(0xFF3D2314)
+                                      : Colors.grey,
+                                ),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.calendar_today,
+                              color: Color(0xFFFFB570),
+                              size: 20,
+                            ),
+                          ],
                         ),
                       ),
-                      onSubmitted: (_) => _fetchTransactions(),
                     ),
                   ),
                 ],
