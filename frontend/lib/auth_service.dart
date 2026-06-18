@@ -50,6 +50,32 @@ class CaptchaChallenge {
 }
 
 /// Authentication Service
+class AccountModel {
+  final String id;
+  final String name;
+  final String email;
+  final String roleName;
+
+  const AccountModel({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.roleName,
+  });
+
+  factory AccountModel.fromJson(Map<String, dynamic> json) {
+    final role = json['role'];
+    return AccountModel(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      roleName: role is Map
+          ? role['name']?.toString() ?? 'user'
+          : role?.toString() ?? 'user',
+    );
+  }
+}
+
 class AuthService extends ChangeNotifier {
   late final ApiClient _apiClient;
   late final FlutterSecureStorage _secureStorage;
@@ -182,6 +208,45 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  Future<List<AccountModel>> getAccounts() async {
+    final response = await _apiClient.get('/api/auth/accounts');
+
+    if (response['status'] == true && response['data'] is List) {
+      return (response['data'] as List)
+          .whereType<Map<String, dynamic>>()
+          .map(AccountModel.fromJson)
+          .toList();
+    }
+
+    throw Exception(response['message'] ?? 'Failed to load accounts');
+  }
+
+  Future<bool> updateAccount({
+    required String userId,
+    String? name,
+    String? email,
+    String? password,
+    String? passwordConfirmation,
+    int? roleId,
+  }) async {
+    final body = <String, dynamic>{};
+    if (name != null) body['name'] = name;
+    if (email != null) body['email'] = email;
+    if (password != null && password.isNotEmpty) {
+      body['password'] = password;
+      body['password_confirmation'] = passwordConfirmation;
+    }
+    if (roleId != null) body['role_id'] = roleId;
+
+    final response = await _apiClient.put('/api/auth/accounts/$userId', body: body);
+    return response['status'] == true;
+  }
+
+  Future<bool> deleteAccount(String userId) async {
+    final response = await _apiClient.delete('/api/auth/accounts/$userId');
+    return response['status'] == true;
   }
 
   /// Register a new user (only for owner role)

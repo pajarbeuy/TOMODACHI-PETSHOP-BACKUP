@@ -11,6 +11,7 @@ import 'tabs/dashboard_owner.dart';
 import 'ai_chat_screen.dart';
 import 'login_screen.dart';
 import '../ai_chat_service.dart';
+import 'owner_accounts_screen.dart';
 import '../widgets/app_logo.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -100,9 +101,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           _NavigationItem(
-            label: 'AI Asisten',
-            icon: Icons.auto_awesome,
-            widget: AiChatScreen(chatService: _aiChatService),
+            label: 'Manajemen Akun',
+            icon: Icons.manage_accounts,
+            widget: OwnerAccountsScreen(authService: widget.authService),
           ),
         ];
 
@@ -257,6 +258,8 @@ class _HomeScreenState extends State<HomeScreen> {
         return 'Riwayat';
       case 'POS Kasir':
         return 'POS';
+      case 'Manajemen Akun':
+        return 'Akun';
       case 'AI Asisten':
         return 'AI';
       default:
