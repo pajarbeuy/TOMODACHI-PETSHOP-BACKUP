@@ -76,6 +76,32 @@ class AccountModel {
   }
 }
 
+class AccountModel {
+  final String id;
+  final String name;
+  final String email;
+  final String roleName;
+
+  const AccountModel({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.roleName,
+  });
+
+  factory AccountModel.fromJson(Map<String, dynamic> json) {
+    final role = json['role'];
+    return AccountModel(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      roleName: role is Map
+          ? role['name']?.toString() ?? 'user'
+          : role?.toString() ?? 'user',
+    );
+  }
+}
+
 class AuthService extends ChangeNotifier {
   late final ApiClient _apiClient;
   late final FlutterSecureStorage _secureStorage;

@@ -276,6 +276,115 @@ class AuthController extends Controller
     }
 
     /**
+     * GET /api/auth/accounts
+     * Owner-only account management list.
+     */
+    public function accounts(Request $request)
+    {
+        try {
+            $users = User::with('role')->orderBy('name')->get()->map(fn ($user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => [
+                    'id' => $user->role?->id,
+                    'name' => $user->role?->name,
+                ],
+                'created_at' => $user->created_at?->toIso8601String(),
+                'updated_at' => $user->updated_at?->toIso8601String(),
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Accounts retrieved successfully',
+                'data' => $users,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to retrieve accounts: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * PATCH /api/auth/accounts/{user}
+     * Owner-only account update.
+     */
+    public function updateAccount(Request $request, User $user)
+    {
+        try {
+            $validated = $request->validate([
+                'name' => 'sometimes|required|string|max:255',
+                'email' => 'sometimes|required|email|unique:users,email,' . $user->id,
+                'password' => 'nullable|string|min:6|confirmed',
+                'role_id' => 'sometimes|required|exists:roles,id',
+            ]);
+
+            $payload = [];
+
+            if (array_key_exists('name', $validated)) {
+                $payload['name'] = $validated['name'];
+            }
+
+            if (array_key_exists('email', $validated)) {
+                $payload['email'] = $validated['email'];
+            }
+
+            if (array_key_exists('role_id', $validated)) {
+                $payload['role_id'] = $validated['role_id'];
+            }
+
+            if (array_key_exists('password', $validated) && $validated['password'] !== null) {
+                $payload['password'] = Hash::make($validated['password']);
+            }
+
+            $user->update($payload);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Account updated successfully',
+                'data' => [
+                    'user' => $user->fresh()->load('role'),
+                ],
+            ], 200);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to update account: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * DELETE /api/auth/accounts/{user}
+     * Owner-only account deletion.
+     */
+    public function destroyAccount(User $user)
+    {
+        try {
+            $user->delete();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Account deleted successfully',
+                'data' => null,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to delete account: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * GET /api/auth/me
      * Get current authenticated user
      */
