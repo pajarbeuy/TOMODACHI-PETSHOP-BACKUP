@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\Role;
+use App\Support\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -59,23 +59,16 @@ class AuthController extends Controller
             ]);
 
             if (!$this->captchaIsValid($validated['captcha_key'], $validated['captcha_answer'])) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Captcha verification failed.',
-                    'errors' => [
-                        'captcha_answer' => ['Captcha is incorrect or expired.'],
-                    ],
-                ], 422);
+                return ApiResponse::error('Captcha verification failed.', 422, [
+                    'captcha_answer' => ['Captcha is incorrect or expired.'],
+                ]);
             }
 
             $user = User::where('email', $validated['email'])->first();
 
             // 401: email tidak ditemukan atau password salah
             if (!$user || !Hash::check($validated['password'], $user->password)) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'Invalid credentials. Email or password is incorrect.',
-                ], 401);
+                return ApiResponse::error('Invalid credentials. Email or password is incorrect.', 401);
             }
 
             $rememberMe = (bool) ($validated['remember_me'] ?? false);
@@ -101,11 +94,7 @@ class AuthController extends Controller
             ], 200);
         } catch (ValidationException $e) {
             // 422: hanya untuk field yang tidak memenuhi aturan validasi
-            return response()->json([
-                'status'  => false,
-                'message' => 'Validation failed',
-                'errors'  => $e->errors(),
-            ], 422);
+            return ApiResponse::error('Validation failed', 422, $e->errors());
         }
     }
 
@@ -119,10 +108,7 @@ class AuthController extends Controller
             $user = $request->user();
 
             if (!$user) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'User not authenticated',
-                ], 401);
+                return ApiResponse::error('User not authenticated', 401);
             }
 
             // Revoke all tokens for this user
@@ -134,10 +120,9 @@ class AuthController extends Controller
                 'data' => null,
             ], 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Logout failed: ' . $e->getMessage(),
-            ], 500);
+            report($e);
+
+            return ApiResponse::error('Logout failed. Please try again later.', 500);
         }
     }
 
@@ -153,10 +138,7 @@ class AuthController extends Controller
 
             // Check if user is authenticated and is owner
             if (!$user || !$user->role || $user->role->name !== 'owner') {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Unauthorized. Only owner can register new accounts.',
-                ], 403);
+                return ApiResponse::error('Unauthorized. Only owner can register new accounts.', 403);
             }
 
             $validated = $request->validate([
@@ -183,16 +165,11 @@ class AuthController extends Controller
                 ],
             ], 201);
         } catch (ValidationException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
+            return ApiResponse::error('Validation failed', 422, $e->errors());
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Registration failed: ' . $e->getMessage(),
-            ], 500);
+            report($e);
+
+            return ApiResponse::error('Registration failed. Please try again later.', 500);
         }
     }
 
@@ -221,10 +198,9 @@ class AuthController extends Controller
                 'data' => $users,
             ], 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to retrieve accounts: ' . $e->getMessage(),
-            ], 500);
+            report($e);
+
+            return ApiResponse::error('Failed to retrieve accounts. Please try again later.', 500);
         }
     }
 
@@ -270,16 +246,11 @@ class AuthController extends Controller
                 ],
             ], 200);
         } catch (ValidationException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
+            return ApiResponse::error('Validation failed', 422, $e->errors());
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to update account: ' . $e->getMessage(),
-            ], 500);
+            report($e);
+
+            return ApiResponse::error('Failed to update account. Please try again later.', 500);
         }
     }
 
@@ -298,10 +269,9 @@ class AuthController extends Controller
                 'data' => null,
             ], 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to delete account: ' . $e->getMessage(),
-            ], 500);
+            report($e);
+
+            return ApiResponse::error('Failed to delete account. Please try again later.', 500);
         }
     }
 
@@ -315,10 +285,7 @@ class AuthController extends Controller
             $user = $request->user();
 
             if (!$user) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'User not authenticated',
-                ], 401);
+                return ApiResponse::error('User not authenticated', 401);
             }
 
             return response()->json([
@@ -337,10 +304,9 @@ class AuthController extends Controller
                 ],
             ], 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to retrieve user: ' . $e->getMessage(),
-            ], 500);
+            report($e);
+
+            return ApiResponse::error('Failed to retrieve user. Please try again later.', 500);
         }
     }
 

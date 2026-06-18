@@ -236,12 +236,37 @@ class AuthService extends ChangeNotifier {
     if (email != null) body['email'] = email;
     if (password != null && password.isNotEmpty) {
       body['password'] = password;
-      body['password_confirmation'] = passwordConfirmation;
+      body['password_confirmation'] = passwordConfirmation ?? '';
     }
     if (roleId != null) body['role_id'] = roleId;
 
-    final response = await _apiClient.put('/api/auth/accounts/$userId', body: body);
-    return response['status'] == true;
+    try {
+      final response = await _apiClient.patch(
+        '/api/auth/accounts/$userId',
+        body: body,
+      );
+
+      if (response['status'] == true) {
+        _errorMessage = null;
+        return true;
+      }
+
+      // Handle validation errors
+      if (response['errors'] is Map<String, dynamic>) {
+        final errors = response['errors'] as Map<String, dynamic>;
+        final errorList = errors.entries
+            .map((e) => '${e.key}: ${(e.value is List ? (e.value as List).join(', ') : e.value)}')
+            .toList();
+        _errorMessage = errorList.join('\n');
+      } else {
+        _errorMessage = response['message'] ?? 'Update failed';
+      }
+
+      return false;
+    } catch (e) {
+      _errorMessage = 'Error: ${e.toString()}';
+      return false;
+    }
   }
 
   Future<bool> deleteAccount(String userId) async {
@@ -279,7 +304,17 @@ class AuthService extends ChangeNotifier {
         return true;
       }
 
-      _errorMessage = response['message'] ?? 'Registration failed';
+      // Handle validation errors
+      if (response['errors'] is Map<String, dynamic>) {
+        final errors = response['errors'] as Map<String, dynamic>;
+        final errorList = errors.entries
+            .map((e) => '${e.key}: ${(e.value is List ? (e.value as List).join(', ') : e.value)}')
+            .toList();
+        _errorMessage = errorList.join('\n');
+      } else {
+        _errorMessage = response['message'] ?? 'Registration failed';
+      }
+
       _isLoading = false;
       notifyListeners();
       return false;

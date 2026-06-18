@@ -7,6 +7,9 @@ until php -r "new PDO('mysql:host=${DB_HOST};port=${DB_PORT};dbname=${DB_DATABAS
 done
 echo "MySQL is ready."
 
+echo "Syncing Laravel public assets..."
+cp -a /var/www/laravel_public_seed/. public/
+
 echo "Clearing stale Laravel bootstrap cache..."
 rm -f bootstrap/cache/packages.php \
       bootstrap/cache/services.php \

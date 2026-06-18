@@ -157,6 +157,50 @@ class ApiClient {
     }
   }
 
+  /// Make a PATCH request
+  Future<Map<String, dynamic>> patch(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
+    final client = HttpClient();
+    client.connectionTimeout = const Duration(seconds: 10);
+
+    try {
+      final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+      final request = await client.patchUrl(_baseUri.resolve(cleanPath));
+      request.headers.set(HttpHeaders.acceptHeader, 'application/json');
+      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
+      _addNgrokHeader(request);
+
+      _addAuthHeader(request);
+
+      if (body != null) {
+        request.write(jsonEncode(body));
+      }
+
+      final response = await request.close();
+      final responseBody = await response.transform(utf8.decoder).join();
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw ApiException(_formatHttpError(response.statusCode, responseBody));
+      }
+
+      final decoded = jsonDecode(responseBody);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      throw const FormatException('Response API bukan JSON object');
+    } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
+      throw ApiException('Network error: ${e.toString()}');
+    } finally {
+      client.close(force: true);
+    }
+  }
+
   /// Make a DELETE request
   Future<Map<String, dynamic>> delete(String path) async {
     final client = HttpClient();
@@ -307,14 +351,38 @@ class ApiClient {
   String _formatHttpError(int status, String body) {
     try {
       final decoded = jsonDecode(body);
-      if (decoded is Map && decoded['message'] != null) {
-        return 'HTTP $status: ${decoded['message']}';
+      if (decoded is Map) {
+        final message = decoded['message']?.toString();
+        final validationDetails = _formatValidationErrors(decoded['errors']);
+
+        if (message != null && message.isNotEmpty) {
+          return validationDetails == null
+              ? 'HTTP $status: $message'
+              : 'HTTP $status: $message\n$validationDetails';
+        }
       }
     } catch (_) {
       // Keep the raw response below if it is not JSON.
     }
 
     return 'HTTP $status: $body';
+  }
+
+  String? _formatValidationErrors(dynamic errors) {
+    if (errors is! Map) {
+      return null;
+    }
+
+    final messages = <String>[];
+    errors.forEach((field, value) {
+      if (value is List) {
+        messages.addAll(value.map((item) => item.toString()));
+      } else if (value != null) {
+        messages.add(value.toString());
+      }
+    });
+
+    return messages.isEmpty ? null : messages.join('\n');
   }
 }
 

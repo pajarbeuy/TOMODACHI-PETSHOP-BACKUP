@@ -177,7 +177,6 @@ class _LoginScreenState extends State<LoginScreen>
     _authService = AuthService();
     _authService.initialize(kIsWeb ? _apiBaseUrl : _mobileApiBaseUrl);
     _loadCaptcha();
-    _loadCaptcha();
   }
 
   @override
@@ -186,31 +185,8 @@ class _LoginScreenState extends State<LoginScreen>
     _emailCtrl.dispose();
     _passCtrl.dispose();
     _captchaCtrl.dispose();
-    _captchaCtrl.dispose();
     super.dispose();
   }
-
-  // Future<void> _loadCaptcha() async {
-  //   if (mounted) {
-  //     setState(() => _captchaLoading = true);
-  //   }
-
-  //   try {
-  //     final challenge = await _authService.fetchCaptcha();
-  //     if (!mounted) return;
-  //     setState(() {
-  //       _captchaChallenge = challenge;
-  //       _captchaCtrl.clear();
-  //       _captchaLoading = false;
-  //     });
-  //   } catch (e) {
-  //     if (!mounted) return;
-  //     setState(() {
-  //       _captchaLoading = false;
-  //       _errorMessage = 'Failed to load captcha: $e';
-  //     });
-  //   }
-  // }
 
   Future<void> _loadCaptcha() async {
     if (mounted) {
@@ -238,15 +214,9 @@ class _LoginScreenState extends State<LoginScreen>
     final email = _emailCtrl.text.trim();
     final password = _passCtrl.text.trim();
     final captchaAnswer = _captchaCtrl.text.trim();
-    // final captchaAnswer = _captchaCtrl.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
       setState(() => _errorMessage = 'Email and password are required');
-      return;
-    }
-
-    if (_captchaChallenge == null || captchaAnswer.isEmpty) {
-      setState(() => _errorMessage = 'Captcha answer is required');
       return;
     }
 
@@ -269,13 +239,6 @@ class _LoginScreenState extends State<LoginScreen>
       captchaAnswer: captchaAnswer,
       rememberMe: _rememberMe,
     );
-    // final success = await _authService.login(
-    //   email,
-    //   password,
-    //   captchaKey: _captchaChallenge!.key,
-    //   captchaAnswer: captchaAnswer,
-    //   rememberMe: _rememberMe,
-    // );
 
     if (!mounted) return;
 

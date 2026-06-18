@@ -5,9 +5,9 @@ Panduan ini menjelaskan cara menjalankan stack Tomodachi Pet Shop dengan Docker,
 ## Isi Folder
 
 - `docker-compose.yml`: untuk development/local. Image backend dan frontend dibuild dari source lokal.
-- `docker-compose.prod.yml`: untuk production/server. Image backend dan frontend dipull dari Docker Hub.
+- `docker-compose.prod.yml`: untuk production/server backend API. Image backend dipull dari Docker Hub.
 - `.env.laravel`: environment Laravel yang dimount ke container.
-- `nginx/conf.d/default.conf`: Nginx reverse proxy untuk Flutter Web, Laravel API, dan storage.
+- `nginx/conf.d/default.conf`: Nginx reverse proxy untuk Laravel API dan storage.
 
 ## Arsitektur
 
@@ -35,11 +35,10 @@ DB_PASSWORD=strong-db-password
 NGINX_PORT=80
 ```
 
-Untuk production image:
+Untuk production image backend:
 
 ```env
 BACKEND_IMAGE=dockerhubusername/tomodachi-backend:latest
-FRONTEND_IMAGE=dockerhubusername/tomodachi-frontend:latest
 ```
 
 Pastikan `.env.laravel` production berisi:
@@ -98,28 +97,25 @@ Dari root project:
 docker login
 ```
 
-Build image:
+Build image backend:
 
 ```powershell
 docker build -t dockerhubusername/tomodachi-backend:latest ./backend
-docker build -t dockerhubusername/tomodachi-frontend:latest ./frontend
 ```
 
 Push image:
 
 ```powershell
 docker push dockerhubusername/tomodachi-backend:latest
-docker push dockerhubusername/tomodachi-frontend:latest
 ```
 
 Atau dari folder `docker`, gunakan compose local:
 
 ```powershell
 $env:BACKEND_IMAGE="dockerhubusername/tomodachi-backend:latest"
-$env:FRONTEND_IMAGE="dockerhubusername/tomodachi-frontend:latest"
 
-docker compose build
-docker compose push
+docker compose build laravel
+docker compose push laravel
 ```
 
 ## Production Run di Server
@@ -141,19 +137,12 @@ DB_USERNAME=tomodachi_user
 DB_PASSWORD=strong-db-password
 NGINX_PORT=80
 BACKEND_IMAGE=dockerhubusername/tomodachi-backend:latest
-FRONTEND_IMAGE=dockerhubusername/tomodachi-frontend:latest
 ```
 
 Pull image:
 
 ```powershell
 docker compose -f docker-compose.prod.yml pull
-```
-
-Isi volume Flutter Web:
-
-```powershell
-docker compose -f docker-compose.prod.yml --profile build up flutter_builder
 ```
 
 Jalankan stack:
@@ -225,13 +214,6 @@ flutter build appbundle --release --dart-define=API_BASE_URL=https://domain-kamu
 
 ## Troubleshooting
 
-Jika `403 Forbidden` saat buka `/`:
-
-```powershell
-docker compose --profile build up --build flutter_builder
-docker compose up -d
-```
-
 Jika login `401 Invalid credentials`:
 
 ```powershell
@@ -251,7 +233,6 @@ Jika image salah tag:
 
 ```powershell
 docker rmi dockerhubusername/tomodachi-backend:latest
-docker rmi dockerhubusername/tomodachi-frontend:latest
 ```
 
 ## Data Persisten
@@ -259,8 +240,7 @@ docker rmi dockerhubusername/tomodachi-frontend:latest
 Volume penting:
 
 - `mysql_data`: data database.
-- `laravel_app`: file aplikasi Laravel yang dibaca Nginx, termasuk public storage.
-- `flutter_web`: hasil build Flutter Web.
+- `laravel_public_storage`: file public storage Laravel, misalnya gambar produk.
 
 Hati-hati dengan:
 

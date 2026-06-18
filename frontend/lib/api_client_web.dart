@@ -101,6 +101,30 @@ class ApiClient {
     }
   }
 
+  /// Make a PATCH request
+  Future<Map<String, dynamic>> patch(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
+    final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    final url = _baseUri.resolve(cleanPath).toString();
+
+    final headers = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
+    _addNgrokHeader(headers);
+    _addAuthHeader(headers);
+
+    try {
+      final bodyStr = body != null ? jsonEncode(body) : null;
+      final response = await _makeRequest(url, 'PATCH', headers, bodyStr);
+      return response;
+    } catch (e) {
+      throw ApiException('PATCH $path failed: $e');
+    }
+  }
+
   /// Make a DELETE request
   Future<Map<String, dynamic>> delete(String path) async {
     final cleanPath = path.startsWith('/') ? path.substring(1) : path;
@@ -294,14 +318,38 @@ class ApiClient {
   String _formatHttpError(int status, String body) {
     try {
       final decoded = jsonDecode(body);
-      if (decoded is Map && decoded['message'] != null) {
-        return 'HTTP $status: ${decoded['message']}';
+      if (decoded is Map) {
+        final message = decoded['message']?.toString();
+        final validationDetails = _formatValidationErrors(decoded['errors']);
+
+        if (message != null && message.isNotEmpty) {
+          return validationDetails == null
+              ? 'HTTP $status: $message'
+              : 'HTTP $status: $message\n$validationDetails';
+        }
       }
     } catch (_) {
       // Keep the raw response below if it is not JSON.
     }
 
     return 'HTTP $status: $body';
+  }
+
+  String? _formatValidationErrors(dynamic errors) {
+    if (errors is! Map) {
+      return null;
+    }
+
+    final messages = <String>[];
+    errors.forEach((field, value) {
+      if (value is List) {
+        messages.addAll(value.map((item) => item.toString()));
+      } else if (value != null) {
+        messages.add(value.toString());
+      }
+    });
+
+    return messages.isEmpty ? null : messages.join('\n');
   }
 }
 
