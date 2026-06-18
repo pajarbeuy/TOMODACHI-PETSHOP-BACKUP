@@ -101,6 +101,56 @@ class AuthApiTest extends TestCase
         $this->assertDatabaseHas('users', ['email' => 'new-kasir@test.local']);
     }
 
+
+    public function test_owner_can_list_accounts(): void
+    {
+        Sanctum::actingAs($this->userWithRole('owner'));
+
+        $response = $this->getJson('/api/auth/accounts');
+
+        $response->assertOk()
+            ->assertJsonPath('status', true);
+    }
+
+    public function test_admin_cannot_list_accounts(): void
+    {
+        Sanctum::actingAs($this->userWithRole('admin'));
+
+        $response = $this->getJson('/api/auth/accounts');
+
+        $response->assertForbidden();
+    }
+
+    public function test_owner_can_update_account(): void
+    {
+        Sanctum::actingAs($this->userWithRole('owner'));
+        $target = $this->userWithRole('kasir', ['email' => 'change-me@test.local']);
+        $role = $this->role('admin');
+
+        $response = $this->patchJson('/api/auth/accounts/' . $target->id, [
+            'name' => 'Updated Name',
+            'role_id' => $role->id,
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('status', true)
+            ->assertJsonPath('data.user.name', 'Updated Name')
+            ->assertJsonPath('data.user.role.name', 'admin');
+    }
+
+    public function test_owner_can_delete_account(): void
+    {
+        Sanctum::actingAs($this->userWithRole('owner'));
+        $target = $this->userWithRole('kasir', ['email' => 'delete-me@test.local']);
+
+        $response = $this->deleteJson('/api/auth/accounts/' . $target->id);
+
+        $response->assertOk()
+            ->assertJsonPath('status', true);
+
+        $this->assertDatabaseMissing('users', ['id' => $target->id]);
+    }
+
     public function test_owner_register_validates_duplicate_email(): void
     {
         $existing = $this->userWithRole('kasir', ['email' => 'duplicate@test.local']);

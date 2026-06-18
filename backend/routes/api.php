@@ -50,6 +50,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Registering new users is restricted to owner
     Route::post('/auth/register', [AuthController::class, 'register'])
         ->middleware(['check.role:owner', 'throttle:register']);
+    Route::get('/auth/accounts', [AuthController::class, 'accounts'])
+        ->middleware('check.role:owner');
+    Route::patch('/auth/accounts/{user}', [AuthController::class, 'updateAccount'])
+        ->middleware('check.role:owner');
+    Route::delete('/auth/accounts/{user}', [AuthController::class, 'destroyAccount'])
+        ->middleware('check.role:owner');
     
     Route::get('/user', function (Request $request) {
         return $request->user();
