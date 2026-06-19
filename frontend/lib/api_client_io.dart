@@ -308,7 +308,26 @@ class ApiClient {
     try {
       final decoded = jsonDecode(body);
       if (decoded is Map && decoded['message'] != null) {
-        return 'HTTP $status: ${decoded['message']}';
+        String msg = decoded['message'];
+        
+        // Extract validation errors if present
+        if (decoded['errors'] is Map) {
+          final errors = decoded['errors'] as Map;
+          final errorList = <String>[];
+          for (final key in errors.keys) {
+            final value = errors[key];
+            if (value is List && value.isNotEmpty) {
+              errorList.add(value.first.toString());
+            } else {
+              errorList.add(value.toString());
+            }
+          }
+          if (errorList.isNotEmpty) {
+            msg += ': ' + errorList.join(', ');
+          }
+        }
+        
+        return msg;
       }
     } catch (_) {
       // Keep the raw response below if it is not JSON.

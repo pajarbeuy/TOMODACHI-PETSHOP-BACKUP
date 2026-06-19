@@ -287,9 +287,16 @@ class AuthController extends Controller
      * DELETE /api/auth/accounts/{user}
      * Owner-only account deletion.
      */
-    public function destroyAccount(User $user)
+    public function destroyAccount(Request $request, User $user)
     {
         try {
+            if ($request->user()->id === $user->id) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Cannot delete your own account',
+                ], 403);
+            }
+
             $user->delete();
 
             return response()->json([
