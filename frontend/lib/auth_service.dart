@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'api_client.dart';
+import 'utils/error_message.dart';
 
 /// User model
 class UserModel {
@@ -76,6 +77,7 @@ class AccountModel {
   }
 }
 
+
 class AuthService extends ChangeNotifier {
   late final ApiClient _apiClient;
   late final FlutterSecureStorage _secureStorage;
@@ -106,7 +108,7 @@ class AuthService extends ChangeNotifier {
       return CaptchaChallenge.fromJson(data);
     }
 
-    throw Exception(response['message'] ?? 'Failed to load captcha');
+    throw ApiException(response['message'] ?? 'Gagal memuat captcha');
   }
 
   Future<bool> login(
@@ -159,12 +161,12 @@ class AuthService extends ChangeNotifier {
         }
       }
 
-      _errorMessage = response['message'] ?? 'Login failed';
+      _errorMessage = response['message'] ?? 'Login gagal';
       _isLoading = false;
       notifyListeners();
       return false;
     } catch (e) {
-      _errorMessage = 'Error: ${e.toString()}';
+      _errorMessage = userFriendlyError(e, fallback: 'Login gagal');
       _isLoading = false;
       notifyListeners();
       return false;
@@ -193,12 +195,12 @@ class AuthService extends ChangeNotifier {
         return true;
       }
 
-      _errorMessage = response['message'] ?? 'Logout failed';
+      _errorMessage = response['message'] ?? 'Logout gagal';
       _isLoading = false;
       notifyListeners();
       return false;
     } catch (e) {
-      _errorMessage = 'Error: ${e.toString()}';
+      _errorMessage = userFriendlyError(e, fallback: 'Logout gagal');
       // Still clear local token even if API call fails
       _token = null;
       _currentUser = null;
@@ -220,7 +222,7 @@ class AuthService extends ChangeNotifier {
           .toList();
     }
 
-    throw Exception(response['message'] ?? 'Failed to load accounts');
+    throw ApiException(response['message'] ?? 'Gagal memuat akun');
   }
 
   Future<bool> updateAccount({
@@ -236,12 +238,37 @@ class AuthService extends ChangeNotifier {
     if (email != null) body['email'] = email;
     if (password != null && password.isNotEmpty) {
       body['password'] = password;
-      body['password_confirmation'] = passwordConfirmation;
+      body['password_confirmation'] = passwordConfirmation ?? '';
     }
     if (roleId != null) body['role_id'] = roleId;
 
-    final response = await _apiClient.put('/api/auth/accounts/$userId', body: body);
-    return response['status'] == true;
+    try {
+      final response = await _apiClient.patch(
+        '/api/auth/accounts/$userId',
+        body: body,
+      );
+
+      if (response['status'] == true) {
+        _errorMessage = null;
+        return true;
+      }
+
+      // Handle validation errors
+      if (response['errors'] is Map<String, dynamic>) {
+        final errors = response['errors'] as Map<String, dynamic>;
+        final errorList = errors.entries
+            .map((e) => '${e.key}: ${(e.value is List ? (e.value as List).join(', ') : e.value)}')
+            .toList();
+        _errorMessage = errorList.join('\n');
+      } else {
+      _errorMessage = response['message'] ?? 'Gagal mengubah akun';
+      }
+
+      return false;
+    } catch (e) {
+      _errorMessage = userFriendlyError(e, fallback: 'Gagal mengubah akun');
+      return false;
+    }
   }
 
   Future<bool> deleteAccount(String userId) async {
@@ -279,12 +306,22 @@ class AuthService extends ChangeNotifier {
         return true;
       }
 
-      _errorMessage = response['message'] ?? 'Registration failed';
+      // Handle validation errors
+      if (response['errors'] is Map<String, dynamic>) {
+        final errors = response['errors'] as Map<String, dynamic>;
+        final errorList = errors.entries
+            .map((e) => '${e.key}: ${(e.value is List ? (e.value as List).join(', ') : e.value)}')
+            .toList();
+        _errorMessage = errorList.join('\n');
+      } else {
+        _errorMessage = response['message'] ?? 'Registrasi gagal';
+      }
+
       _isLoading = false;
       notifyListeners();
       return false;
     } catch (e) {
-      _errorMessage = 'Error: ${e.toString()}';
+      _errorMessage = userFriendlyError(e, fallback: 'Registrasi gagal');
       _isLoading = false;
       notifyListeners();
       return false;
@@ -309,7 +346,7 @@ class AuthService extends ChangeNotifier {
 
       return false;
     } catch (e) {
-      _errorMessage = 'Error: ${e.toString()}';
+      _errorMessage = userFriendlyError(e);
       notifyListeners();
       return false;
     }
@@ -333,7 +370,7 @@ class AuthService extends ChangeNotifier {
       }
       return false;
     } catch (e) {
-      _errorMessage = 'Error restoring token: ${e.toString()}';
+      _errorMessage = userFriendlyError(e, fallback: 'Gagal memulihkan sesi login');
       return false;
     }
   }

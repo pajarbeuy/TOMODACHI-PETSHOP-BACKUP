@@ -49,6 +49,9 @@ class ApiClient {
       final response = await _makeRequest(url, 'GET', headers, null);
       return response;
     } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
       throw ApiException('GET $path failed: $e');
     }
   }
@@ -73,6 +76,9 @@ class ApiClient {
       final response = await _makeRequest(url, 'POST', headers, bodyStr);
       return response;
     } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
       throw ApiException('POST $path failed: $e');
     }
   }
@@ -97,7 +103,37 @@ class ApiClient {
       final response = await _makeRequest(url, 'PUT', headers, bodyStr);
       return response;
     } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
       throw ApiException('PUT $path failed: $e');
+    }
+  }
+
+  /// Make a PATCH request
+  Future<Map<String, dynamic>> patch(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
+    final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    final url = _baseUri.resolve(cleanPath).toString();
+
+    final headers = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
+    _addNgrokHeader(headers);
+    _addAuthHeader(headers);
+
+    try {
+      final bodyStr = body != null ? jsonEncode(body) : null;
+      final response = await _makeRequest(url, 'PATCH', headers, bodyStr);
+      return response;
+    } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
+      throw ApiException('PATCH $path failed: $e');
     }
   }
 
@@ -114,6 +150,9 @@ class ApiClient {
       final response = await _makeRequest(url, 'DELETE', headers, null);
       return response;
     } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
       throw ApiException('DELETE $path failed: $e');
     }
   }
@@ -321,6 +360,23 @@ class ApiClient {
     }
 
     return 'HTTP $status: $body';
+  }
+
+  String? _formatValidationErrors(dynamic errors) {
+    if (errors is! Map) {
+      return null;
+    }
+
+    final messages = <String>[];
+    errors.forEach((field, value) {
+      if (value is List) {
+        messages.addAll(value.map((item) => item.toString()));
+      } else if (value != null) {
+        messages.add(value.toString());
+      }
+    });
+
+    return messages.isEmpty ? null : messages.join('\n');
   }
 }
 

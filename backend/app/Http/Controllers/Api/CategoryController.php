@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Support\ApiResponse;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
@@ -51,7 +52,7 @@ class CategoryController extends Controller
     {
         $category = Category::find($id);
         if (!$category) {
-            return response()->json(['status' => false, 'message' => 'Kategori tidak ditemukan'], 404);
+            return ApiResponse::error('Kategori tidak ditemukan', 404);
         }
         return response()->json(['status' => true, 'message' => 'Detail kategori berhasil diambil', 'data' => $category], 200);
     }
@@ -71,7 +72,7 @@ class CategoryController extends Controller
     {
         $category = Category::find($id);
         if (!$category) {
-            return response()->json(['message' => 'Category not found'], 404);
+            return ApiResponse::error('Kategori tidak ditemukan', 404);
         }
 
         $validated = $request->validate([
@@ -92,7 +93,7 @@ class CategoryController extends Controller
     {
         $category = Category::find($id);
         if (!$category) {
-            return response()->json(['status' => false, 'message' => 'Kategori tidak ditemukan'], 404);
+            return ApiResponse::error('Kategori tidak ditemukan', 404);
         }
 
         $category->delete();

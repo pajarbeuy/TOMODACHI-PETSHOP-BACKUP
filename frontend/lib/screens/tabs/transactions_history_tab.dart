@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../transaction_service.dart';
 import '../../utils/currency_formatter.dart';
+import '../../utils/error_message.dart';
 
 class TransactionsHistoryTab extends StatefulWidget {
   final TransactionService transactionService;
@@ -66,7 +67,7 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Failed to load transaction history: ${e.toString()}',
+              userFriendlyError(e, fallback: 'Gagal memuat riwayat transaksi'),
             ),
           ),
         );

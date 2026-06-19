@@ -2,10 +2,18 @@
 
 namespace App\Exceptions;
 
+use App\Support\ApiResponse;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Exceptions\InvalidSignatureException;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -30,15 +38,86 @@ class Handler extends ExceptionHandler
             //
         });
 
-        // 429: Rate limit exceeded → always return JSON
-        $this->renderable(function (ThrottleRequestsException $e, Request $request) {
-            $retryAfter = $e->getHeaders()['Retry-After'] ?? 60;
-            return response()->json([
-                'status'      => false,
-                'message'     => 'Too many requests. Please slow down.',
-                'retry_after' => (int) $retryAfter . ' seconds',
-            ], 429);
+        $this->renderable(function (ValidationException $e, Request $request) {
+            if (!$this->shouldReturnJson($request)) {
+                return null;
+            }
+
+            return ApiResponse::error('Validation failed', 422, $e->errors());
         });
+
+        $this->renderable(function (AuthorizationException $e, Request $request) {
+            if (!$this->shouldReturnJson($request)) {
+                return null;
+            }
+
+            return ApiResponse::error('Forbidden. You do not have permission to access this resource.', 403);
+        });
+
+        $this->renderable(function (NotFoundHttpException $e, Request $request) {
+            if (!$this->shouldReturnJson($request)) {
+                return null;
+            }
+
+            return ApiResponse::error('Resource not found.', 404);
+        });
+
+        $this->renderable(function (MethodNotAllowedHttpException $e, Request $request) {
+            if (!$this->shouldReturnJson($request)) {
+                return null;
+            }
+
+            return ApiResponse::error('HTTP method is not allowed for this endpoint.', 405, null, [
+                'allowed_methods' => $e->getHeaders()['Allow'] ?? null,
+            ]);
+        });
+
+        $this->renderable(function (InvalidSignatureException $e, Request $request) {
+            if (!$this->shouldReturnJson($request)) {
+                return null;
+            }
+
+            return ApiResponse::error('Invalid or expired signature.', 403);
+        });
+
+        $this->renderable(function (QueryException $e, Request $request) {
+            if (!$this->shouldReturnJson($request)) {
+                return null;
+            }
+
+            return ApiResponse::error('Database operation failed. Please try again later.', 500);
+        });
+
+        $this->renderable(function (ThrottleRequestsException $e, Request $request) {
+            if (!$this->shouldReturnJson($request)) {
+                return null;
+            }
+
+            $retryAfter = $e->getHeaders()['Retry-After'] ?? 60;
+
+            return ApiResponse::error('Too many requests. Please slow down.', 429, null, [
+                'retry_after' => (int) $retryAfter . ' seconds',
+            ]);
+        });
+    }
+
+    public function render($request, Throwable $e)
+    {
+        if ($this->shouldReturnJson($request)) {
+            if (
+                !$e instanceof AuthenticationException
+                && !$e instanceof AuthorizationException
+                && !$e instanceof ValidationException
+                && !$e instanceof HttpExceptionInterface
+                && !$e instanceof QueryException
+            ) {
+                report($e);
+
+                return ApiResponse::error('Internal server error. Please try again later.', 500);
+            }
+        }
+
+        return parent::render($request, $e);
     }
 
     /**
@@ -47,9 +126,11 @@ class Handler extends ExceptionHandler
      */
     protected function unauthenticated($request, AuthenticationException $exception)
     {
-        return response()->json([
-            'status'  => false,
-            'message' => 'Unauthenticated. Please provide a valid Bearer token.',
-        ], 401);
+        return ApiResponse::error('Unauthenticated. Please provide a valid Bearer token.', 401);
+    }
+
+    protected function shouldReturnJson($request, ?Throwable $e = null): bool
+    {
+        return $request->is('api/*') || $request->expectsJson();
     }
 }

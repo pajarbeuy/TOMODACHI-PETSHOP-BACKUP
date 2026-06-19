@@ -7,6 +7,7 @@ import '../../payment_url_launcher.dart';
 import '../../product_service.dart';
 import '../../transaction_service.dart';
 import '../../utils/currency_formatter.dart';
+import '../../utils/error_message.dart';
 
 class PosTab extends StatefulWidget {
   final ProductService productService;
@@ -46,6 +47,7 @@ class _PosTabState extends State<PosTab> {
 
   // Cart items: Map of productId -> CartItem
   final Map<String, Map<String, dynamic>> _cart = {};
+  final ValueNotifier<int> _cartVersion = ValueNotifier<int>(0);
 
   // Checkout inputs
   String _paymentMethod = 'cash';
@@ -69,6 +71,7 @@ class _PosTabState extends State<PosTab> {
   void dispose() {
     _paymentStatusTimer?.cancel();
     _searchDebounce?.cancel();
+    _cartVersion.dispose();
     _paymentSuccessPlayer.dispose();
     _searchCtrl.dispose();
     _amountPaidCtrl.dispose();
@@ -96,6 +99,11 @@ class _PosTabState extends State<PosTab> {
 
   void _onAmountPaidChanged() {
     _calculateChange();
+  }
+
+  void _notifyCartChanged() {
+    if (!mounted) return;
+    _cartVersion.value++;
   }
 
   Future<void> _fetchCategories() async {
@@ -131,7 +139,9 @@ class _PosTabState extends State<PosTab> {
     } catch (e) {
       if (mounted && fetchSerial == _productFetchSerial) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load products: ${e.toString()}')),
+          SnackBar(
+            content: Text(userFriendlyError(e, fallback: 'Gagal memuat produk')),
+          ),
         );
       }
     } finally {
@@ -173,29 +183,77 @@ class _PosTabState extends State<PosTab> {
       }
       _calculateChange();
     });
+    _notifyCartChanged();
   }
 
   void _updateQuantity(String id, int delta) {
-    setState(() {
-      if (_cart.containsKey(id)) {
-        final currentQty = _cart[id]!['quantity'] as int;
-        final maxStock = _cart[id]!['max_stock'] as int;
-        final nextQty = currentQty + delta;
+    if (!_cart.containsKey(id)) {
+      return;
+    }
 
-        if (nextQty <= 0) {
-          _cart.remove(id);
-        } else if (nextQty <= maxStock) {
-          _cart[id]!['quantity'] = nextQty;
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Cannot exceed available stock ($maxStock)'),
-            ),
-          );
-        }
-        _calculateChange();
-      }
+    final currentQty = _cart[id]!['quantity'] as int;
+    final maxStock = _cart[id]!['max_stock'] as int;
+    final nextQty = currentQty + delta;
+
+    if (nextQty <= 0) {
+      _cart.remove(id);
+    } else if (nextQty <= maxStock) {
+      _cart[id]!['quantity'] = nextQty;
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Cannot exceed available stock ($maxStock)'),
+        ),
+      );
+      return;
+    }
+
+    _calculateChange();
+    _notifyCartChanged();
+  }
+
+  void _setPaymentMethod(String value) {
+    if (_paymentMethod == value) {
+      return;
+    }
+
+    _paymentMethod = value;
+    if (value != 'cash') {
+      _amountPaidCtrl.clear();
+      _change = 0.0;
+    } else {
+      _calculateChange();
+    }
+    _notifyCartChanged();
+  }
+
+  void _calculateChange() {
+    final sub = _getCartSubtotal();
+    final paid = parseCurrency(_amountPaidCtrl.text);
+    final nextChange = paid > sub ? paid - sub : 0.0;
+    if (_change != nextChange) {
+      _change = nextChange;
+      _notifyCartChanged();
+    }
+  }
+
+  void _clearCartAfterCheckout() {
+    setState(() {
+      _cart.clear();
+      _amountPaidCtrl.clear();
+      _change = 0.0;
     });
+    _notifyCartChanged();
+  }
+
+  void _setSubmittingCheckout(bool value) {
+    if (_submittingCheckout == value) {
+      return;
+    }
+    setState(() {
+      _submittingCheckout = value;
+    });
+    _notifyCartChanged();
   }
 
   double _getCartSubtotal() {
@@ -204,14 +262,6 @@ class _PosTabState extends State<PosTab> {
       sub += (item['unit_price'] as double) * (item['quantity'] as int);
     });
     return sub;
-  }
-
-  void _calculateChange() {
-    final sub = _getCartSubtotal();
-    final paid = parseCurrency(_amountPaidCtrl.text);
-    setState(() {
-      _change = paid > sub ? paid - sub : 0.0;
-    });
   }
 
   void _handleCheckout() async {
@@ -246,6 +296,7 @@ class _PosTabState extends State<PosTab> {
       preparingPaymentDialogOpen = true;
       _showPreparingPaymentDialog(sub);
     }
+    _setSubmittingCheckout(true);
 
     try {
       final itemsList = _cart.values.map((item) {
@@ -284,12 +335,7 @@ class _PosTabState extends State<PosTab> {
           _showReceiptDialog(trxId);
         }
 
-        // Clear state
-        setState(() {
-          _cart.clear();
-          _amountPaidCtrl.clear();
-          _change = 0.0;
-        });
+        _clearCartAfterCheckout();
 
         // Re-fetch products to update stock quantities
         _fetchProducts();
@@ -310,7 +356,7 @@ class _PosTabState extends State<PosTab> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Checkout failed: ${e.toString()}'),
+            content: Text(userFriendlyError(e, fallback: 'Checkout gagal')),
             backgroundColor: Colors.red.shade700,
           ),
         );
@@ -369,6 +415,7 @@ class _PosTabState extends State<PosTab> {
         );
       },
     );
+      _setSubmittingCheckout(false);
   }
 
   void _showPaymentPendingDialog(
@@ -815,15 +862,20 @@ class _PosTabState extends State<PosTab> {
           Positioned(
             right: 16,
             bottom: 16,
-            child: FloatingActionButton.extended(
-              onPressed: _openCartSheet,
-              backgroundColor: const Color(0xFFFFB570),
-              foregroundColor: Colors.white,
-              icon: const Icon(Icons.shopping_cart),
-              label: Text(
-                '${_cart.length} Item - ${formatRupiah(_getCartSubtotal())}',
+            child: ValueListenableBuilder<int>(
+              valueListenable: _cartVersion,
+              builder: (context, _, __) {
+                return FloatingActionButton.extended(
+                  onPressed: _openCartSheet,
+                  backgroundColor: const Color(0xFFFFB570),
+                  foregroundColor: Colors.white,
+                  icon: const Icon(Icons.shopping_cart),
+                  label: Text(
+                    '${_cart.length} Item - ${formatRupiah(_getCartSubtotal())}',
+                  ),
+                );
+              },
               ),
-            ),
           ),
         ],
       );
@@ -1133,11 +1185,14 @@ class _PosTabState extends State<PosTab> {
   }
 
   Widget _buildCartPanel() {
-    final subtotal = _getCartSubtotal();
+    return ValueListenableBuilder<int>(
+      valueListenable: _cartVersion,
+      builder: (context, _, __) {
+        final subtotal = _getCartSubtotal();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
         // Cart Header
         Padding(
           padding: const EdgeInsets.all(20),
@@ -1398,7 +1453,9 @@ class _PosTabState extends State<PosTab> {
             ],
           ),
         ),
-      ],
+          ],
+        );
+      },
     );
   }
 
@@ -1418,15 +1475,7 @@ class _PosTabState extends State<PosTab> {
           color: isSelected ? Colors.white : const Color(0xFF3D2314),
         ),
       ),
-      onPressed: () {
-        setState(() {
-          _paymentMethod = value;
-          if (value != 'cash') {
-            _amountPaidCtrl.clear();
-            _change = 0.0;
-          }
-        });
-      },
+      onPressed: () => _setPaymentMethod(value),
       style: OutlinedButton.styleFrom(
         backgroundColor: isSelected ? const Color(0xFFFFB570) : Colors.white,
         side: BorderSide(
