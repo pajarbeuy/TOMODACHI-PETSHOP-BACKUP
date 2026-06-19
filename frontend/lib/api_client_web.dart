@@ -333,15 +333,27 @@ class ApiClient {
   String _formatHttpError(int status, String body) {
     try {
       final decoded = jsonDecode(body);
-      if (decoded is Map) {
-        final message = decoded['message']?.toString();
-        final validationDetails = _formatValidationErrors(decoded['errors']);
-
-        if (message != null && message.isNotEmpty) {
-          return validationDetails == null
-              ? 'HTTP $status: $message'
-              : 'HTTP $status: $message\n$validationDetails';
+      if (decoded is Map && decoded['message'] != null) {
+        String msg = decoded['message'];
+        
+        // Extract validation errors if present
+        if (decoded['errors'] is Map) {
+          final errors = decoded['errors'] as Map;
+          final errorList = <String>[];
+          for (final key in errors.keys) {
+            final value = errors[key];
+            if (value is List && value.isNotEmpty) {
+              errorList.add(value.first.toString());
+            } else {
+              errorList.add(value.toString());
+            }
+          }
+          if (errorList.isNotEmpty) {
+            msg += ': ' + errorList.join(', ');
+          }
         }
+        
+        return msg;
       }
     } catch (_) {
       // Keep the raw response below if it is not JSON.

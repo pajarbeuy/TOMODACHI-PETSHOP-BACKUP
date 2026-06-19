@@ -103,7 +103,14 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
   List<AccountModel> _filter(List<AccountModel> source) {
     final q = _searchCtrl.text.trim().toLowerCase();
     if (q.isEmpty) return source;
-    return source.where((a) => a.name.toLowerCase().contains(q) || a.email.toLowerCase().contains(q) || a.roleName.toLowerCase().contains(q)).toList();
+    return source
+        .where(
+          (a) =>
+              a.name.toLowerCase().contains(q) ||
+              a.email.toLowerCase().contains(q) ||
+              a.roleName.toLowerCase().contains(q),
+        )
+        .toList();
   }
 
   void _openForm({AccountModel? account}) {
@@ -363,7 +370,16 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Hapus akun'),
         content: Text('Hapus ${account.name}?'),
-        actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')), FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Hapus'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Hapus'),
+          ),
+        ],
       ),
     );
     if (ok != true) return;

@@ -1,0 +1,761 @@
+{
+  "info": {
+    "_postman_id": "tomodachi-petshop-api",
+    "name": "Tomodachi Pet Shop API",
+    "description": "API Collection untuk Tomodachi Pet Shop Management System\n\n**Base URL:** http://127.0.0.1:8000\n\n**Setup:**\n1. Login terlebih dahulu untuk mendapatkan token\n2. Token akan tersimpan otomatis di environment variable\n3. Gunakan environment: \"Local Development\"",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "26906715"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "1. Get Captcha (LAKUKAN DULU)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data) {",
+                  "        pm.environment.set('captcha_key', jsonData.data.captcha_key);",
+                  "        console.log('✅ Captcha Key: ' + jsonData.data.captcha_key);",
+                  "        console.log('❓ Question: ' + jsonData.data.question);",
+                  "        console.log('💡 Jawab pertanyaan di atas, lalu masukkan jawaban di Login request');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/captcha",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "captcha"]
+            },
+            "description": "📌 STEP 1: Dapatkan CAPTCHA terlebih dahulu\n\n⚠️ PENTING:\n1. Click SEND\n2. Lihat Console (bawah kiri) - akan ada pertanyaan soal penjumlahan\n3. Jawab soal tersebut, misalnya 3 + 5 = 8\n4. Copy jawaban, lalu buka request 'Login'\n5. Paste jawaban di field 'captcha_answer' pada Login request"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Login (SETELAH GET CAPTCHA)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data && jsonData.data.token) {",
+                  "        pm.environment.set('token', jsonData.data.token);",
+                  "        console.log('✅ Login Berhasil!');",
+                  "        console.log('🔑 Token: ' + jsonData.data.token);",
+                  "        console.log('👤 User: ' + jsonData.data.user.name + ' (' + jsonData.data.user.role.name + ')');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"owner@example.com\",\n  \"password\": \"password\",\n  \"captcha_key\": \"{{captcha_key}}\",\n  \"captcha_answer\": \"GANTI_DENGAN_JAWABAN_SOAL_DARI_CAPTCHA\",\n  \"remember_me\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "📌 STEP 2: Login dengan Captcha\n\n⚠️ PENTING:\n1. Sebelum click SEND, buka request 'Get Captcha' dulu\n2. Copy jawaban dari console (misal: 8)\n3. Paste ke field 'captcha_answer' di bawah\n4. Klik SEND\n5. Token akan tersimpan otomatis!"
+          },
+          "response": []
+        },
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"kasir\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Registrasi pengguna baru (Owner only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Dapatkan profil pengguna yang sedang login"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            },
+            "description": "Logout dan revoke token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Product Management",
+      "item": [
+        {
+          "name": "Get All Products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/products?page=1&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "15"
+                },
+                {
+                  "key": "category_id",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "animal_type",
+                  "value": "cat",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Dapatkan daftar semua produk (dengan pagination)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Product Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/products/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "1"]
+            },
+            "description": "Dapatkan detail produk spesifik berdasarkan ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cat Food Premium\",\n  \"sku\": \"CF-001\",\n  \"category_id\": 1,\n  \"animal_type\": \"cat\",\n  \"sub_category\": \"food\",\n  \"buy_price\": 25000,\n  \"sell_price\": 45000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/products",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Buat produk baru (Owner only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cat Food Premium Updated\",\n  \"sell_price\": 50000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/products/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "1"]
+            },
+            "description": "Update data produk (Owner only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/products/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "1"]
+            },
+            "description": "Hapus produk (soft delete) - Owner only"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/products/categories",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "categories"]
+            },
+            "description": "Dapatkan daftar kategori produk"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Point of Sale (POS)",
+      "item": [
+        {
+          "name": "Create Transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"channel\": \"offline\",\n  \"items\": [\n    {\n      \"product_id\": 1,\n      \"quantity\": 2,\n      \"unit_price\": 45000\n    },\n    {\n      \"product_id\": 2,\n      \"quantity\": 1,\n      \"unit_price\": 30000\n    }\n  ],\n  \"payment_method\": \"cash\",\n  \"amount_paid\": 120000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions"]
+            },
+            "description": "Buat transaksi penjualan baru (Kasir only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/transactions?page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                },
+                {
+                  "key": "channel",
+                  "value": "offline",
+                  "disabled": true
+                },
+                {
+                  "key": "start_date",
+                  "value": "2026-06-01",
+                  "disabled": true
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-06-18",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Dapatkan daftar transaksi (dengan pagination dan filter)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Transaction Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/transactions/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions", "1"]
+            },
+            "description": "Dapatkan detail transaksi spesifik"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Transaction Receipt",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/transactions/1/receipt",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions", "1", "receipt"]
+            },
+            "description": "Dapatkan struk transaksi (untuk cetak/tampil digital)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reports & Dashboard",
+      "item": [
+        {
+          "name": "Get Sales Report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Status Code: 200 OK', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('✅ Response has valid structure', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.equal(true);",
+                  "    pm.expect(jsonData.data).to.have.all.keys('period', 'summary', 'by_channel');",
+                  "});",
+                  "",
+                  "pm.test('✅ Summary contains required fields', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    var summary = jsonData.data.summary;",
+                  "    pm.expect(summary).to.have.all.keys('total_transactions', 'total_revenue', 'total_items_sold', 'average_transaction_value');",
+                  "    pm.expect(summary.total_transactions).to.be.a('number');",
+                  "    pm.expect(summary.total_revenue).to.be.a('number');",
+                  "    pm.expect(summary.total_items_sold).to.be.a('number');",
+                  "});",
+                  "",
+                  "pm.test('✅ Channel breakdown includes offline & online', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.by_channel).to.have.keys('offline', 'online');",
+                  "    pm.expect(jsonData.data.by_channel.offline.total_transactions).to.be.a('number');",
+                  "    pm.expect(jsonData.data.by_channel.online.total_revenue).to.be.a('number');",
+                  "});",
+                  "",
+                  "console.log('📊 Sales Report - Total Revenue: ' + pm.response.json().data.summary.total_revenue);",
+                  "console.log('🎫 Transactions Count: ' + pm.response.json().data.summary.total_transactions);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reports/sales?start_date=2026-06-01&end_date=2026-06-18&channel=all",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reports", "sales"],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2026-06-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-06-18"
+                },
+                {
+                  "key": "channel",
+                  "value": "all"
+                },
+                {
+                  "key": "category",
+                  "value": "cat",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Laporan penjualan berdasarkan periode dan channel (Owner only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sales Summary",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Status Code: 200 OK', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('✅ Response returns array of daily summaries', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.equal(true);",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('✅ Each summary item has required fields', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data.length > 0) {",
+                  "        var item = jsonData.data[0];",
+                  "        pm.expect(item).to.have.keys('date', 'total_revenue', 'transaction_count', 'items_sold');",
+                  "        pm.expect(item.date).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);",
+                  "        pm.expect(item.total_revenue).to.be.a('number');",
+                  "        pm.expect(item.transaction_count).to.be.a('number');",
+                  "    }",
+                  "});",
+                  "",
+                  "console.log('📈 Sales Summary - Total entries: ' + pm.response.json().data.length);",
+                  "if (pm.response.json().data.length > 0) console.log('💰 Latest revenue: ' + pm.response.json().data[0].total_revenue);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reports/sales/summary?period=daily&year=2026",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reports", "sales", "summary"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "daily"
+                },
+                {
+                  "key": "year",
+                  "value": "2026"
+                },
+                {
+                  "key": "month",
+                  "value": "6",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Ringkasan penjualan harian/mingguan/bulanan (Owner only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Top Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Status Code: 200 OK', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('✅ Response returns ranked products array', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.equal(true);",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('✅ Top products are properly ranked and sorted', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data.length > 0) {",
+                  "        var item = jsonData.data[0];",
+                  "        pm.expect(item).to.have.keys('rank', 'product_id', 'product_name', 'sku', 'quantity_sold', 'total_revenue');",
+                  "        pm.expect(item.rank).to.equal(1);",
+                  "        pm.expect(item.quantity_sold).to.be.a('number');",
+                  "        pm.expect(item.total_revenue).to.be.a('number');",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test('✅ Ranking is sequential and correct', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    var limit = 5;",
+                  "    for (var i = 0; i < Math.min(limit, jsonData.data.length); i++) {",
+                  "        pm.expect(jsonData.data[i].rank).to.equal(i + 1);",
+                  "    }",
+                  "});",
+                  "",
+                  "console.log('🏆 Top Products - Count: ' + pm.response.json().data.length);",
+                  "if (pm.response.json().data.length > 0) console.log('⭐ #1 Product: ' + pm.response.json().data[0].product_name + ' (' + pm.response.json().data[0].quantity_sold + ' sold)');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reports/top-products?sort_by=quantity&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reports", "top-products"],
+              "query": [
+                {
+                  "key": "sort_by",
+                  "value": "quantity"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "start_date",
+                  "value": "2026-06-01",
+                  "disabled": true
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-06-18",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Produk terlaris (sort by quantity atau revenue) - Owner only"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Dashboard Analytics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Status Code: 200 OK', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('✅ Dashboard has KPI section with all required metrics', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.equal(true);",
+                  "    pm.expect(jsonData.data).to.have.keys('kpi', 'sales_trend', 'top_products', 'category_breakdown');",
+                  "    ",
+                  "    var kpi = jsonData.data.kpi;",
+                  "    pm.expect(kpi).to.have.all.keys('today_sales', 'total_transactions_today', 'items_sold_today', 'average_transaction_value', 'yesterday_sales', 'transactions_yesterday', 'today_sales_change_percent', 'transactions_change', 'monthly_revenue', 'previous_monthly_revenue', 'monthly_revenue_change_percent', 'active_products', 'low_stock_products');",
+                  "});",
+                  "",
+                  "pm.test('✅ Sales trend has 7 days of data', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.sales_trend).to.be.an('array');",
+                  "    pm.expect(jsonData.data.sales_trend.length).to.equal(7);",
+                  "});",
+                  "",
+                  "pm.test('✅ Category breakdown has percentage data', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    var breakdown = jsonData.data.category_breakdown;",
+                  "    pm.expect(breakdown).to.be.an('object');",
+                  "    ",
+                  "    var total = Object.values(breakdown).reduce((sum, val) => sum + val, 0);",
+                  "    if (total > 0) {",
+                  "        pm.expect(Math.round(total)).to.equal(100);",
+                  "    }",
+                  "});",
+                  "",
+                  "console.log('📊 Dashboard Analytics - Today Sales: ' + pm.response.json().data.kpi.today_sales);",
+                  "console.log('📈 Sales Change: ' + pm.response.json().data.kpi.today_sales_change_percent + '%');",
+                  "console.log('⚠️ Low Stock Products: ' + pm.response.json().data.kpi.low_stock_products);",
+                  "console.log('🎯 Top Product: ' + pm.response.json().data.top_products[0]?.product_name);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/analytics?period=7d",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "analytics"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "7d"
+                },
+                {
+                  "key": "start_date",
+                  "value": "2026-06-11",
+                  "disabled": true
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-06-18",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Dashboard analytics dengan KPI, sales trend, top products, dan low stock alerts (Owner only)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

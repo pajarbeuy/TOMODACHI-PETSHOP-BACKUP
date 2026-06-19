@@ -105,6 +105,11 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icons.manage_accounts,
             widget: OwnerAccountsScreen(authService: widget.authService),
           ),
+          _NavigationItem(
+            label: 'AI Asisten',
+            icon: Icons.auto_awesome,
+            widget: AiChatScreen(chatService: _aiChatService),
+          ),
         ];
 
       case 'admin':
@@ -131,11 +136,6 @@ class _HomeScreenState extends State<HomeScreen> {
             widget: TransactionsHistoryTab(
               transactionService: _transactionService,
             ),
-          ),
-          _NavigationItem(
-            label: 'AI Asisten',
-            icon: Icons.auto_awesome,
-            widget: AiChatScreen(chatService: _aiChatService),
           ),
         ];
 
