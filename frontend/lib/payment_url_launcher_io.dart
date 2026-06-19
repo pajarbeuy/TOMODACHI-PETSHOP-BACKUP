@@ -6,5 +6,9 @@ Future<bool> openPaymentUrl(String url) async {
     return false;
   }
 
+  if (await launchUrl(uri, mode: LaunchMode.inAppBrowserView)) {
+    return true;
+  }
+
   return launchUrl(uri, mode: LaunchMode.externalApplication);
 }
