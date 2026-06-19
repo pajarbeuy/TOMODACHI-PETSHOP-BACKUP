@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../product_image_picker.dart';
 import '../../product_service.dart';
 import '../../utils/currency_formatter.dart';
+import '../../utils/error_message.dart';
 
 class ProductsTab extends StatefulWidget {
   final ProductService productService;
@@ -99,7 +100,7 @@ class _ProductsTabState extends State<ProductsTab> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading products: ${e.toString()}'),
+            content: Text(userFriendlyError(e, fallback: 'Gagal memuat produk')),
             backgroundColor: Colors.red.shade700,
           ),
         );
@@ -166,7 +167,11 @@ class _ProductsTabState extends State<ProductsTab> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menghapus produk: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              userFriendlyError(e, fallback: 'Gagal menghapus produk'),
+            ),
+          ),
         );
       }
     }
@@ -439,7 +444,10 @@ class _ProductsTabState extends State<ProductsTab> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        'Gagal memilih foto: ${e.toString()}',
+                                        userFriendlyError(
+                                          e,
+                                          fallback: 'Gagal memilih foto',
+                                        ),
                                       ),
                                     ),
                                   );
@@ -624,7 +632,10 @@ class _ProductsTabState extends State<ProductsTab> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    'Gagal menyimpan: ${e.toString()}',
+                                    userFriendlyError(
+                                      e,
+                                      fallback: 'Gagal menyimpan produk',
+                                    ),
                                   ),
                                   backgroundColor: Colors.red.shade700,
                                 ),

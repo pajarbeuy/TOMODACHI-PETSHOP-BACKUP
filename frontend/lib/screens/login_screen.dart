@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../auth_service.dart';
+import '../utils/error_message.dart';
 import '../widgets/app_logo.dart';
 import 'home_screen.dart';
 
@@ -205,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen>
       if (!mounted) return;
       setState(() {
         _captchaLoading = false;
-        _errorMessage = 'Failed to load captcha: $e';
+        _errorMessage = userFriendlyError(e, fallback: 'Gagal memuat captcha');
       });
     }
   }
@@ -258,11 +259,11 @@ class _LoginScreenState extends State<LoginScreen>
       setState(() {
         _errorMessage =
             _authService.errorMessage ??
-            'Login failed. Please check your credentials.';
+            'Login gagal. Periksa email, password, dan captcha.';
         _loading = false;
       });
       await _loadCaptcha();
-      _showErrorDialog(_errorMessage ?? 'Login failed');
+      _showErrorDialog(_errorMessage ?? 'Login gagal');
     }
   }
 
@@ -288,11 +289,11 @@ class _LoginScreenState extends State<LoginScreen>
       if (!mounted) return;
       Navigator.of(context).pop();
       setState(() {
-        _errorMessage = 'Login failed: $e';
+        _errorMessage = userFriendlyError(e, fallback: 'Login gagal');
         _loading = false;
       });
       await _loadCaptcha();
-      _showErrorDialog(_errorMessage ?? 'Login failed');
+      _showErrorDialog(_errorMessage ?? 'Login gagal');
       return;
     }
 
@@ -312,11 +313,11 @@ class _LoginScreenState extends State<LoginScreen>
       );
     } else {
       setState(() {
-        _errorMessage = _authService.errorMessage ?? 'Login failed';
+        _errorMessage = _authService.errorMessage ?? 'Login gagal';
         _loading = false;
       });
       await _loadCaptcha();
-      _showErrorDialog(_errorMessage ?? 'Login failed');
+      _showErrorDialog(_errorMessage ?? 'Login gagal');
     }
   }
 

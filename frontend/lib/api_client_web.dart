@@ -49,6 +49,9 @@ class ApiClient {
       final response = await _makeRequest(url, 'GET', headers, null);
       return response;
     } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
       throw ApiException('GET $path failed: $e');
     }
   }
@@ -73,6 +76,9 @@ class ApiClient {
       final response = await _makeRequest(url, 'POST', headers, bodyStr);
       return response;
     } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
       throw ApiException('POST $path failed: $e');
     }
   }
@@ -97,6 +103,9 @@ class ApiClient {
       final response = await _makeRequest(url, 'PUT', headers, bodyStr);
       return response;
     } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
       throw ApiException('PUT $path failed: $e');
     }
   }
@@ -121,6 +130,9 @@ class ApiClient {
       final response = await _makeRequest(url, 'PATCH', headers, bodyStr);
       return response;
     } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
       throw ApiException('PATCH $path failed: $e');
     }
   }
@@ -138,6 +150,9 @@ class ApiClient {
       final response = await _makeRequest(url, 'DELETE', headers, null);
       return response;
     } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
       throw ApiException('DELETE $path failed: $e');
     }
   }
