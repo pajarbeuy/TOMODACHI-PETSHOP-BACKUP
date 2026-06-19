@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const appLogoAsset = 'logo.png';
+const appLogoAsset = 'assets/icons/logo.png';
 
 class AppLogo extends StatelessWidget {
   final double size;

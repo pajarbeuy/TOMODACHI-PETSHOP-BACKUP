@@ -37,6 +37,7 @@ WORKDIR /var/www/laravel
 
 # Salin kode aplikasi
 COPY . .
+RUN cp -a public /var/www/laravel_public_seed
 
 # Salin vendor dari stage composer
 COPY --from=composer_stage /app/vendor ./vendor

@@ -416,7 +416,6 @@ class _PosTabState extends State<PosTab> {
       },
     );
       _setSubmittingCheckout(false);
-    }
   }
 
   void _showPaymentPendingDialog(

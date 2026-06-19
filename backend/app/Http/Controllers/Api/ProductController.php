@@ -19,11 +19,11 @@ class ProductController extends Controller
         $path = parse_url($imageUrl, PHP_URL_PATH) ?: $imageUrl;
 
         if (str_starts_with($path, '/storage/')) {
-            return $request->getSchemeAndHttpHost() . '/api/product-images/' . ltrim(substr($path, strlen('/storage/')), '/');
+            return $request->getSchemeAndHttpHost() . '/storage/' . ltrim(substr($path, strlen('/storage/')), '/');
         }
 
         if (str_starts_with($path, 'storage/')) {
-            return $request->getSchemeAndHttpHost() . '/api/product-images/' . ltrim(substr($path, strlen('storage/')), '/');
+            return $request->getSchemeAndHttpHost() . '/storage/' . ltrim(substr($path, strlen('storage/')), '/');
         }
 
         return $imageUrl;
