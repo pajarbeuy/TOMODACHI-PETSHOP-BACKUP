@@ -120,7 +120,10 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
     _emailCtrl.text = account?.email ?? '';
     _passwordCtrl.clear();
     _passwordConfirmCtrl.clear();
-    _selectedRole = account?.roleName.toLowerCase() ?? 'kasir';
+    
+    final initialRole = account?.roleName.toLowerCase() ?? 'kasir';
+    _selectedRole = ['admin', 'kasir'].contains(initialRole) ? initialRole : 'kasir';
+    
     _showPassword = false;
     _showPasswordConfirm = false;
 
@@ -312,6 +315,7 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
 
     setState(() => _saving = true);
     final roleId = _roles[_selectedRole.toLowerCase()] ?? 3; // Ensure explicit role lookup with fallback
+    debugPrint('[SAVE] _selectedRole=$_selectedRole, roleId=$roleId, editing=${_editing?.id}, creating=$_creating');
 
     try {
       if (_creating) {
@@ -328,6 +332,7 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
           );
         }
       } else if (_editing != null) {
+        debugPrint('[SAVE] Calling updateAccount userId=${_editing!.id}, roleId=$roleId');
         final ok = await widget.authService.updateAccount(
           userId: _editing!.id,
           name: name,
@@ -335,6 +340,7 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
           password: password.isEmpty ? null : password,
           passwordConfirmation: password.isEmpty ? null : passwordConfirm,
           roleId: roleId,
+          roleName: _selectedRole.toLowerCase(),
         );
         if (!ok) {
           throw Exception(
@@ -649,6 +655,9 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
   }
 
   Widget _buildRoleDropdown(StateSetter setState) {
+    final availableRoles = ['admin', 'kasir'];
+    final dropdownValue = availableRoles.contains(_selectedRole) ? _selectedRole : 'kasir';
+
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: _borderLight, width: 2),
@@ -657,8 +666,8 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: _selectedRole,
-          items: _roles.keys
+          value: dropdownValue,
+          items: availableRoles
               .map((role) => DropdownMenuItem(
                     value: role,
                     child: Text(
@@ -667,7 +676,12 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
                     ),
                   ))
               .toList(),
-          onChanged: (value) => setState(() => _selectedRole = value ?? 'kasir'),
+          onChanged: (value) {
+            if (value != null) {
+              setState(() => _selectedRole = value);
+              this.setState(() => _selectedRole = value);
+            }
+          },
           isExpanded: true,
           isDense: true,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

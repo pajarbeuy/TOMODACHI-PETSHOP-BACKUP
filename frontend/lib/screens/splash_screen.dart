@@ -85,14 +85,12 @@ class _SplashScreenState extends State<SplashScreen>
 
     if (restored) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => HomeScreen(authService: authService),
-        ),
+        MaterialPageRoute(builder: (_) => HomeScreen(authService: authService)),
       );
     } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
     }
   }
 
