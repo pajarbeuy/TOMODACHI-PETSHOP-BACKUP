@@ -44,7 +44,7 @@ class TransactionController extends Controller
             $query->whereDate('created_at', '<=', $request->query('end_date'));
         }
 
-        $perPage = $request->query('per_page', 15);
+        $perPage = min(max((int) $request->query('per_page', 10), 1), 100);
         $paginated = $query->latest()->paginate($perPage);
 
         return response()->json([
@@ -55,6 +55,7 @@ class TransactionController extends Controller
                 'current_page' => $paginated->currentPage(),
                 'per_page' => $paginated->perPage(),
                 'total' => $paginated->total(),
+                'last_page' => $paginated->lastPage(),
             ]
         ], 200);
     }
