@@ -120,7 +120,7 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
     _emailCtrl.text = account?.email ?? '';
     _passwordCtrl.clear();
     _passwordConfirmCtrl.clear();
-    _selectedRole = account?.roleName ?? 'kasir';
+    _selectedRole = account?.roleName.toLowerCase() ?? 'kasir';
     _showPassword = false;
     _showPasswordConfirm = false;
 
@@ -311,7 +311,7 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
     }
 
     setState(() => _saving = true);
-    final roleId = _roles[_selectedRole];
+    final roleId = _roles[_selectedRole.toLowerCase()] ?? 3; // Ensure explicit role lookup with fallback
 
     try {
       if (_creating) {
@@ -320,7 +320,7 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
           email: email,
           password: password,
           passwordConfirmation: passwordConfirm,
-          roleId: roleId ?? 3,
+          roleId: roleId,
         );
         if (!ok) {
           throw Exception(

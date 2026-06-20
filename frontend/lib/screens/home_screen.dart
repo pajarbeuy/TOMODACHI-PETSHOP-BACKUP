@@ -49,6 +49,11 @@ class _HomeScreenState extends State<HomeScreen> {
     letterSpacing: letterSpacing,
   );
 
+  // Cached styles for frequently used combinations (OPT-05)
+  late final TextStyle _styleBold14 = _plusJakarta(fontWeight: FontWeight.w900);
+  late final TextStyle _styleNav11 = _plusJakarta(fontSize: 11, fontWeight: FontWeight.w700);
+  late final TextStyle _styleNavUnsel11 = _plusJakarta(fontSize: 11, color: const Color(0xFF9E8F85));
+
   late final ProductService _productService;
   late final TransactionService _transactionService;
   late final DashboardService _dashboardService;
@@ -56,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int _currentIndex = 0;
   bool _loadingLogout = false;
+  List<_NavigationItem> _navItems = [];
 
   @override
   void initState() {
@@ -66,6 +72,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _transactionService = TransactionService(client);
     _dashboardService = DashboardService(client);
     _aiChatService = AiChatService(client);
+
+    // Build navigation items once and cache them (OPT-01)
+    final role = widget.authService.currentUser?.role ?? 'kasir';
+    _navItems = _getNavigationItems(role);
   }
 
   List<_NavigationItem> _getNavigationItems(String role) {
@@ -195,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final user = widget.authService.currentUser;
     final role = user?.role ?? 'kasir';
-    final items = _getNavigationItems(role);
+    final items = _navItems;
 
     // Adjust selected index if navigation items count changed dynamically
     if (_currentIndex >= items.length) {
@@ -204,6 +214,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final screenWidth = MediaQuery.of(context).size.width;
     final isWide = screenWidth >= 900;
+
+    // OPT-01: IndexedStack keeps all tabs alive across switches
+    final tabBody = IndexedStack(
+      index: _currentIndex,
+      children: items.map((item) => item.widget).toList(),
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFDF9),
@@ -215,10 +231,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildSidebar(items),
                 const VerticalDivider(width: 1, thickness: 1),
                 // Core screen content
-                Expanded(child: items[_currentIndex].widget),
+                Expanded(child: tabBody),
               ],
             )
-          : items[_currentIndex].widget,
+          : tabBody,
       bottomNavigationBar: !isWide
           ? BottomNavigationBar(
               currentIndex: _currentIndex,
@@ -226,14 +242,8 @@ class _HomeScreenState extends State<HomeScreen> {
               unselectedItemColor: const Color(0xFF9E8F85),
               showUnselectedLabels: true,
               type: BottomNavigationBarType.fixed,
-              selectedLabelStyle: _plusJakarta(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-              unselectedLabelStyle: _plusJakarta(
-                fontSize: 11,
-                color: const Color(0xFF9E8F85),
-              ),
+              selectedLabelStyle: _styleNav11,
+              unselectedLabelStyle: _styleNavUnsel11,
               onTap: (index) => setState(() => _currentIndex = index),
               items: items.map((item) {
                 return BottomNavigationBarItem(
