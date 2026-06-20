@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../payment_url_launcher.dart';
@@ -36,6 +37,9 @@ class _PosTabState extends State<PosTab> {
     color: color,
     letterSpacing: letterSpacing,
   );
+
+  late final TextStyle _styleBold13 = _plusJakarta(fontSize: 13, fontWeight: FontWeight.bold);
+  late final TextStyle _stylePrice13 = _plusJakarta(fontSize: 13, fontWeight: FontWeight.w900, color: const Color(0xFFFF9A4D));
 
   final _searchCtrl = TextEditingController();
   Timer? _searchDebounce;
@@ -910,11 +914,20 @@ class _PosTabState extends State<PosTab> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
-        return SafeArea(
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.82,
-            child: _buildCartPanel(),
-          ),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: SafeArea(
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.82,
+                  child: _buildCartPanel(),
+                ),
+              ),
+            );
+          },
         );
       },
     ).whenComplete(() {
@@ -997,6 +1010,7 @@ class _PosTabState extends State<PosTab> {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ChoiceChip(
+        showCheckmark: false,
         label: Text(
           label,
           style: _plusJakarta(
@@ -1095,10 +1109,10 @@ class _PosTabState extends State<PosTab> {
                         width: double.infinity,
                         color: const Color(0xFFFFFDF9),
                         child: imageUrl != null
-                            ? Image.network(
-                                imageUrl,
+                            ? CachedNetworkImage(
+                                imageUrl: imageUrl,
                                 fit: BoxFit.contain,
-                                errorBuilder: (_, _, _) => const Icon(
+                                errorWidget: (context, url, error) => const Icon(
                                   Icons.pets,
                                   size: 36,
                                   color: Color(0xFFFFD4A8),
@@ -1137,19 +1151,18 @@ class _PosTabState extends State<PosTab> {
                               ),
                             ),
                             const Spacer(),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              crossAxisAlignment: WrapCrossAlignment.center,
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Text(
-                                  formatRupiah(price),
-                                  style: _plusJakarta(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w900,
-                                    color: const Color(0xFFFF9A4D),
+                                Flexible(
+                                  child: Text(
+                                    formatRupiah(price),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: _stylePrice13,
                                   ),
                                 ),
+                                const SizedBox(width: 6),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 7,

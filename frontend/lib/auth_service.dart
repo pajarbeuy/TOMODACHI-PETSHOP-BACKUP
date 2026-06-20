@@ -213,7 +213,7 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<List<AccountModel>> getAccounts() async {
-    final response = await _apiClient.get('/api/auth/accounts');
+    final response = await _apiClient.get('/api/auth/accounts?_cb=${DateTime.now().millisecondsSinceEpoch}');
 
     if (response['status'] == true && response['data'] is List) {
       return (response['data'] as List)
@@ -232,6 +232,7 @@ class AuthService extends ChangeNotifier {
     String? password,
     String? passwordConfirmation,
     int? roleId,
+    String? roleName,
   }) async {
     final body = <String, dynamic>{};
     if (name != null) body['name'] = name;
@@ -241,12 +242,17 @@ class AuthService extends ChangeNotifier {
       body['password_confirmation'] = passwordConfirmation ?? '';
     }
     if (roleId != null) body['role_id'] = roleId;
+    if (roleName != null) body['role_name'] = roleName;
+
+    debugPrint('[updateAccount] body=$body');
 
     try {
       final response = await _apiClient.patch(
         '/api/auth/accounts/$userId',
         body: body,
       );
+
+      debugPrint('[updateAccount] response=$response');
 
       if (response['status'] == true) {
         _errorMessage = null;

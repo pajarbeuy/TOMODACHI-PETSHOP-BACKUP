@@ -217,7 +217,11 @@ class AuthController extends Controller
                 'email' => 'sometimes|required|email|unique:users,email,' . $user->id,
                 'password' => 'nullable|string|min:6|confirmed',
                 'role_id' => 'sometimes|required|exists:roles,id',
+                'role_name' => 'sometimes|required|string|exists:roles,name',
             ]);
+            
+            \Log::info('Update Account Payload: ', $request->all());
+            \Log::info('Validated: ', $validated);
 
             $payload = [];
 
@@ -229,7 +233,12 @@ class AuthController extends Controller
                 $payload['email'] = $validated['email'];
             }
 
-            if (array_key_exists('role_id', $validated)) {
+            if (array_key_exists('role_name', $validated)) {
+                $roleModel = \App\Models\Role::where('name', $validated['role_name'])->first();
+                if ($roleModel) {
+                    $payload['role_id'] = $roleModel->id;
+                }
+            } else if (array_key_exists('role_id', $validated)) {
                 $payload['role_id'] = $validated['role_id'];
             }
 
