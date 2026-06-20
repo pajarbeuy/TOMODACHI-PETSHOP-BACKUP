@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../product_image_picker.dart';
@@ -36,6 +38,7 @@ class _ProductsTabState extends State<ProductsTab> {
   );
 
   final _searchCtrl = TextEditingController();
+  Timer? _searchDebounce;
   List<dynamic> _products = [];
   List<dynamic> _categoriesList = [];
   bool _loading = false;
@@ -52,12 +55,17 @@ class _ProductsTabState extends State<ProductsTab> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchCtrl.dispose();
     super.dispose();
   }
 
   void _onSearchChanged() {
-    _fetchProducts();
+    if (mounted) {
+      setState(() {});
+    }
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), _fetchProducts);
   }
 
   Future<void> _fetchCategories() async {
@@ -480,12 +488,12 @@ class _ProductsTabState extends State<ProductsTab> {
                                   Uint8List.fromList(selectedImage!.bytes),
                                   fit: BoxFit.cover,
                                 )
-                              : Image.network(
-                                  widget.productService.resolveImageUrl(
+                              : CachedNetworkImage(
+                                  imageUrl: widget.productService.resolveImageUrl(
                                     imgUrlCtrl.text.trim(),
                                   ),
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => Center(
+                                  errorWidget: (context, url, error) => Center(
                                     child: Text(
                                       'Preview foto tidak dapat dimuat',
                                       style: _plusJakarta(
@@ -756,11 +764,11 @@ class _ProductsTabState extends State<ProductsTab> {
           else
             Row(
               children: [
-                Expanded(child: _buildSearchField()),
+                Expanded(flex: 3, child: _buildSearchField()),
                 const SizedBox(width: 12),
-                Expanded(flex: 3, child: _buildAnimalDropdown()),
+                Expanded(flex: 2, child: _buildAnimalDropdown()),
                 const SizedBox(width: 12),
-                Expanded(child: _buildSubCategoryDropdown()),
+                Expanded(flex: 2, child: _buildSubCategoryDropdown()),
               ],
             ),
           const SizedBox(height: 16),
@@ -967,10 +975,10 @@ class _ProductsTabState extends State<ProductsTab> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: imageUrl != null
-                      ? Image.network(
-                          imageUrl,
+                      ? CachedNetworkImage(
+                          imageUrl: imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) =>
+                          errorWidget: (context, url, error) =>
                               const Icon(Icons.pets, color: Color(0xFFFFB570)),
                         )
                       : const Icon(Icons.pets, color: Color(0xFFFFB570)),
