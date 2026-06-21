@@ -1,11 +1,14 @@
 import 'dart:async';
 
+import 'package:audioplayers/audioplayers.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../payment_url_launcher.dart';
 import '../../product_service.dart';
 import '../../transaction_service.dart';
 import '../../utils/currency_formatter.dart';
+import '../../utils/error_message.dart';
 
 class PosTab extends StatefulWidget {
   final ProductService productService;
@@ -35,6 +38,9 @@ class _PosTabState extends State<PosTab> {
     letterSpacing: letterSpacing,
   );
 
+  late final TextStyle _styleBold13 = _plusJakarta(fontSize: 13, fontWeight: FontWeight.bold);
+  late final TextStyle _stylePrice13 = _plusJakarta(fontSize: 13, fontWeight: FontWeight.w900, color: const Color(0xFFFF9A4D));
+
   final _searchCtrl = TextEditingController();
   Timer? _searchDebounce;
   List<dynamic> _products = [];
@@ -45,6 +51,7 @@ class _PosTabState extends State<PosTab> {
 
   // Cart items: Map of productId -> CartItem
   final Map<String, Map<String, dynamic>> _cart = {};
+  final ValueNotifier<int> _cartVersion = ValueNotifier<int>(0);
 
   // Checkout inputs
   String _paymentMethod = 'cash';
@@ -52,6 +59,8 @@ class _PosTabState extends State<PosTab> {
   double _change = 0.0;
   bool _submittingCheckout = false;
   Timer? _paymentStatusTimer;
+  bool _cartSheetOpen = false;
+  final AudioPlayer _paymentSuccessPlayer = AudioPlayer();
 
   @override
   void initState() {
@@ -66,9 +75,22 @@ class _PosTabState extends State<PosTab> {
   void dispose() {
     _paymentStatusTimer?.cancel();
     _searchDebounce?.cancel();
+    _cartVersion.dispose();
+    _paymentSuccessPlayer.dispose();
     _searchCtrl.dispose();
     _amountPaidCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _playPaymentSuccessAudio() async {
+    try {
+      await _paymentSuccessPlayer.stop();
+      await _paymentSuccessPlayer.play(
+        AssetSource('audio/payment_success.mp3'),
+      );
+    } catch (_) {
+      // Audio feedback is nice to have; checkout should never fail because of it.
+    }
   }
 
   void _onSearchChanged() {
@@ -81,6 +103,11 @@ class _PosTabState extends State<PosTab> {
 
   void _onAmountPaidChanged() {
     _calculateChange();
+  }
+
+  void _notifyCartChanged() {
+    if (!mounted) return;
+    _cartVersion.value++;
   }
 
   Future<void> _fetchCategories() async {
@@ -116,7 +143,9 @@ class _PosTabState extends State<PosTab> {
     } catch (e) {
       if (mounted && fetchSerial == _productFetchSerial) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load products: ${e.toString()}')),
+          SnackBar(
+            content: Text(userFriendlyError(e, fallback: 'Gagal memuat produk')),
+          ),
         );
       }
     } finally {
@@ -158,29 +187,77 @@ class _PosTabState extends State<PosTab> {
       }
       _calculateChange();
     });
+    _notifyCartChanged();
   }
 
   void _updateQuantity(String id, int delta) {
-    setState(() {
-      if (_cart.containsKey(id)) {
-        final currentQty = _cart[id]!['quantity'] as int;
-        final maxStock = _cart[id]!['max_stock'] as int;
-        final nextQty = currentQty + delta;
+    if (!_cart.containsKey(id)) {
+      return;
+    }
 
-        if (nextQty <= 0) {
-          _cart.remove(id);
-        } else if (nextQty <= maxStock) {
-          _cart[id]!['quantity'] = nextQty;
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Cannot exceed available stock ($maxStock)'),
-            ),
-          );
-        }
-        _calculateChange();
-      }
+    final currentQty = _cart[id]!['quantity'] as int;
+    final maxStock = _cart[id]!['max_stock'] as int;
+    final nextQty = currentQty + delta;
+
+    if (nextQty <= 0) {
+      _cart.remove(id);
+    } else if (nextQty <= maxStock) {
+      _cart[id]!['quantity'] = nextQty;
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Cannot exceed available stock ($maxStock)'),
+        ),
+      );
+      return;
+    }
+
+    _calculateChange();
+    _notifyCartChanged();
+  }
+
+  void _setPaymentMethod(String value) {
+    if (_paymentMethod == value) {
+      return;
+    }
+
+    _paymentMethod = value;
+    if (value != 'cash') {
+      _amountPaidCtrl.clear();
+      _change = 0.0;
+    } else {
+      _calculateChange();
+    }
+    _notifyCartChanged();
+  }
+
+  void _calculateChange() {
+    final sub = _getCartSubtotal();
+    final paid = parseCurrency(_amountPaidCtrl.text);
+    final nextChange = paid > sub ? paid - sub : 0.0;
+    if (_change != nextChange) {
+      _change = nextChange;
+      _notifyCartChanged();
+    }
+  }
+
+  void _clearCartAfterCheckout() {
+    setState(() {
+      _cart.clear();
+      _amountPaidCtrl.clear();
+      _change = 0.0;
     });
+    _notifyCartChanged();
+  }
+
+  void _setSubmittingCheckout(bool value) {
+    if (_submittingCheckout == value) {
+      return;
+    }
+    setState(() {
+      _submittingCheckout = value;
+    });
+    _notifyCartChanged();
   }
 
   double _getCartSubtotal() {
@@ -191,15 +268,9 @@ class _PosTabState extends State<PosTab> {
     return sub;
   }
 
-  void _calculateChange() {
-    final sub = _getCartSubtotal();
-    final paid = parseCurrency(_amountPaidCtrl.text);
-    setState(() {
-      _change = paid > sub ? paid - sub : 0.0;
-    });
-  }
-
   void _handleCheckout() async {
+    if (_submittingCheckout) return;
+
     final sub = _getCartSubtotal();
     if (sub <= 0) {
       ScaffoldMessenger.of(
@@ -217,6 +288,19 @@ class _PosTabState extends State<PosTab> {
     }
 
     setState(() => _submittingCheckout = true);
+    var preparingPaymentDialogOpen = false;
+
+    if (_paymentMethod != 'cash' && mounted) {
+      if (_cartSheetOpen) {
+        Navigator.of(context).pop();
+        _cartSheetOpen = false;
+        await Future<void>.delayed(const Duration(milliseconds: 120));
+        if (!mounted) return;
+      }
+      preparingPaymentDialogOpen = true;
+      _showPreparingPaymentDialog(sub);
+    }
+    _setSubmittingCheckout(true);
 
     try {
       final itemsList = _cart.values.map((item) {
@@ -234,6 +318,11 @@ class _PosTabState extends State<PosTab> {
         items: itemsList,
       );
 
+      if (preparingPaymentDialogOpen && mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        preparingPaymentDialogOpen = false;
+      }
+
       if (res['status'] == true) {
         final trxId = res['data']['transaction_id'];
         final payment = res['data']['payment'];
@@ -242,48 +331,124 @@ class _PosTabState extends State<PosTab> {
             : null;
 
         if (redirectUrl != null && redirectUrl.isNotEmpty) {
-          final opened = await openPaymentUrl(redirectUrl);
           if (mounted) {
-            _showPaymentPendingDialog(trxId, redirectUrl, opened);
+            _showPaymentPendingDialog(trxId, redirectUrl, sub);
           }
         } else if (mounted) {
+          unawaited(_playPaymentSuccessAudio());
           _showReceiptDialog(trxId);
         }
 
-        // Clear state
-        setState(() {
-          _cart.clear();
-          _amountPaidCtrl.clear();
-          _change = 0.0;
-        });
+        _clearCartAfterCheckout();
 
         // Re-fetch products to update stock quantities
         _fetchProducts();
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(res['message']?.toString() ?? 'Checkout gagal.'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
       }
     } catch (e) {
+      if (preparingPaymentDialogOpen && mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        preparingPaymentDialogOpen = false;
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Checkout failed: ${e.toString()}'),
+            content: Text(userFriendlyError(e, fallback: 'Checkout gagal')),
             backgroundColor: Colors.red.shade700,
           ),
         );
       }
     } finally {
-      setState(() => _submittingCheckout = false);
+      if (mounted) {
+        setState(() => _submittingCheckout = false);
+      }
     }
+  }
+
+  void _showPreparingPaymentDialog(double total) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFFFFFDF9),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 4),
+              const SizedBox(
+                width: 42,
+                height: 42,
+                child: CircularProgressIndicator(
+                  color: Color(0xFFFF9A4D),
+                  strokeWidth: 3,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Membuat QRIS',
+                style: _plusJakarta(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                formatRupiah(total),
+                style: _plusJakarta(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFFFF9A4D),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Tunggu sebentar, sistem sedang menyiapkan halaman pembayaran.',
+                textAlign: TextAlign.center,
+                style: _plusJakarta(fontSize: 12, color: Colors.grey.shade700),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+      _setSubmittingCheckout(false);
   }
 
   void _showPaymentPendingDialog(
     String transactionId,
     String paymentUrl,
-    bool opened,
+    double total,
   ) {
     _paymentStatusTimer?.cancel();
     var dialogOpen = true;
+    var checkingPaymentStatus = false;
+
+    unawaited(
+      Future<void>.delayed(const Duration(milliseconds: 250), () async {
+        final opened = await openPaymentUrl(paymentUrl);
+        if (!opened && mounted && dialogOpen) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Tidak bisa membuka halaman pembayaran otomatis. Tekan Buka Pembayaran.',
+              ),
+            ),
+          );
+        }
+      }),
+    );
 
     Future<void> checkPaymentStatus() async {
-      if (!dialogOpen) return;
+      if (!dialogOpen || checkingPaymentStatus) return;
+      checkingPaymentStatus = true;
 
       try {
         final res = await widget.transactionService.getTransactionDetail(
@@ -298,6 +463,7 @@ class _PosTabState extends State<PosTab> {
 
           if (!mounted) return;
           Navigator.of(context, rootNavigator: true).pop();
+          unawaited(_playPaymentSuccessAudio());
           _showReceiptDialog(transactionId);
           _fetchProducts();
         } else if (status == 'cancelled') {
@@ -316,11 +482,13 @@ class _PosTabState extends State<PosTab> {
         }
       } catch (_) {
         // Keep polling; transient network errors can happen while Midtrans redirects.
+      } finally {
+        checkingPaymentStatus = false;
       }
     }
 
     _paymentStatusTimer = Timer.periodic(
-      const Duration(seconds: 3),
+      const Duration(seconds: 4),
       (_) => checkPaymentStatus(),
     );
     unawaited(checkPaymentStatus());
@@ -339,7 +507,7 @@ class _PosTabState extends State<PosTab> {
               const Icon(Icons.qr_code_2, color: Color(0xFFFF9A4D), size: 54),
               const SizedBox(height: 8),
               Text(
-                'MENUNGGU PEMBAYARAN',
+                'QRIS SIAP DIBAYAR',
                 style: _plusJakarta(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ],
@@ -359,24 +527,56 @@ class _PosTabState extends State<PosTab> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  opened
-                      ? 'Halaman pembayaran Midtrans sudah dibuka. Status akan berubah otomatis setelah webhook Midtrans diterima.'
-                      : 'Tidak bisa membuka browser otomatis. Buka URL pembayaran ini secara manual:',
+                  formatRupiah(total),
+                  style: _plusJakarta(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFFFF9A4D),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Jika halaman QRIS belum muncul otomatis, tekan tombol di bawah. Status akan diperbarui otomatis setelah pembayaran diterima.',
                   style: _plusJakarta(
                     fontSize: 12,
                     color: Colors.grey.shade700,
                   ),
                 ),
-                if (!opened) ...[
-                  const SizedBox(height: 10),
-                  SelectableText(
-                    paymentUrl,
-                    style: _plusJakarta(
-                      fontSize: 11,
-                      color: const Color(0xFFFF9A4D),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      unawaited(openPaymentUrl(paymentUrl));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFB570),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(Icons.qr_code_2),
+                    label: Text(
+                      'BUKA QRIS SEKARANG',
+                      style: _plusJakarta(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ],
+                ),
+                const SizedBox(height: 12),
+                SelectableText(
+                  paymentUrl,
+                  maxLines: 2,
+                  style: _plusJakarta(
+                    fontSize: 10,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
               ],
             ),
           ),
@@ -468,7 +668,18 @@ class _PosTabState extends State<PosTab> {
                         ),
                       ),
                       Text(
-                        'Waktu: ${data['transaction_date'].substring(0, 19).replaceFirst('T', ' ')}',
+                        () {
+                          try {
+                            final dt = DateTime.parse(
+                              data['transaction_date']?.toString() ?? '',
+                            ).toLocal();
+                            final pad = (int n) => n.toString().padLeft(2, '0');
+                            return 'Waktu: ${dt.year}-${pad(dt.month)}-${pad(dt.day)} '
+                                '${pad(dt.hour)}:${pad(dt.minute)}:${pad(dt.second)} WIB';
+                          } catch (_) {
+                            return 'Waktu: ${data['transaction_date']}';
+                          }
+                        }(),
                         style: _plusJakarta(
                           fontSize: 12,
                           color: Colors.grey.shade600,
@@ -666,15 +877,20 @@ class _PosTabState extends State<PosTab> {
           Positioned(
             right: 16,
             bottom: 16,
-            child: FloatingActionButton.extended(
-              onPressed: _openCartSheet,
-              backgroundColor: const Color(0xFFFFB570),
-              foregroundColor: Colors.white,
-              icon: const Icon(Icons.shopping_cart),
-              label: Text(
-                '${_cart.length} Item - ${formatRupiah(_getCartSubtotal())}',
+            child: ValueListenableBuilder<int>(
+              valueListenable: _cartVersion,
+              builder: (context, _, __) {
+                return FloatingActionButton.extended(
+                  onPressed: _openCartSheet,
+                  backgroundColor: const Color(0xFFFFB570),
+                  foregroundColor: Colors.white,
+                  icon: const Icon(Icons.shopping_cart),
+                  label: Text(
+                    '${_cart.length} Item - ${formatRupiah(_getCartSubtotal())}',
+                  ),
+                );
+              },
               ),
-            ),
           ),
         ],
       );
@@ -700,6 +916,7 @@ class _PosTabState extends State<PosTab> {
   }
 
   void _openCartSheet() {
+    _cartSheetOpen = true;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -708,14 +925,33 @@ class _PosTabState extends State<PosTab> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
-        return SafeArea(
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.82,
-            child: _buildCartPanel(),
-          ),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final media = MediaQuery.of(context);
+            final keyboardHeight = media.viewInsets.bottom;
+            final availableHeight = media.size.height - keyboardHeight - 24;
+            final sheetHeight = availableHeight.clamp(
+              260.0,
+              media.size.height * 0.9,
+            );
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: keyboardHeight,
+              ),
+              child: SafeArea(
+                child: SizedBox(
+                  height: sheetHeight.toDouble(),
+                  child: _buildCartPanel(),
+                ),
+              ),
+            );
+          },
         );
       },
-    );
+    ).whenComplete(() {
+      _cartSheetOpen = false;
+    });
   }
 
   Widget _buildSearchAndFilters() {
@@ -793,6 +1029,7 @@ class _PosTabState extends State<PosTab> {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ChoiceChip(
+        showCheckmark: false,
         label: Text(
           label,
           style: _plusJakarta(
@@ -847,135 +1084,147 @@ class _PosTabState extends State<PosTab> {
       );
     }
 
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 220,
-        childAspectRatio: 0.72,
-        crossAxisSpacing: 14,
-        mainAxisSpacing: 14,
-      ),
-      itemCount: _products.length,
-      itemBuilder: (context, index) {
-        final prod = _products[index];
-        final String name = prod['name'];
-        final String sku = prod['sku'];
-        final double price = parseCurrency(prod['sell_price']);
-        final int stock = int.parse(
-          (prod['stock']?['offline_qty'] ?? 0).toString(),
-        );
-        final String? img = prod['image_url'];
-        final imageUrl = img != null && img.isNotEmpty
-            ? widget.productService.resolveImageUrl(img)
-            : null;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = constraints.maxWidth < 520 ? 2 : 3;
 
-        return Card(
-          color: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-            side: BorderSide(color: Colors.grey.shade100),
+        return GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            childAspectRatio: constraints.maxWidth < 520 ? 0.56 : 0.66,
+            crossAxisSpacing: 14,
+            mainAxisSpacing: 14,
           ),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () => _addToCart(prod),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Image or icon
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    color: const Color(0xFFFFFDF9),
-                    child: imageUrl != null
-                        ? Image.network(
-                            imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => const Icon(
-                              Icons.pets,
-                              size: 36,
-                              color: Color(0xFFFFD4A8),
-                            ),
-                          )
-                        : const Icon(
-                            Icons.pets,
-                            size: 36,
-                            color: Color(0xFFFFD4A8),
-                          ),
-                  ),
-                ),
+          itemCount: _products.length,
+          itemBuilder: (context, index) {
+            final prod = _products[index];
+            final String name = prod['name'];
+            final String sku = prod['sku'];
+            final double price = parseCurrency(prod['sell_price']);
+            final int stock = int.parse(
+              (prod['stock']?['offline_qty'] ?? 0).toString(),
+            );
+            final String? img = prod['image_url'];
+            final imageUrl = img != null && img.isNotEmpty
+                ? widget.productService.resolveImageUrl(img)
+                : null;
 
-                // Name & Info
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: _plusJakarta(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
+            return Card(
+              color: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: Colors.grey.shade100),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () => _addToCart(prod),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AspectRatio(
+                      aspectRatio: 1.22,
+                      child: Container(
+                        width: double.infinity,
+                        color: const Color(0xFFFFFDF9),
+                        child: imageUrl != null
+                            ? CachedNetworkImage(
+                                imageUrl: imageUrl,
+                                fit: BoxFit.contain,
+                                errorWidget: (context, url, error) => const Icon(
+                                  Icons.pets,
+                                  size: 36,
+                                  color: Color(0xFFFFD4A8),
+                                ),
+                              )
+                            : const Icon(
+                                Icons.pets,
+                                size: 36,
+                                color: Color(0xFFFFD4A8),
+                              ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'SKU: $sku',
-                        style: _plusJakarta(
-                          fontSize: 10,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            formatRupiah(price),
-                            style: _plusJakarta(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w900,
-                              color: const Color(0xFFFF9A4D),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFDF1E8),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              'Stok: $stock',
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: _plusJakarta(
-                                fontSize: 10,
+                                fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: const Color(0xFFE27F3B),
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 5),
+                            Text(
+                              'SKU: $sku',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: _plusJakarta(
+                                fontSize: 10,
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
+                            const Spacer(),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    formatRupiah(price),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: _stylePrice13,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFDF1E8),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    'Stok: $stock',
+                                    style: _plusJakarta(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFFE27F3B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
   }
 
   Widget _buildCartPanel() {
-    final subtotal = _getCartSubtotal();
+    return ValueListenableBuilder<int>(
+      valueListenable: _cartVersion,
+      builder: (context, _, __) {
+        final subtotal = _getCartSubtotal();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
         // Cart Header
         Padding(
           padding: const EdgeInsets.all(20),
@@ -1236,7 +1485,9 @@ class _PosTabState extends State<PosTab> {
             ],
           ),
         ),
-      ],
+          ],
+        );
+      },
     );
   }
 
@@ -1256,15 +1507,7 @@ class _PosTabState extends State<PosTab> {
           color: isSelected ? Colors.white : const Color(0xFF3D2314),
         ),
       ),
-      onPressed: () {
-        setState(() {
-          _paymentMethod = value;
-          if (value != 'cash') {
-            _amountPaidCtrl.clear();
-            _change = 0.0;
-          }
-        });
-      },
+      onPressed: () => _setPaymentMethod(value),
       style: OutlinedButton.styleFrom(
         backgroundColor: isSelected ? const Color(0xFFFFB570) : Colors.white,
         side: BorderSide(

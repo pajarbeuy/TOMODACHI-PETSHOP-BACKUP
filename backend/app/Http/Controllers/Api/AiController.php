@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ChatHistory;
 use App\Services\AiService;
 use App\Services\RestockAnalysisService;
+use App\Support\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -48,23 +49,15 @@ class AiController extends Controller
             ], 200);
 
         } catch (ValidationException $e) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Validation failed',
-                'errors'  => $e->errors(),
-            ], 422);
+            return ApiResponse::error('Validation failed', 422, $e->errors());
 
         } catch (\RuntimeException $e) {
-            return response()->json([
-                'status'  => false,
-                'message' => $e->getMessage(),
-            ], 503);
+            return ApiResponse::error($e->getMessage(), 503);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Terjadi kesalahan pada AI service.',
-            ], 500);
+            report($e);
+
+            return ApiResponse::error('Terjadi kesalahan pada AI service.', 500);
         }
     }
 
@@ -101,10 +94,9 @@ class AiController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Failed to retrieve chat history: ' . $e->getMessage(),
-            ], 500);
+            report($e);
+
+            return ApiResponse::error('Failed to retrieve chat history. Please try again later.', 500);
         }
     }
 
@@ -137,10 +129,9 @@ class AiController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Failed to get restock analysis: ' . $e->getMessage(),
-            ], 500);
+            report($e);
+
+            return ApiResponse::error('Failed to get restock analysis. Please try again later.', 500);
         }
     }
 }

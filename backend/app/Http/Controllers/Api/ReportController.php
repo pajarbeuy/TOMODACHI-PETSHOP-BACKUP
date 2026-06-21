@@ -253,9 +253,10 @@ class ReportController extends Controller
 
         $avgTodayVal = $todayCount > 0 ? $todaySales / $todayCount : 0;
 
-        // 2. Sales Trend (Past 7 days)
+        // 2. Sales Trend (Dynamic days: 7, 30, or 90)
+        $trendDays = min(90, max(7, intval($request->query('trend_days', 7))));
         $trendData = [];
-        for ($i = 6; $i >= 0; $i--) {
+        for ($i = $trendDays - 1; $i >= 0; $i--) {
             $date = now()->subDays($i)->toDateString();
             $dayQuery = Transaction::whereDate('created_at', $date)->where('status', 'completed');
             $trendData[] = [
@@ -268,12 +269,65 @@ class ReportController extends Controller
         // 3. Top Products (Limit 5)
         $topProds = TransactionItem::join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
             ->join('products', 'transaction_items.product_id', '=', 'products.id')
+            ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
             ->where('transactions.status', 'completed')
-            ->select('products.name as product_name', DB::raw('SUM(transaction_items.quantity) as quantity_sold'))
-            ->groupBy('products.name')
+            ->select(
+                'products.id as product_id',
+                'products.name as product_name',
+                'products.sku',
+                'categories.name as category_name',
+                DB::raw('SUM(transaction_items.quantity) as quantity_sold'),
+                DB::raw('SUM(transaction_items.subtotal) as total_revenue')
+            )
+            ->groupBy('products.id', 'products.name', 'products.sku', 'categories.name')
             ->orderBy('quantity_sold', 'desc')
             ->limit(5)
             ->get();
+
+        // Low stock alerts: produk yang stok (offline+online) <= min_threshold masing-masing
+        $lowStockAlerts = Product::with('stock')
+            ->join('stocks', 'products.id', '=', 'stocks.product_id')
+            ->whereRaw('(stocks.offline_qty + stocks.online_qty) <= stocks.min_threshold')
+            ->select(
+                'products.id',
+                'products.name',
+                'products.sku',
+                'stocks.offline_qty',
+                'stocks.online_qty',
+                'stocks.min_threshold'
+            )
+            ->orderByRaw('(stocks.offline_qty + stocks.online_qty) asc')
+            ->limit(20)
+            ->get();
+
+        $monthlyRows = Transaction::where('status', 'completed')
+            ->whereDate('created_at', '>=', now()->subMonths(11)->startOfMonth()->toDateString())
+            ->select(
+                DB::raw('YEAR(created_at) as year'),
+                DB::raw('MONTH(created_at) as month'),
+                DB::raw('SUM(total) as total_revenue'),
+                DB::raw('COUNT(id) as transaction_count')
+            )
+            ->groupBy('year', 'month')
+            ->orderBy('year')
+            ->orderBy('month')
+            ->get()
+            ->keyBy(fn ($item) => sprintf('%04d-%02d', $item->year, $item->month));
+
+        $monthlyRevenue = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $key = $month->format('Y-m');
+            $row = $monthlyRows->get($key);
+
+            $monthlyRevenue[] = [
+                'month' => $month->format('M'),
+                'month_number' => intval($month->format('n')),
+                'year' => intval($month->format('Y')),
+                'total_revenue' => floatval($row?->total_revenue ?? 0),
+                'transaction_count' => intval($row?->transaction_count ?? 0),
+            ];
+        }
 
         // 4. Category breakdown shares
         $catBreakdown = [];
@@ -325,10 +379,31 @@ class ReportController extends Controller
             'sales_trend' => $trendData,
             'top_products' => $topProds->map(function ($item) {
                 return [
+                    'product_id' => $item->product_id,
                     'product_name' => $item->product_name,
+                    'sku' => $item->sku,
+                    'category' => $item->category_name ?? '-',
                     'quantity_sold' => intval($item->quantity_sold),
+                    'total_revenue' => floatval($item->total_revenue),
                 ];
             })->all(),
+            'low_stock_alerts' => $lowStockAlerts->map(function ($item) {
+                $stock = intval($item->offline_qty) + intval($item->online_qty);
+                $minThreshold = intval($item->min_threshold);
+
+                return [
+                    'product_id' => $item->id,
+                    'product_name' => $item->name,
+                    'sku' => $item->sku,
+                    'stock' => $stock,
+                    'offline_qty' => intval($item->offline_qty),
+                    'online_qty' => intval($item->online_qty),
+                    'threshold' => $minThreshold,
+                    'min_threshold' => $minThreshold,
+                    'critical' => $stock <= max(1, intval(floor($minThreshold / 2))),
+                ];
+            })->all(),
+            'monthly_revenue' => $monthlyRevenue,
             'category_breakdown' => $catBreakdown
         ];
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\ApiResponse;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,26 +20,18 @@ class CheckRole
         $user = $request->user();
 
         if (!$user) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Unauthorized. Please login first.',
-            ], 401);
+            return ApiResponse::error('Unauthorized. Please login first.', 401);
         }
 
         if (!$user->role) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Unauthorized. User role not assigned.',
-            ], 403);
+            return ApiResponse::error('Unauthorized. User role not assigned.', 403);
         }
 
         if (!in_array($user->role->name, $roles)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Forbidden. You do not have permission to access this resource.',
+            return ApiResponse::error('Forbidden. You do not have permission to access this resource.', 403, null, [
                 'required_roles' => $roles,
                 'your_role' => $user->role->name,
-            ], 403);
+            ]);
         }
 
         return $next($request);

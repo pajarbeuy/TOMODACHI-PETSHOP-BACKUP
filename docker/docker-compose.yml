@@ -7,7 +7,7 @@ services:
     volumes:
       - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
       - flutter_web:/var/www/flutter:ro
-      - laravel_app:/var/www/laravel:ro
+      - ../backend:/var/www/laravel:ro
     depends_on:
       - laravel
     networks:
@@ -21,7 +21,7 @@ services:
       dockerfile: Dockerfile
     container_name: tomodachi_laravel
     volumes:
-      - laravel_app:/var/www/laravel
+      - ../backend:/var/www/laravel
       - ./.env.laravel:/var/www/laravel/.env:ro
     depends_on:
       mysql:
@@ -62,6 +62,8 @@ services:
     build:
       context: ../frontend
       dockerfile: Dockerfile
+      args:
+        API_BASE_URL: ${API_BASE_URL:-/}
     container_name: tomodachi_flutter_build
     volumes:
       - flutter_web:/output
@@ -70,7 +72,7 @@ services:
 
 volumes:
   mysql_data:
-  laravel_app:
+  #laravel_app:
   flutter_web:
 
 networks:

@@ -54,8 +54,11 @@ class DashboardService {
   }
 
   /// Fetch general dashboard KPIs, sales trends and category distributions
-  Future<Map<String, dynamic>> getAnalytics() async {
-    return await _client.get('/api/dashboard/analytics');
+  Future<Map<String, dynamic>> getAnalytics({int trendDays = 7}) async {
+    final queryString = Uri(
+      queryParameters: {'trend_days': trendDays.toString()},
+    ).query;
+    return await _client.get('/api/dashboard/analytics?$queryString');
   }
 
   /// Fetch latest transactions for live dashboard activity

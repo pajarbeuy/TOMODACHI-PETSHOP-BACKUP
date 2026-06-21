@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
-import 'screens/login_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'screens/splash_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Prefetch Plus Jakarta Sans to avoid layout jumping
+  GoogleFonts.pendingFonts([
+    GoogleFonts.plusJakartaSans(),
+    GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+    GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900),
+  ]);
   runApp(const TomodachiApp());
 }
 
@@ -25,7 +33,7 @@ class TomodachiApp extends StatelessWidget {
         fontFamily: 'Poppins',
       ),
 
-      home: const LoginScreen(),
+      home: const SplashScreen(),
     );
   }
 }
