@@ -32,7 +32,7 @@ class TransactionService {
     String? startDate,
     String? endDate,
     int page = 1,
-    int perPage = 15,
+    int perPage = 10,
   }) async {
     final Map<String, String> queryParams = {};
     if (channel != null && channel.isNotEmpty) queryParams['channel'] = channel;

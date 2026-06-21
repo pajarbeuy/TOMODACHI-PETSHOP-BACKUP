@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'api_client.dart';
@@ -148,6 +150,10 @@ class AuthService extends ChangeNotifier {
           // Keep the in-memory session usable even when persistence fails.
           try {
             await _secureStorage.write(key: 'auth_token', value: token);
+            await _secureStorage.write(
+              key: 'auth_user',
+              value: jsonEncode(_currentUser!.toJson()),
+            );
           } catch (e) {
             if (!kIsWeb) {
               rethrow;
@@ -189,6 +195,7 @@ class AuthService extends ChangeNotifier {
 
         // Remove token from secure storage
         await _secureStorage.delete(key: 'auth_token');
+        await _secureStorage.delete(key: 'auth_user');
 
         _isLoading = false;
         notifyListeners();
@@ -206,6 +213,7 @@ class AuthService extends ChangeNotifier {
       _currentUser = null;
       _apiClient.clearToken();
       await _secureStorage.delete(key: 'auth_token');
+      await _secureStorage.delete(key: 'auth_user');
       _isLoading = false;
       notifyListeners();
       return false;
@@ -362,14 +370,36 @@ class AuthService extends ChangeNotifier {
   Future<bool> restoreTokenFromStorage() async {
     try {
       final token = await _secureStorage.read(key: 'auth_token');
+      final cachedUser = await _secureStorage.read(key: 'auth_user');
 
       if (token != null && token.isNotEmpty) {
         _token = token;
         _apiClient.setToken(token);
 
+        if (cachedUser != null && cachedUser.isNotEmpty) {
+          final decoded = jsonDecode(cachedUser);
+          if (decoded is Map<String, dynamic>) {
+            _currentUser = UserModel.fromJson(decoded);
+          } else if (decoded is Map) {
+            _currentUser = UserModel.fromJson(Map<String, dynamic>.from(decoded));
+          }
+        }
+
         // Fetch current user data
         final success = await getCurrentUser();
         if (success) {
+          if (_currentUser != null) {
+            await _secureStorage.write(
+              key: 'auth_user',
+              value: jsonEncode(_currentUser!.toJson()),
+            );
+          }
+          notifyListeners();
+          return true;
+        }
+
+        if (_currentUser != null) {
+          _errorMessage = null;
           notifyListeners();
           return true;
         }
@@ -394,6 +424,8 @@ class AuthService extends ChangeNotifier {
     _currentUser = null;
     _errorMessage = null;
     _apiClient.clearToken();
+    _secureStorage.delete(key: 'auth_token');
+    _secureStorage.delete(key: 'auth_user');
     notifyListeners();
   }
 }

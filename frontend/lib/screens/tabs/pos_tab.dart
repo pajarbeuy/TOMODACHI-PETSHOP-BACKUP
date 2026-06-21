@@ -668,7 +668,18 @@ class _PosTabState extends State<PosTab> {
                         ),
                       ),
                       Text(
-                        'Waktu: ${data['transaction_date'].substring(0, 19).replaceFirst('T', ' ')}',
+                        () {
+                          try {
+                            final dt = DateTime.parse(
+                              data['transaction_date']?.toString() ?? '',
+                            ).toLocal();
+                            final pad = (int n) => n.toString().padLeft(2, '0');
+                            return 'Waktu: ${dt.year}-${pad(dt.month)}-${pad(dt.day)} '
+                                '${pad(dt.hour)}:${pad(dt.minute)}:${pad(dt.second)} WIB';
+                          } catch (_) {
+                            return 'Waktu: ${data['transaction_date']}';
+                          }
+                        }(),
                         style: _plusJakarta(
                           fontSize: 12,
                           color: Colors.grey.shade600,
@@ -916,13 +927,21 @@ class _PosTabState extends State<PosTab> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
+            final media = MediaQuery.of(context);
+            final keyboardHeight = media.viewInsets.bottom;
+            final availableHeight = media.size.height - keyboardHeight - 24;
+            final sheetHeight = availableHeight.clamp(
+              260.0,
+              media.size.height * 0.9,
+            );
+
             return Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
+                bottom: keyboardHeight,
               ),
               child: SafeArea(
                 child: SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.82,
+                  height: sheetHeight.toDouble(),
                   child: _buildCartPanel(),
                 ),
               ),

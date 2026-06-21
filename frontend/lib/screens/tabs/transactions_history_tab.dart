@@ -30,6 +30,10 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
   List<dynamic> _transactions = [];
   bool _loading = false;
   String? _selectedChannel;
+  int _currentPage = 1;
+  int _lastPage = 1;
+  int _totalTransactions = 0;
+  static const int _perPage = 10;
   final _startDateCtrl = TextEditingController();
   final _endDateCtrl = TextEditingController();
 
@@ -55,11 +59,25 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
         channel: _selectedChannel,
         startDate: _startDateCtrl.text.trim(),
         endDate: _endDateCtrl.text.trim(),
+        page: _currentPage,
+        perPage: _perPage,
       );
 
       if (res['status'] == true) {
+        final pagination = res['pagination'];
         setState(() {
           _transactions = res['data'];
+          if (pagination is Map) {
+            _currentPage =
+                int.tryParse('${pagination['current_page'] ?? _currentPage}') ??
+                    _currentPage;
+            _lastPage =
+                int.tryParse('${pagination['last_page'] ?? _lastPage}') ??
+                    _lastPage;
+            _totalTransactions =
+                int.tryParse('${pagination['total'] ?? _totalTransactions}') ??
+                    _totalTransactions;
+          }
         });
       }
     } catch (e) {
@@ -74,6 +92,44 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
       }
     } finally {
       setState(() => _loading = false);
+    }
+  }
+
+  void _refreshFirstPage() {
+    setState(() => _currentPage = 1);
+    _fetchTransactions();
+  }
+
+  void _goToPage(int page) {
+    if (page < 1 || page > _lastPage || page == _currentPage || _loading) {
+      return;
+    }
+
+    setState(() => _currentPage = page);
+    _fetchTransactions();
+  }
+
+  /// Format ISO 8601 timestamp ke waktu WIB yang dapat dibaca.
+  String _formatWIB(String isoString) {
+    try {
+      final dt = DateTime.parse(isoString).toLocal();
+      final pad = (int n) => n.toString().padLeft(2, '0');
+      return '${dt.year}-${pad(dt.month)}-${pad(dt.day)} '
+          '${pad(dt.hour)}:${pad(dt.minute)}:${pad(dt.second)} WIB';
+    } catch (_) {
+      return isoString;
+    }
+  }
+
+  /// Format ke waktu WIB pendek (tanpa detik) untuk daftar transaksi.
+  String _formatWIBShort(String isoString) {
+    try {
+      final dt = DateTime.parse(isoString).toLocal();
+      final pad = (int n) => n.toString().padLeft(2, '0');
+      return '${dt.year}-${pad(dt.month)}-${pad(dt.day)} '
+          '${pad(dt.hour)}:${pad(dt.minute)} WIB';
+    } catch (_) {
+      return isoString;
     }
   }
 
@@ -137,7 +193,7 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
                         ),
                       ),
                       Text(
-                        'Waktu: ${data['transaction_date'].substring(0, 19).replaceFirst('T', ' ')}',
+                        'Waktu: ${_formatWIB(data['transaction_date']?.toString() ?? '')}',
                         style: _plusJakarta(
                           fontSize: 12,
                           color: Colors.grey.shade600,
@@ -364,7 +420,7 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
                           ],
                           onChanged: (v) {
                             setState(() => _selectedChannel = v);
-                            _fetchTransactions();
+                            _refreshFirstPage();
                           },
                         ),
                       ),
@@ -403,7 +459,7 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
                               ' ',
                             )[0];
                           });
-                          _fetchTransactions();
+                          _refreshFirstPage();
                         }
                       },
                       child: Container(
@@ -459,7 +515,7 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
                               ' ',
                             )[0];
                           });
-                          _fetchTransactions();
+                          _refreshFirstPage();
                         }
                       },
                       child: Container(
@@ -503,6 +559,52 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
 
           // Transactions List
           Expanded(child: _buildTransactionsList()),
+          const SizedBox(height: 10),
+          _buildPaginationControls(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaginationControls() {
+    final start = _totalTransactions == 0
+        ? 0
+        : ((_currentPage - 1) * _perPage) + 1;
+    final end = (_currentPage * _perPage).clamp(0, _totalTransactions);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF9F2),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              _totalTransactions == 0
+                  ? 'Tidak ada transaksi'
+                  : '$start-$end dari $_totalTransactions transaksi',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: _plusJakarta(fontSize: 12, color: Colors.grey.shade700),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Halaman sebelumnya',
+            onPressed: _currentPage > 1 ? () => _goToPage(_currentPage - 1) : null,
+            icon: const Icon(Icons.chevron_left),
+          ),
+          Text(
+            '$_currentPage / $_lastPage',
+            style: _plusJakarta(fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+          IconButton(
+            tooltip: 'Halaman berikutnya',
+            onPressed:
+                _currentPage < _lastPage ? () => _goToPage(_currentPage + 1) : null,
+            icon: const Icon(Icons.chevron_right),
+          ),
         ],
       ),
     );
@@ -530,9 +632,9 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
         final String channel = trx['channel'] ?? 'offline';
         final double total = parseCurrency(trx['total']);
         final String payment = trx['payment_method'] ?? 'cash';
-        final String dateStr = trx['created_at']
-            .substring(0, 19)
-            .replaceFirst('T', ' ');
+        final String dateStr = _formatWIBShort(
+          trx['created_at']?.toString() ?? '',
+        );
 
         return Card(
           color: Colors.white,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../auth_service.dart';
 import '../product_service.dart';
+import '../category_service.dart';
 import '../transaction_service.dart';
 import '../dashboard_service.dart';
 import 'tabs/pos_tab.dart';
@@ -12,6 +13,7 @@ import 'ai_chat_screen.dart';
 import 'login_screen.dart';
 import '../ai_chat_service.dart';
 import 'owner_accounts_screen.dart';
+import 'category_management_screen.dart';
 import '../widgets/app_logo.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -55,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late final TextStyle _styleNavUnsel11 = _plusJakarta(fontSize: 11, color: const Color(0xFF9E8F85));
 
   late final ProductService _productService;
+  late final CategoryService _categoryService;
   late final TransactionService _transactionService;
   late final DashboardService _dashboardService;
   late final AiChatService _aiChatService;
@@ -69,6 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Initialize services by accessing apiClient from AuthService
     final client = widget.authService.apiClient;
     _productService = ProductService(client);
+    _categoryService = CategoryService(client);
     _transactionService = TransactionService(client);
     _dashboardService = DashboardService(client);
     _aiChatService = AiChatService(client);
@@ -104,6 +108,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           _NavigationItem(
+            label: 'Kategori Produk',
+            icon: Icons.category_outlined,
+            widget: CategoryManagementScreen(
+              categoryService: _categoryService,
+            ),
+          ),
+          _NavigationItem(
             label: 'Riwayat Transaksi',
             icon: Icons.history,
             widget: TransactionsHistoryTab(
@@ -130,6 +141,13 @@ class _HomeScreenState extends State<HomeScreen> {
             widget: ProductsTab(
               productService: _productService,
               userRole: role,
+            ),
+          ),
+          _NavigationItem(
+            label: 'Kategori Produk',
+            icon: Icons.category_outlined,
+            widget: CategoryManagementScreen(
+              categoryService: _categoryService,
             ),
           ),
           _NavigationItem(
@@ -263,6 +281,8 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'Manajemen Produk':
       case 'Stok Produk':
         return 'Produk';
+      case 'Kategori Produk':
+        return 'Kategori';
       case 'Riwayat Transaksi':
       case 'Riwayat Kasir':
         return 'Riwayat';

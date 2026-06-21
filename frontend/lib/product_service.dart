@@ -47,7 +47,7 @@ class ProductService {
   /// Create a new product with optional image upload
   Future<Map<String, dynamic>> createProduct({
     required String name,
-    required String sku,
+    String? sku,
     required String categoryId,
     required double buyPrice,
     required double sellPrice,
@@ -63,7 +63,6 @@ class ProductService {
   }) async {
     final fields = {
       'name': name,
-      'sku': sku,
       'category_id': categoryId,
       'buy_price': buyPrice.toString(),
       'sell_price': sellPrice.toString(),
@@ -73,6 +72,9 @@ class ProductService {
       'description': description ?? '',
       'confirm_price_below_cost': confirmPriceBelowCost ? 'true' : 'false',
     };
+    if (sku != null && sku.trim().isNotEmpty) {
+      fields['sku'] = sku.trim();
+    }
     if (imageUrl != null) fields['image_url'] = imageUrl;
 
     return await _client.postMultipart(

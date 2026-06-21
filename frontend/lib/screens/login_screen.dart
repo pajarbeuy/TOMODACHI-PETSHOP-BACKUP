@@ -8,7 +8,7 @@ import 'home_screen.dart';
 
 const _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://127.0.0.1:8000',
+  defaultValue: 'https://tomodachi-petshop.xyz',
 );
 const _mobileApiBaseUrl = String.fromEnvironment(
   'MOBILE_API_BASE_URL',

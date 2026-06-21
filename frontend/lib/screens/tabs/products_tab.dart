@@ -303,12 +303,44 @@ class _ProductsTabState extends State<ProductsTab> {
                       decoration: modalInputDecoration('Nama Produk *'),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      controller: skuCtrl,
-                      style: _plusJakarta(fontSize: 14),
-                      decoration: modalInputDecoration('SKU Produk *'),
-                    ),
-                    const SizedBox(height: 12),
+                    if (isEdit) ...[
+                      TextField(
+                        controller: skuCtrl,
+                        style: _plusJakarta(fontSize: 14),
+                        decoration: modalInputDecoration('SKU Produk *'),
+                      ),
+                      const SizedBox(height: 12),
+                    ] else ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7ED),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFFD4A8)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.auto_awesome,
+                              size: 18,
+                              color: Color(0xFFFF9A4D),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'SKU akan dibuat otomatis dari kategori dan nama produk.',
+                                style: _plusJakarta(
+                                  fontSize: 12,
+                                  color: const Color(0xFF6B4F3E),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     DropdownButtonFormField<String>(
                       initialValue: selectedCategoryId,
                       isExpanded: true,
@@ -533,7 +565,7 @@ class _ProductsTabState extends State<ProductsTab> {
                           final imgUrl = imgUrlCtrl.text.trim();
 
                           if (name.isEmpty ||
-                              sku.isEmpty ||
+                              (isEdit && sku.isEmpty) ||
                               selectedCategoryId == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -604,7 +636,6 @@ class _ProductsTabState extends State<ProductsTab> {
                             } else {
                               res = await widget.productService.createProduct(
                                 name: name,
-                                sku: sku,
                                 categoryId: selectedCategoryId!,
                                 buyPrice: buyVal,
                                 sellPrice: sellVal,
@@ -771,6 +802,8 @@ class _ProductsTabState extends State<ProductsTab> {
                 Expanded(flex: 2, child: _buildSubCategoryDropdown()),
               ],
             ),
+          const SizedBox(height: 10),
+          _buildSubCategoryChips(),
           const SizedBox(height: 16),
 
           // Table / List of products
@@ -904,6 +937,58 @@ class _ProductsTabState extends State<ProductsTab> {
             _fetchProducts();
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildSubCategoryChips() {
+    final subCategories = _availableSubCategories();
+    if (subCategories.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return SizedBox(
+      height: 42,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: subCategories.length + 1,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final String? value = index == 0 ? null : subCategories[index - 1];
+          final selected = _selectedSubCategory == value;
+          final label = value ?? 'Semua Sub-kategori';
+
+          return ChoiceChip(
+            showCheckmark: false,
+            selected: selected,
+            selectedColor: const Color(0xFFFFB570),
+            backgroundColor: const Color(0xFFFFFDFB),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 10),
+            label: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.visible,
+              softWrap: false,
+              style: _plusJakarta(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+                color: selected ? Colors.white : const Color(0xFF3D2314),
+              ),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+              side: BorderSide(
+                color: selected
+                    ? const Color(0xFFFFB570)
+                    : const Color(0x33FFB570),
+              ),
+            ),
+            onSelected: (_) {
+              setState(() => _selectedSubCategory = value);
+              _fetchProducts();
+            },
+          );
+        },
       ),
     );
   }
