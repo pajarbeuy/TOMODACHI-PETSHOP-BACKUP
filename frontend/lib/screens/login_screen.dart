@@ -14,6 +14,10 @@ const _mobileApiBaseUrl = String.fromEnvironment(
   'MOBILE_API_BASE_URL',
   defaultValue: 'https://tomodachi-petshop.xyz',
 );
+const _mobileApiBaseUrl = String.fromEnvironment(
+  'MOBILE_API_BASE_URL',
+  defaultValue: 'https://crusher-vaguely-tyke.ngrok-free.dev',
+);
 
 // ── Models ──────────────────────────────────────────────────────────────────
 
