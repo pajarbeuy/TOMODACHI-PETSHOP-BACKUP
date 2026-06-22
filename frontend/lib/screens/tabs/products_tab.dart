@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../product_image_picker.dart';
 import '../../product_service.dart';
 import '../../utils/currency_formatter.dart';
+import '../../utils/error_message.dart';
 
 class ProductsTab extends StatefulWidget {
   final ProductService productService;
@@ -35,6 +38,7 @@ class _ProductsTabState extends State<ProductsTab> {
   );
 
   final _searchCtrl = TextEditingController();
+  Timer? _searchDebounce;
   List<dynamic> _products = [];
   List<dynamic> _categoriesList = [];
   bool _loading = false;
@@ -51,12 +55,17 @@ class _ProductsTabState extends State<ProductsTab> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchCtrl.dispose();
     super.dispose();
   }
 
   void _onSearchChanged() {
-    _fetchProducts();
+    if (mounted) {
+      setState(() {});
+    }
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), _fetchProducts);
   }
 
   Future<void> _fetchCategories() async {
@@ -99,7 +108,7 @@ class _ProductsTabState extends State<ProductsTab> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading products: ${e.toString()}'),
+            content: Text(userFriendlyError(e, fallback: 'Gagal memuat produk')),
             backgroundColor: Colors.red.shade700,
           ),
         );
@@ -166,7 +175,11 @@ class _ProductsTabState extends State<ProductsTab> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menghapus produk: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              userFriendlyError(e, fallback: 'Gagal menghapus produk'),
+            ),
+          ),
         );
       }
     }
@@ -290,12 +303,44 @@ class _ProductsTabState extends State<ProductsTab> {
                       decoration: modalInputDecoration('Nama Produk *'),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      controller: skuCtrl,
-                      style: _plusJakarta(fontSize: 14),
-                      decoration: modalInputDecoration('SKU Produk *'),
-                    ),
-                    const SizedBox(height: 12),
+                    if (isEdit) ...[
+                      TextField(
+                        controller: skuCtrl,
+                        style: _plusJakarta(fontSize: 14),
+                        decoration: modalInputDecoration('SKU Produk *'),
+                      ),
+                      const SizedBox(height: 12),
+                    ] else ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7ED),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFFD4A8)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.auto_awesome,
+                              size: 18,
+                              color: Color(0xFFFF9A4D),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'SKU akan dibuat otomatis dari kategori dan nama produk.',
+                                style: _plusJakarta(
+                                  fontSize: 12,
+                                  color: const Color(0xFF6B4F3E),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     DropdownButtonFormField<String>(
                       initialValue: selectedCategoryId,
                       isExpanded: true,
@@ -439,7 +484,10 @@ class _ProductsTabState extends State<ProductsTab> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        'Gagal memilih foto: ${e.toString()}',
+                                        userFriendlyError(
+                                          e,
+                                          fallback: 'Gagal memilih foto',
+                                        ),
                                       ),
                                     ),
                                   );
@@ -472,12 +520,12 @@ class _ProductsTabState extends State<ProductsTab> {
                                   Uint8List.fromList(selectedImage!.bytes),
                                   fit: BoxFit.cover,
                                 )
-                              : Image.network(
-                                  widget.productService.resolveImageUrl(
+                              : CachedNetworkImage(
+                                  imageUrl: widget.productService.resolveImageUrl(
                                     imgUrlCtrl.text.trim(),
                                   ),
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => Center(
+                                  errorWidget: (context, url, error) => Center(
                                     child: Text(
                                       'Preview foto tidak dapat dimuat',
                                       style: _plusJakarta(
@@ -517,7 +565,7 @@ class _ProductsTabState extends State<ProductsTab> {
                           final imgUrl = imgUrlCtrl.text.trim();
 
                           if (name.isEmpty ||
-                              sku.isEmpty ||
+                              (isEdit && sku.isEmpty) ||
                               selectedCategoryId == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -588,7 +636,6 @@ class _ProductsTabState extends State<ProductsTab> {
                             } else {
                               res = await widget.productService.createProduct(
                                 name: name,
-                                sku: sku,
                                 categoryId: selectedCategoryId!,
                                 buyPrice: buyVal,
                                 sellPrice: sellVal,
@@ -624,7 +671,10 @@ class _ProductsTabState extends State<ProductsTab> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    'Gagal menyimpan: ${e.toString()}',
+                                    userFriendlyError(
+                                      e,
+                                      fallback: 'Gagal menyimpan produk',
+                                    ),
                                   ),
                                   backgroundColor: Colors.red.shade700,
                                 ),
@@ -745,13 +795,15 @@ class _ProductsTabState extends State<ProductsTab> {
           else
             Row(
               children: [
-                Expanded(child: _buildSearchField()),
+                Expanded(flex: 3, child: _buildSearchField()),
                 const SizedBox(width: 12),
-                Expanded(flex: 3, child: _buildAnimalDropdown()),
+                Expanded(flex: 2, child: _buildAnimalDropdown()),
                 const SizedBox(width: 12),
-                Expanded(child: _buildSubCategoryDropdown()),
+                Expanded(flex: 2, child: _buildSubCategoryDropdown()),
               ],
             ),
+          const SizedBox(height: 10),
+          _buildSubCategoryChips(),
           const SizedBox(height: 16),
 
           // Table / List of products
@@ -889,6 +941,58 @@ class _ProductsTabState extends State<ProductsTab> {
     );
   }
 
+  Widget _buildSubCategoryChips() {
+    final subCategories = _availableSubCategories();
+    if (subCategories.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return SizedBox(
+      height: 42,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: subCategories.length + 1,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final String? value = index == 0 ? null : subCategories[index - 1];
+          final selected = _selectedSubCategory == value;
+          final label = value ?? 'Semua Sub-kategori';
+
+          return ChoiceChip(
+            showCheckmark: false,
+            selected: selected,
+            selectedColor: const Color(0xFFFFB570),
+            backgroundColor: const Color(0xFFFFFDFB),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 10),
+            label: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.visible,
+              softWrap: false,
+              style: _plusJakarta(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+                color: selected ? Colors.white : const Color(0xFF3D2314),
+              ),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+              side: BorderSide(
+                color: selected
+                    ? const Color(0xFFFFB570)
+                    : const Color(0x33FFB570),
+              ),
+            ),
+            onSelected: (_) {
+              setState(() => _selectedSubCategory = value);
+              _fetchProducts();
+            },
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildProductsList() {
     if (_loading && _products.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -956,10 +1060,10 @@ class _ProductsTabState extends State<ProductsTab> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: imageUrl != null
-                      ? Image.network(
-                          imageUrl,
+                      ? CachedNetworkImage(
+                          imageUrl: imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) =>
+                          errorWidget: (context, url, error) =>
                               const Icon(Icons.pets, color: Color(0xFFFFB570)),
                         )
                       : const Icon(Icons.pets, color: Color(0xFFFFB570)),

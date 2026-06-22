@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\Product;
-use App\Models\Stock;
+use App\Support\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -44,7 +44,7 @@ class TransactionController extends Controller
             $query->whereDate('created_at', '<=', $request->query('end_date'));
         }
 
-        $perPage = $request->query('per_page', 15);
+        $perPage = min(max((int) $request->query('per_page', 10), 1), 100);
         $paginated = $query->latest()->paginate($perPage);
 
         return response()->json([
@@ -55,6 +55,7 @@ class TransactionController extends Controller
                 'current_page' => $paginated->currentPage(),
                 'per_page' => $paginated->perPage(),
                 'total' => $paginated->total(),
+                'last_page' => $paginated->lastPage(),
             ]
         ], 200);
     }
@@ -255,16 +256,11 @@ class TransactionController extends Controller
             ], 201);
 
         } catch (ValidationException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
+            return ApiResponse::error('Validation failed', 422, $e->errors());
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Transaction failed: ' . $e->getMessage()
-            ], 500);
+            report($e);
+
+            return ApiResponse::error('Transaction failed. Please try again later.', 500);
         }
     }
 
@@ -274,10 +270,7 @@ class TransactionController extends Controller
         $serverKey = config('midtrans.server_key');
 
         if (empty($serverKey)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'MIDTRANS_SERVER_KEY belum diatur',
-            ], 500);
+            return ApiResponse::error('MIDTRANS_SERVER_KEY belum diatur', 500);
         }
 
         $orderId = $payload['order_id'] ?? null;
@@ -286,18 +279,12 @@ class TransactionController extends Controller
         $signatureKey = $payload['signature_key'] ?? null;
 
         if (!$orderId || !$statusCode || !$grossAmount || !$signatureKey) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Payload notifikasi Midtrans tidak lengkap',
-            ], 422);
+            return ApiResponse::error('Payload notifikasi Midtrans tidak lengkap', 422);
         }
 
         $expectedSignature = hash('sha512', $orderId . $statusCode . $grossAmount . $serverKey);
         if (!hash_equals($expectedSignature, $signatureKey)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Signature Midtrans tidak valid',
-            ], 403);
+            return ApiResponse::error('Signature Midtrans tidak valid', 403);
         }
 
         $transaction = Transaction::with('items.product.stock')
@@ -305,10 +292,7 @@ class TransactionController extends Controller
             ->first();
 
         if (!$transaction) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Transaksi tidak ditemukan',
-            ], 404);
+            return ApiResponse::error('Transaksi tidak ditemukan', 404);
         }
 
         $midtransStatus = $payload['transaction_status'] ?? null;
@@ -384,10 +368,7 @@ class TransactionController extends Controller
             ->first();
 
         if (!$transaction) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Transaksi tidak ditemukan'
-            ], 404);
+            return ApiResponse::error('Transaksi tidak ditemukan', 404);
         }
 
         // Format items representation to match API contract
@@ -437,10 +418,7 @@ class TransactionController extends Controller
             ->first();
 
         if (!$transaction) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Transaksi tidak ditemukan'
-            ], 404);
+            return ApiResponse::error('Transaksi tidak ditemukan', 404);
         }
 
         $itemsFormatted = $transaction->items->map(function ($item) {

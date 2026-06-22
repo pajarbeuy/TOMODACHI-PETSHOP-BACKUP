@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\AiController;
+use App\Http\Controllers\Api\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -50,10 +51,30 @@ Route::middleware('auth:sanctum')->group(function () {
     // Registering new users is restricted to owner
     Route::post('/auth/register', [AuthController::class, 'register'])
         ->middleware(['check.role:owner', 'throttle:register']);
+    Route::get('/auth/accounts', [AuthController::class, 'accounts'])
+        ->middleware('check.role:owner');
+    Route::put('/auth/accounts/{user}', [AuthController::class, 'updateAccount'])
+        ->middleware('check.role:owner');
+    Route::patch('/auth/accounts/{user}', [AuthController::class, 'updateAccount'])
+        ->middleware('check.role:owner');
+    Route::delete('/auth/accounts/{user}', [AuthController::class, 'destroyAccount'])
+        ->middleware('check.role:owner');
     
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+});
+
+// ── User Management (CRUD) — Owner only ──────────────────────────────────────
+
+Route::middleware(['auth:sanctum', 'check.role:owner'])->group(function () {
+    Route::get('users', [UserController::class, 'index']);
+    Route::post('users', [UserController::class, 'store']);
+    Route::get('users/stats', [UserController::class, 'stats']);
+    Route::get('users/{user}', [UserController::class, 'show']);
+    Route::put('users/{user}', [UserController::class, 'update']);
+    Route::patch('users/{user}', [UserController::class, 'update']);
+    Route::delete('users/{user}', [UserController::class, 'destroy']);
 });
 
 // ── Protected POS & Product Features Routes ───────────────────────────────────
@@ -86,7 +107,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('products/{product}', [ProductController::class, 'destroy']);
     });
 
-    // 4. POS Transactions (Checkout for roles with POS access, history for all auth)
+    // 4. POS Transactions (Checkout for kasir & owner, history for all auth)
     Route::post('transactions', [TransactionController::class, 'store'])->middleware('check.role:kasir,owner,admin');
     Route::get('transactions', [TransactionController::class, 'index']);
     Route::get('transactions/{id}', [TransactionController::class, 'show']);
@@ -100,10 +121,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('dashboard/analytics', [ReportController::class, 'analytics']);
     });
 
-    // 6. AI Chatbot — semua role yang sudah login bisa akses
-    Route::prefix('ai')->group(function () {
-        Route::post('chat', [AiController::class, 'chat'])->middleware('throttle:ai');
-        Route::get('chat/history', [AiController::class, 'history']);
-        Route::get('restock', [AiController::class, 'restock']);
+    // 6. AI Chatbot — Owner only
+    Route::middleware('check.role:owner')->group(function () {
+        Route::prefix('ai')->group(function () {
+            Route::post('chat', [AiController::class, 'chat'])->middleware('throttle:ai');
+            Route::get('chat/history', [AiController::class, 'history']);
+            Route::get('restock', [AiController::class, 'restock']);
+        });
     });
 });

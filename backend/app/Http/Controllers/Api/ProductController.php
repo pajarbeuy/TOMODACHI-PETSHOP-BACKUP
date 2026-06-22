@@ -3,12 +3,53 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Product;
+use App\Support\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
+    private function makeSkuPart(string $value, int $maxWords = 2): string
+    {
+        $slug = strtoupper(Str::slug($value, '-'));
+        $parts = array_values(array_filter(explode('-', $slug)));
+        $selected = array_slice($parts, 0, $maxWords);
+
+        return implode('-', $selected) ?: 'PRD';
+    }
+
+    private function categorySkuCode(Category $category): string
+    {
+        $source = $category->sub_category ?: $category->animal_type ?: $category->name;
+        $letters = preg_replace('/[^A-Za-z0-9]/', '', strtoupper($source));
+
+        return str_pad(substr($letters ?: 'CAT', 0, 3), 3, 'X');
+    }
+
+    private function generateUniqueSku(Category $category, string $productName): string
+    {
+        $prefix = $this->categorySkuCode($category) . '-' . $this->makeSkuPart($productName) . '-';
+        $lastSku = Product::withTrashed()
+            ->where('sku', 'like', $prefix . '%')
+            ->orderByDesc('sku')
+            ->value('sku');
+
+        $next = 1;
+        if ($lastSku && preg_match('/-(\d+)$/', $lastSku, $matches)) {
+            $next = intval($matches[1]) + 1;
+        }
+
+        do {
+            $sku = $prefix . str_pad((string) $next, 3, '0', STR_PAD_LEFT);
+            $next++;
+        } while (Product::withTrashed()->where('sku', $sku)->exists());
+
+        return $sku;
+    }
+
     private function publicImageUrl(Request $request, ?string $imageUrl): ?string
     {
         if (empty($imageUrl)) {
@@ -18,11 +59,11 @@ class ProductController extends Controller
         $path = parse_url($imageUrl, PHP_URL_PATH) ?: $imageUrl;
 
         if (str_starts_with($path, '/storage/')) {
-            return $request->getSchemeAndHttpHost() . '/api/product-images/' . ltrim(substr($path, strlen('/storage/')), '/');
+            return $request->getSchemeAndHttpHost() . '/storage/' . ltrim(substr($path, strlen('/storage/')), '/');
         }
 
         if (str_starts_with($path, 'storage/')) {
-            return $request->getSchemeAndHttpHost() . '/api/product-images/' . ltrim(substr($path, strlen('storage/')), '/');
+            return $request->getSchemeAndHttpHost() . '/storage/' . ltrim(substr($path, strlen('storage/')), '/');
         }
 
         return $imageUrl;
@@ -37,7 +78,7 @@ class ProductController extends Controller
     public function image(string $path)
     {
         if (str_contains($path, '..') || !Storage::disk('public')->exists($path)) {
-            abort(404);
+            return ApiResponse::error('Gambar produk tidak ditemukan', 404);
         }
 
         return response()->file(Storage::disk('public')->path($path), [
@@ -151,7 +192,7 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'buy_price' => 'required|numeric|min:0',
             'sell_price' => 'required|numeric|min:0',
-            'sku' => 'required|string|unique:products,sku',
+            'sku' => 'nullable|string|unique:products,sku',
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'image_url' => 'nullable|string',
@@ -172,13 +213,9 @@ class ProductController extends Controller
         }
 
         if ($sellPrice < $buyPrice && !$confirm) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Harga jual tidak boleh lebih rendah dari harga beli.',
-                'errors' => [
-                    'sell_price' => ['Harga jual tidak boleh lebih rendah dari harga beli tanpa konfirmasi owner.']
-                ]
-            ], 422);
+            return ApiResponse::error('Harga jual tidak boleh lebih rendah dari harga beli.', 422, [
+                'sell_price' => ['Harga jual tidak boleh lebih rendah dari harga beli tanpa konfirmasi owner.'],
+            ]);
         }
 
         // 2. Photo upload support (max 2MB validated in Laravel)
@@ -190,10 +227,15 @@ class ProductController extends Controller
 
         $marginPercentage = $buyPrice > 0 ? (($sellPrice - $buyPrice) / $buyPrice) * 100 : 0;
 
+        $category = Category::findOrFail($validated['category_id']);
+        $sku = trim($validated['sku'] ?? '') !== ''
+            ? strtoupper(trim($validated['sku']))
+            : $this->generateUniqueSku($category, $validated['name']);
+
         $product = Product::create([
             'category_id' => $validated['category_id'],
             'name' => $validated['name'],
-            'sku' => $validated['sku'],
+            'sku' => $sku,
             'buy_price' => $buyPrice,
             'sell_price' => $sellPrice,
             'margin_percentage' => round($marginPercentage, 2),
@@ -226,7 +268,7 @@ class ProductController extends Controller
     {
         $product = Product::with(['category', 'stock'])->find($id);
         if (!$product) {
-            return response()->json(['status' => false, 'message' => 'Produk tidak ditemukan'], 404);
+            return ApiResponse::error('Produk tidak ditemukan', 404);
         }
 
         $user = auth()->user();
@@ -266,7 +308,7 @@ class ProductController extends Controller
     {
         $product = Product::find($id);
         if (!$product) {
-            return response()->json(['status' => false, 'message' => 'Product not found'], 404);
+            return ApiResponse::error('Produk tidak ditemukan', 404);
         }
 
         $validated = $request->validate([
@@ -294,13 +336,9 @@ class ProductController extends Controller
         }
 
         if ($sellPrice < $buyPrice && !$confirm) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Harga jual tidak boleh lebih rendah dari harga beli.',
-                'errors' => [
-                    'sell_price' => ['Harga jual tidak boleh lebih rendah dari harga beli tanpa konfirmasi owner.']
-                ]
-            ], 422);
+            return ApiResponse::error('Harga jual tidak boleh lebih rendah dari harga beli.', 422, [
+                'sell_price' => ['Harga jual tidak boleh lebih rendah dari harga beli tanpa konfirmasi owner.'],
+            ]);
         }
 
         // Photo upload support (max 2MB)
@@ -351,7 +389,7 @@ class ProductController extends Controller
     {
         $product = Product::find($id);
         if (!$product) {
-            return response()->json(['status' => false, 'message' => 'Produk tidak ditemukan'], 404);
+            return ApiResponse::error('Produk tidak ditemukan', 404);
         }
 
         // Soft deletes in database (historical records kept intact)

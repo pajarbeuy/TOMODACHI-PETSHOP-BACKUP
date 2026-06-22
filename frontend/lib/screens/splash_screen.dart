@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../auth_service.dart';
 import 'login_screen.dart';
+import 'home_screen.dart';
 import '../widgets/app_logo.dart';
+
+const _apiBaseUrl = String.fromEnvironment(
+  'API_BASE_URL',
+  defaultValue: 'http://127.0.0.1:8000',
+);
+const _mobileApiBaseUrl = String.fromEnvironment(
+  'MOBILE_API_BASE_URL',
+  defaultValue: 'https://tomodachi-petshop.xyz',
+);
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -53,14 +65,33 @@ class _SplashScreenState extends State<SplashScreen>
 
     _animationController.forward();
 
-    // Navigate after animation completes
-    Future.delayed(const Duration(milliseconds: 3000), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
-      }
-    });
+    // Try to restore token and navigate accordingly
+    _tryRestoreSession();
+  }
+
+  Future<void> _tryRestoreSession() async {
+    final authService = AuthService();
+    authService.initialize(kIsWeb ? _apiBaseUrl : _mobileApiBaseUrl);
+
+    // Run restore and a minimum delay in parallel
+    final results = await Future.wait([
+      authService.restoreTokenFromStorage(),
+      Future.delayed(const Duration(milliseconds: 2800), () => true),
+    ]);
+
+    final restored = results[0] as bool;
+
+    if (!mounted) return;
+
+    if (restored) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => HomeScreen(authService: authService)),
+      );
+    } else {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
+    }
   }
 
   @override

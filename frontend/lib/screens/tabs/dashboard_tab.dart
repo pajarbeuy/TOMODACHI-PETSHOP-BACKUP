@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -281,7 +281,7 @@ class _DashboardTabState extends State<DashboardTab> {
     _fetchAnalytics();
     _fetchRecentTransactions();
     _recentTransactionsTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      _fetchAnalytics(silent: true);
+      _fetchAnalytics(silent: true, trendDays: _selectedSalesTrendDays);
       _fetchRecentTransactions(silent: true);
     });
   }
@@ -327,16 +327,18 @@ class _DashboardTabState extends State<DashboardTab> {
     }
   }
 
-  Future<void> _fetchAnalytics({bool silent = false}) async {
+  Future<void> _fetchAnalytics({bool silent = false, int? trendDays}) async {
     final service = widget.dashboardService;
     if (service == null) return;
+
+    final days = trendDays ?? _selectedSalesTrendDays;
 
     if (!silent && mounted) {
       setState(() => _analyticsLoading = true);
     }
 
     try {
-      final res = await service.getAnalytics();
+      final res = await service.getAnalytics(trendDays: days);
       final data = res['data'];
 
       if (!mounted) return;
@@ -449,6 +451,20 @@ class _DashboardTabState extends State<DashboardTab> {
   }
 
   List<_SalesTrendPoint> _buildSalesTrendPoints() {
+    // Prioritaskan data real dari API
+    final trend = _analyticsData?['sales_trend'];
+    if (trend is List && trend.isNotEmpty) {
+      return trend.whereType<Map>().map((row) {
+        final date = DateTime.tryParse('${row['date'] ?? ''}') ?? DateTime.now();
+        return _SalesTrendPoint(
+          date: date,
+          sales: _doubleValue(row['revenue'], 0),
+          transactions: _intValue(row['transactions'], 0),
+        );
+      }).toList();
+    }
+
+    // Fallback ke data dummy saat API belum siap
     final today = DateTime.now();
     final startOfToday = DateTime(today.year, today.month, today.day);
     final days = _selectedSalesTrendDays;
@@ -468,6 +484,61 @@ class _DashboardTabState extends State<DashboardTab> {
       );
     });
   }
+
+  /// Best Sellers — dari API (top_products), fallback ke dummy saat loading
+  List<ProductRank> _bestSellerItems() {
+    final rows = _analyticsData?['top_products'];
+    if (rows is! List || rows.isEmpty) {
+      return _analyticsData != null ? [] : bestSellers;
+    }
+    return rows.whereType<Map>().toList().asMap().entries.map((entry) {
+      final row = entry.value;
+      return ProductRank(
+        id: _intValue(row['product_id'], entry.key + 1),
+        name: (row['product_name'] ?? '-').toString(),
+        category: (row['category'] ?? '-').toString(),
+        sales: _intValue(row['quantity_sold'], 0),
+        revenue: _doubleValue(row['total_revenue'], 0),
+        icon: Icons.pets,
+        trend: 0,
+      );
+    }).toList();
+  }
+
+  /// Low Stock Alert — dari API (low_stock_alerts), fallback ke dummy saat loading
+  List<LowStockItem> _lowStockItems() {
+    final rows = _analyticsData?['low_stock_alerts'];
+    if (rows is! List || rows.isEmpty) {
+      return _analyticsData != null ? [] : lowStockItems;
+    }
+    return rows.whereType<Map>().map((row) {
+      final stock = _intValue(row['stock'], 0);
+      final threshold = _intValue(row['threshold'], 10);
+      return LowStockItem(
+        id: _intValue(row['product_id'], 0),
+        name: (row['product_name'] ?? '-').toString(),
+        stock: stock,
+        min: threshold <= 0 ? 1 : threshold,
+        icon: Icons.inventory_2_outlined,
+        critical: row['critical'] == true,
+      );
+    }).toList();
+  }
+
+  /// Monthly Revenue — dari API (monthly_revenue), fallback ke dummy saat loading
+  List<MonthlyData> _monthlyRevenueItems() {
+    final rows = _analyticsData?['monthly_revenue'];
+    if (rows is! List || rows.isEmpty) {
+      return _analyticsData != null ? [] : monthlyData;
+    }
+    return rows.whereType<Map>().map((row) {
+      return MonthlyData(
+        month: (row['month'] ?? '-').toString(),
+        revenue: _doubleValue(row['total_revenue'], 0),
+      );
+    }).toList();
+  }
+
 
   String _formatTrendDate(DateTime date) {
     return DateFormat('d MMM').format(date);
@@ -859,9 +930,9 @@ class _DashboardTabState extends State<DashboardTab> {
                   '7D',
                   selected: _selectedSalesRange == _SalesTrendRange.sevenDays,
                   onPressed: () {
-                    setState(() {
-                      _selectedSalesRange = _SalesTrendRange.sevenDays;
-                    });
+                    if (_selectedSalesRange == _SalesTrendRange.sevenDays) return;
+                    setState(() => _selectedSalesRange = _SalesTrendRange.sevenDays);
+                    _fetchAnalytics(trendDays: 7);
                   },
                 ),
                 const SizedBox(width: 6),
@@ -869,9 +940,9 @@ class _DashboardTabState extends State<DashboardTab> {
                   '30D',
                   selected: _selectedSalesRange == _SalesTrendRange.thirtyDays,
                   onPressed: () {
-                    setState(() {
-                      _selectedSalesRange = _SalesTrendRange.thirtyDays;
-                    });
+                    if (_selectedSalesRange == _SalesTrendRange.thirtyDays) return;
+                    setState(() => _selectedSalesRange = _SalesTrendRange.thirtyDays);
+                    _fetchAnalytics(trendDays: 30);
                   },
                 ),
                 const SizedBox(width: 6),
@@ -879,9 +950,9 @@ class _DashboardTabState extends State<DashboardTab> {
                   '3M',
                   selected: _selectedSalesRange == _SalesTrendRange.threeMonths,
                   onPressed: () {
-                    setState(() {
-                      _selectedSalesRange = _SalesTrendRange.threeMonths;
-                    });
+                    if (_selectedSalesRange == _SalesTrendRange.threeMonths) return;
+                    setState(() => _selectedSalesRange = _SalesTrendRange.threeMonths);
+                    _fetchAnalytics(trendDays: 90);
                   },
                 ),
               ],
@@ -1009,6 +1080,7 @@ class _DashboardTabState extends State<DashboardTab> {
   }
 
   Widget _buildBestSellersCard() {
+    final products = _bestSellerItems();
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: _cardDecoration(),
@@ -1017,11 +1089,19 @@ class _DashboardTabState extends State<DashboardTab> {
         children: [
           _cardHeader(
             title: 'Best Sellers',
-            subtitle: 'This month',
+            subtitle: _analyticsLoading ? 'Memuat data...' : 'Berdasarkan transaksi',
             trailing: const Icon(Icons.star, size: 18, color: _orange),
           ),
           const SizedBox(height: 16),
-          ...bestSellers.asMap().entries.map((entry) {
+          if (products.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                _analyticsLoading ? 'Memuat...' : 'Belum ada produk terjual.',
+                style: _text(size: 12, color: _brown400),
+              ),
+            ),
+          ...products.asMap().entries.map((entry) {
             final index = entry.key;
             final product = entry.value;
             final rankColor = index == 0
@@ -1211,6 +1291,7 @@ class _DashboardTabState extends State<DashboardTab> {
   }
 
   Widget _buildLowStockCard() {
+    final items = _lowStockItems();
     return Container(
       decoration: _cardDecoration(),
       clipBehavior: Clip.antiAlias,
@@ -1221,7 +1302,9 @@ class _DashboardTabState extends State<DashboardTab> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: _cardHeader(
               title: 'Low Stock Alert',
-              subtitle: '${lowStockItems.length} items need restocking',
+              subtitle: _analyticsLoading
+                  ? 'Memuat stok...'
+                  : '${items.length} produk stok <= min stok',
               trailing: Container(
                 width: 32,
                 height: 32,
@@ -1238,7 +1321,15 @@ class _DashboardTabState extends State<DashboardTab> {
             ),
           ),
           const Divider(height: 1, color: Color(0x1FFFB570)),
-          ...lowStockItems.map((item) {
+          if (items.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                _analyticsLoading ? 'Memuat...' : 'Tidak ada produk stok rendah.',
+                style: _text(size: 12, color: _brown400),
+              ),
+            ),
+          ...items.map((item) {
             final progress = (item.stock / item.min).clamp(0.0, 1.0);
             final alertColor = item.critical
                 ? const Color(0xFFFF6B6B)
@@ -1319,7 +1410,7 @@ class _DashboardTabState extends State<DashboardTab> {
                     ],
                   ),
                 ),
-                if (item != lowStockItems.last)
+                if (item != items.last)
                   const Divider(height: 1, color: Color(0x11FFB570)),
               ],
             );
@@ -1330,8 +1421,16 @@ class _DashboardTabState extends State<DashboardTab> {
   }
 
   Widget _buildMonthlyRevenueCard() {
+    final chartData = _monthlyRevenueItems();
+    final maxRevenue = chartData.isEmpty
+        ? 50000000.0
+        : chartData.map((d) => d.revenue).reduce((a, b) => a > b ? a : b);
+    final maxY = (maxRevenue * 1.25).clamp(1000000.0, double.infinity);
+    final interval = (maxY / 5).ceilToDouble();
+    final currentYear = DateTime.now().year;
+
     return Container(
-      height: 280,
+      height: 300,
       padding: const EdgeInsets.all(20),
       decoration: _cardDecoration(),
       child: Column(
@@ -1339,7 +1438,7 @@ class _DashboardTabState extends State<DashboardTab> {
         children: [
           _cardHeader(
             title: 'Monthly Revenue Overview',
-            subtitle: 'January - June 2024',
+            subtitle: _analyticsLoading ? 'Memuat data...' : '12 bulan terakhir',
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -1349,111 +1448,108 @@ class _DashboardTabState extends State<DashboardTab> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.trending_up,
-                    size: 13,
-                    color: Color(0xFF1B7A65),
-                  ),
+                  const Icon(Icons.calendar_month, size: 13, color: Color(0xFF1B7A65)),
                   const SizedBox(width: 5),
                   Text(
-                    '+18.5% YoY',
-                    style: _text(
-                      size: 11,
-                      weight: FontWeight.w900,
-                      color: const Color(0xFF1B7A65),
-                    ),
+                    '$currentYear',
+                    style: _text(size: 11, weight: FontWeight.w900, color: const Color(0xFF1B7A65)),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 16),
           Expanded(
-            child: BarChart(
-              BarChartData(
-                maxY: 50000000,
-                alignment: BarChartAlignment.spaceAround,
-                barTouchData: BarTouchData(
-                  enabled: true,
-                  touchTooltipData: BarTouchTooltipData(
-                    tooltipBgColor: Colors.white,
-                    tooltipRoundedRadius: 12,
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final item = monthlyData[group.x.toInt()];
-                      return BarTooltipItem(
-                        '${item.month}\n${formatRpFull(item.revenue)}',
-                        _text(size: 11, weight: FontWeight.w800),
-                      );
-                    },
-                  ),
-                ),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  getDrawingHorizontalLine: (_) => FlLine(
-                    color: _orange.withValues(alpha: 0.12),
-                    strokeWidth: 1,
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 26,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index < 0 || index >= monthlyData.length) {
-                          return const SizedBox.shrink();
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            monthlyData[index].month,
-                            style: _text(size: 11, color: _brown400),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                      interval: 10000000,
-                      getTitlesWidget: (value, meta) => Text(
-                        '${(value / 1000000).toStringAsFixed(0)}jt',
-                        style: _text(size: 10, color: _brown400),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final availableWidth = constraints.maxWidth - 40;
+                final count = chartData.isEmpty ? 12 : chartData.length;
+                final barW = ((availableWidth / count) * 0.55).clamp(6.0, 22.0);
+                final showEvery = availableWidth < 300 ? 3 : availableWidth < 450 ? 2 : 1;
+
+                return BarChart(
+                  BarChartData(
+                    maxY: maxY,
+                    alignment: BarChartAlignment.spaceAround,
+                    barTouchData: BarTouchData(
+                      enabled: true,
+                      touchTooltipData: BarTouchTooltipData(
+                        tooltipBgColor: Colors.white,
+                        tooltipRoundedRadius: 12,
+                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                          if (group.x.toInt() >= chartData.length) return null;
+                          final item = chartData[group.x.toInt()];
+                          return BarTooltipItem(
+                            '${item.month}\n${formatRpFull(item.revenue)}',
+                            _text(size: 11, weight: FontWeight.w800),
+                          );
+                        },
                       ),
                     ),
-                  ),
-                ),
-                barGroups: monthlyData.asMap().entries.map((entry) {
-                  final isCurrent = entry.key == monthlyData.length - 1;
-                  return BarChartGroupData(
-                    x: entry.key,
-                    barRods: [
-                      BarChartRodData(
-                        toY: entry.value.revenue,
-                        width: 36,
-                        color: isCurrent
-                            ? _orangeDark
-                            : const Color(0xFFFFD4A8),
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(8),
-                          topRight: Radius.circular(8),
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      getDrawingHorizontalLine: (_) => FlLine(
+                        color: _orange.withValues(alpha: 0.12),
+                        strokeWidth: 1,
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    titlesData: FlTitlesData(
+                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 24,
+                          getTitlesWidget: (value, meta) {
+                            final index = value.toInt();
+                            if (index < 0 || index >= chartData.length) return const SizedBox.shrink();
+                            if (showEvery > 1 && index % showEvery != 0) return const SizedBox.shrink();
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(chartData[index].month, style: _text(size: 9, color: _brown400)),
+                            );
+                          },
                         ),
                       ),
-                    ],
-                  );
-                }).toList(),
-              ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 36,
+                          interval: interval,
+                          getTitlesWidget: (value, meta) => Text(
+                            '${(value / 1000000).toStringAsFixed(0)}jt',
+                            style: _text(size: 9, color: _brown400),
+                          ),
+                        ),
+                      ),
+                    ),
+                    barGroups: chartData.asMap().entries.map((entry) {
+                      final isCurrent = entry.key == chartData.length - 1;
+                      final toY = entry.value.revenue <= 0 ? 0.0 : entry.value.revenue;
+                      return BarChartGroupData(
+                        x: entry.key,
+                        barRods: [
+                          BarChartRodData(
+                            toY: toY,
+                            width: barW,
+                            color: isCurrent
+                                ? _orangeDark
+                                : entry.value.revenue > 0
+                                    ? const Color(0xFFFFD4A8)
+                                    : const Color(0xFFEEE8E0),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(6),
+                              topRight: Radius.circular(6),
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                );
+              },
             ),
           ),
         ],

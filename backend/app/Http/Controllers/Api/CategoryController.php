@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Support\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class CategoryController extends Controller
 {
@@ -34,11 +36,21 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string',
-            'animal_type' => 'required|string',
-            'sub_category' => 'required|string',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('categories')->where(fn ($query) => $query
+                    ->where('animal_type', strtolower(trim($request->input('animal_type', ''))))
+                    ->where('sub_category', strtolower(trim($request->input('sub_category', ''))))),
+            ],
+            'animal_type' => 'required|string|max:100',
+            'sub_category' => 'required|string|max:100',
             'description' => 'nullable|string',
         ]);
+
+        $validated['animal_type'] = strtolower(trim($validated['animal_type']));
+        $validated['sub_category'] = strtolower(trim($validated['sub_category']));
 
         $category = Category::create($validated);
         return response()->json(['status' => true, 'message' => 'Kategori berhasil dibuat', 'data' => $category], 201);
@@ -51,7 +63,7 @@ class CategoryController extends Controller
     {
         $category = Category::find($id);
         if (!$category) {
-            return response()->json(['status' => false, 'message' => 'Kategori tidak ditemukan'], 404);
+            return ApiResponse::error('Kategori tidak ditemukan', 404);
         }
         return response()->json(['status' => true, 'message' => 'Detail kategori berhasil diambil', 'data' => $category], 200);
     }
@@ -71,15 +83,25 @@ class CategoryController extends Controller
     {
         $category = Category::find($id);
         if (!$category) {
-            return response()->json(['message' => 'Category not found'], 404);
+            return ApiResponse::error('Kategori tidak ditemukan', 404);
         }
 
         $validated = $request->validate([
-            'name' => 'required|string',
-            'animal_type' => 'required|string',
-            'sub_category' => 'required|string',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('categories')->ignore($category->id)->where(fn ($query) => $query
+                    ->where('animal_type', strtolower(trim($request->input('animal_type', ''))))
+                    ->where('sub_category', strtolower(trim($request->input('sub_category', ''))))),
+            ],
+            'animal_type' => 'required|string|max:100',
+            'sub_category' => 'required|string|max:100',
             'description' => 'nullable|string',
         ]);
+
+        $validated['animal_type'] = strtolower(trim($validated['animal_type']));
+        $validated['sub_category'] = strtolower(trim($validated['sub_category']));
 
         $category->update($validated);
         return response()->json(['status' => true, 'message' => 'Kategori berhasil diperbarui', 'data' => $category], 200);
@@ -92,7 +114,11 @@ class CategoryController extends Controller
     {
         $category = Category::find($id);
         if (!$category) {
-            return response()->json(['status' => false, 'message' => 'Kategori tidak ditemukan'], 404);
+            return ApiResponse::error('Kategori tidak ditemukan', 404);
+        }
+
+        if ($category->products()->exists()) {
+            return ApiResponse::error('Kategori masih digunakan oleh produk dan tidak dapat dihapus.', 409);
         }
 
         $category->delete();

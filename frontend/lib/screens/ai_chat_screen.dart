@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,7 +19,11 @@ class _AiChatScreenState extends State<AiChatScreen>
     with TickerProviderStateMixin {
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _mobileRestockScrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
+  Timer? _mobileRestockAutoScrollTimer;
+  Timer? _mobileRestockResumeTimer;
+  double _mobileRestockSetWidth = 0;
 
   final List<ChatMessage> _messages = [];
   bool _isLoading = false;
@@ -106,10 +112,59 @@ class _AiChatScreenState extends State<AiChatScreen>
 
   @override
   void dispose() {
+    _cancelMobileRestockAutoScroll();
     _inputController.dispose();
     _scrollController.dispose();
+    _mobileRestockScrollController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _cancelMobileRestockAutoScroll() {
+    _mobileRestockAutoScrollTimer?.cancel();
+    _mobileRestockAutoScrollTimer = null;
+    _mobileRestockResumeTimer?.cancel();
+    _mobileRestockResumeTimer = null;
+  }
+
+  void _pauseMobileRestockAutoScroll() {
+    _mobileRestockAutoScrollTimer?.cancel();
+    _mobileRestockAutoScrollTimer = null;
+    _mobileRestockResumeTimer?.cancel();
+  }
+
+  void _resumeMobileRestockAutoScrollAfterIdle() {
+    _mobileRestockResumeTimer?.cancel();
+    _mobileRestockResumeTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      _startMobileRestockAutoScroll();
+    });
+  }
+
+  void _startMobileRestockAutoScroll() {
+    if (_mobileRestockSetWidth <= 0 ||
+        _mobileRestockAutoScrollTimer?.isActive == true) {
+      return;
+    }
+
+    _mobileRestockAutoScrollTimer = Timer.periodic(
+      const Duration(milliseconds: 16),
+      (_) {
+        if (!mounted || !_mobileRestockScrollController.hasClients) return;
+
+        final position = _mobileRestockScrollController.position;
+        if (position.maxScrollExtent <= 0) return;
+
+        var nextOffset = _mobileRestockScrollController.offset + 0.55;
+        if (nextOffset >= _mobileRestockSetWidth) {
+          nextOffset -= _mobileRestockSetWidth;
+        }
+
+        _mobileRestockScrollController.jumpTo(
+          nextOffset.clamp(0.0, position.maxScrollExtent),
+        );
+      },
+    );
   }
 
   void _scrollToBottom({bool animated = true}) {
@@ -218,7 +273,10 @@ class _AiChatScreenState extends State<AiChatScreen>
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 768;
+        final isMobile = constraints.maxWidth < 900;
+        if (!isMobile) {
+          _cancelMobileRestockAutoScroll();
+        }
         return Container(
           color: _bg,
           child: isMobile ? _buildMobileLayout() : _buildDesktopLayout(),
@@ -228,6 +286,54 @@ class _AiChatScreenState extends State<AiChatScreen>
   }
 
   // ── Chat Panel ────────────────────────────────────────────────────────────
+
+  Widget _buildDesktopLayout() {
+    return Row(
+      children: [
+        Expanded(child: _buildDesktopChatSection()),
+        if (_showRestockPanel)
+          Container(width: 1, color: Colors.white10),
+        if (_showRestockPanel)
+          SizedBox(
+            width: 340,
+            child: ColoredBox(
+              color: _restockSection,
+              child: _buildRestockSidePanel(),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 400;
+        final restockBodyHeight =
+            (constraints.maxHeight * (isNarrow ? 0.34 : 0.3)).clamp(
+              isNarrow ? 230.0 : 210.0,
+              isNarrow ? 280.0 : 300.0,
+            );
+
+        return Column(
+          children: [
+            _buildChatHeader(),
+            Expanded(
+              child: Column(
+                children: [
+                  if (_showRestockPanel)
+                    _buildMobileRestockPanel(bodyHeight: restockBodyHeight),
+                  Expanded(child: _buildMessageList()),
+                  if (_messages.length <= 1) _buildMobileSuggestions(),
+                ],
+              ),
+            ),
+            SafeArea(top: false, child: _buildInputBar()),
+          ],
+        );
+      },
+    );
+  }
 
   Widget _buildDesktopLayout() {
     return Column(
@@ -878,14 +984,17 @@ class _AiChatScreenState extends State<AiChatScreen>
               ),
             ),
             if (_mobileRestockExpanded)
-              SizedBox(height: bodyHeight, child: _buildRestockPanelBody()),
+              SizedBox(
+                height: bodyHeight,
+                child: _buildRestockPanelBody(autoScroll: true),
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRestockPanelBody() {
+  Widget _buildRestockPanelBody({bool autoScroll = false}) {
     if (_restockLoading) {
       return const Center(child: CircularProgressIndicator(color: _accent));
     }
@@ -903,7 +1012,9 @@ class _AiChatScreenState extends State<AiChatScreen>
       );
     }
 
-    return _buildRestockContent();
+    return autoScroll
+        ? _buildRestockHorizontalContent(autoScroll: true)
+        : _buildRestockContent();
   }
 
   Widget _buildRestockHorizontalPanel() {
@@ -955,7 +1066,7 @@ class _AiChatScreenState extends State<AiChatScreen>
     );
   }
 
-  Widget _buildRestockHorizontalBody() {
+  Widget _buildRestockHorizontalBody({bool autoScroll = false}) {
     if (_restockLoading) {
       return const Center(child: CircularProgressIndicator(color: _accent));
     }
@@ -973,10 +1084,10 @@ class _AiChatScreenState extends State<AiChatScreen>
       );
     }
 
-    return _buildRestockHorizontalContent();
+    return _buildRestockHorizontalContent(autoScroll: autoScroll);
   }
 
-  Widget _buildRestockHorizontalContent() {
+  Widget _buildRestockHorizontalContent({bool autoScroll = false}) {
     final analysis = _restockData!;
     final summary = analysis.summary;
     final items = [...analysis.needRestock, ...analysis.safe];
@@ -984,8 +1095,49 @@ class _AiChatScreenState extends State<AiChatScreen>
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 820;
+        final isMobileCarousel = autoScroll;
         final summaryWidth = isCompact ? 210.0 : 260.0;
-        final cardWidth = isCompact ? 300.0 : 360.0;
+        final cardWidth = isMobileCarousel
+            ? (constraints.maxWidth * 0.82).clamp(240.0, 320.0)
+            : isCompact
+            ? 300.0
+            : 360.0;
+        const cardSpacing = 12.0;
+        final shouldAutoScroll = autoScroll && items.length > 1;
+        final visibleItems = shouldAutoScroll
+            ? [...items, ...items, ...items]
+            : items;
+
+        if (shouldAutoScroll) {
+          _mobileRestockSetWidth = items.length * (cardWidth + cardSpacing);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _startMobileRestockAutoScroll();
+          });
+        } else if (autoScroll) {
+          _cancelMobileRestockAutoScroll();
+        }
+
+        if (isMobileCarousel) {
+          return Column(
+            children: [
+              SizedBox(
+                height: 68,
+                child: _buildSummaryCardsRow(summary),
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: _buildHorizontalRestockList(
+                  items: items,
+                  visibleItems: visibleItems,
+                  cardWidth: cardWidth,
+                  cardSpacing: cardSpacing,
+                  shouldAutoScroll: shouldAutoScroll,
+                ),
+              ),
+            ],
+          );
+        }
 
         return Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -993,27 +1145,7 @@ class _AiChatScreenState extends State<AiChatScreen>
             SizedBox(
               width: summaryWidth,
               child: constraints.maxHeight < 190
-                  ? Row(
-                      children: [
-                        Expanded(
-                          child: _summaryCard(
-                            label: 'Perlu Restock',
-                            value: '${summary.needRestock}',
-                            color: const Color(0xFFFF6B35),
-                            icon: Icons.warning_rounded,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _summaryCard(
-                            label: 'Stok Aman',
-                            value: '${summary.safe}',
-                            color: const Color(0xFF4ADE80),
-                            icon: Icons.check_circle_rounded,
-                          ),
-                        ),
-                      ],
-                    )
+                  ? _buildSummaryCardsRow(summary)
                   : Column(
                       children: [
                         Expanded(
@@ -1038,32 +1170,92 @@ class _AiChatScreenState extends State<AiChatScreen>
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: items.isEmpty
-                  ? Center(
-                      child: Text(
-                        'Belum ada data restock',
-                        style: _font(color: _textSecondary),
-                      ),
-                    )
-                  : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: items.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            right: index == items.length - 1 ? 0 : 12,
-                          ),
-                          child: SizedBox(
-                            width: cardWidth,
-                            child: _horizontalRestockCard(items[index]),
-                          ),
-                        );
-                      },
-                    ),
+              child: _buildHorizontalRestockList(
+                items: items,
+                visibleItems: visibleItems,
+                cardWidth: cardWidth,
+                cardSpacing: cardSpacing,
+                shouldAutoScroll: shouldAutoScroll,
+              ),
             ),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildSummaryCardsRow(RestockSummary summary) {
+    return Row(
+      children: [
+        Expanded(
+          child: _summaryCard(
+            label: 'Perlu Restock',
+            value: '${summary.needRestock}',
+            color: const Color(0xFFFF6B35),
+            icon: Icons.warning_rounded,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _summaryCard(
+            label: 'Stok Aman',
+            value: '${summary.safe}',
+            color: const Color(0xFF4ADE80),
+            icon: Icons.check_circle_rounded,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHorizontalRestockList({
+    required List<RestockItem> items,
+    required List<RestockItem> visibleItems,
+    required double cardWidth,
+    required double cardSpacing,
+    required bool shouldAutoScroll,
+  }) {
+    if (items.isEmpty) {
+      return Center(
+        child: Text(
+          'Belum ada data restock',
+          style: _font(color: _textSecondary),
+        ),
+      );
+    }
+
+    return Listener(
+      onPointerDown: shouldAutoScroll
+          ? (_) => _pauseMobileRestockAutoScroll()
+          : null,
+      onPointerUp: shouldAutoScroll
+          ? (_) => _resumeMobileRestockAutoScrollAfterIdle()
+          : null,
+      onPointerCancel: shouldAutoScroll
+          ? (_) => _resumeMobileRestockAutoScrollAfterIdle()
+          : null,
+      child: ListView.builder(
+        controller: shouldAutoScroll ? _mobileRestockScrollController : null,
+        scrollDirection: Axis.horizontal,
+        itemCount: visibleItems.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: EdgeInsets.only(
+              right: shouldAutoScroll
+                  ? cardSpacing
+                  : index == visibleItems.length - 1
+                  ? 0
+                  : cardSpacing,
+            ),
+            child: SizedBox(
+              width: cardWidth,
+              child: _horizontalRestockCard(
+                visibleItems[index % items.length],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -1153,27 +1345,7 @@ class _AiChatScreenState extends State<AiChatScreen>
       padding: const EdgeInsets.all(14),
       children: [
         // Summary cards
-        Row(
-          children: [
-            Expanded(
-              child: _summaryCard(
-                label: 'Perlu Restock',
-                value: '${summary.needRestock}',
-                color: const Color(0xFFFF6B35),
-                icon: Icons.warning_rounded,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _summaryCard(
-                label: 'Stok Aman',
-                value: '${summary.safe}',
-                color: const Color(0xFF4ADE80),
-                icon: Icons.check_circle_rounded,
-              ),
-            ),
-          ],
-        ),
+        _buildSummaryCardsRow(summary),
         const SizedBox(height: 16),
         if (needRestock.isNotEmpty) ...[
           _sectionLabel('⚠️ Harus Direstock', const Color(0xFFFF6B35)),
@@ -1265,24 +1437,60 @@ class _AiChatScreenState extends State<AiChatScreen>
     required Color color,
     required IconData icon,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: _font(size: 22, weight: FontWeight.w800, color: color),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compactHeight =
+            constraints.hasBoundedHeight && constraints.maxHeight < 78;
+        final iconSize = compactHeight ? 17.0 : 22.0;
+        final valueSize = compactHeight ? 17.0 : 22.0;
+        final labelSize = compactHeight ? 9.5 : 11.0;
+
+        return Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: compactHeight ? 8 : 12,
+            vertical: compactHeight ? 6 : 10,
           ),
-          Text(label, style: _font(size: 11, color: _textSecondary)),
-        ],
-      ),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: iconSize),
+              SizedBox(height: compactHeight ? 2 : 5),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  style: _font(
+                    size: valueSize,
+                    weight: FontWeight.w800,
+                    color: color,
+                    height: 1.05,
+                  ),
+                ),
+              ),
+              SizedBox(height: compactHeight ? 1 : 2),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  style: _font(
+                    size: labelSize,
+                    color: _textSecondary,
+                    height: 1.1,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1358,27 +1566,67 @@ class _AiChatScreenState extends State<AiChatScreen>
   }
 
   Widget _infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 130,
-            child: Text(label, style: _font(size: 11, color: _textSecondary)),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: _font(
-                size: 11,
-                weight: FontWeight.w600,
-                color: _textPrimary,
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stack = constraints.maxWidth < 250;
+
+        if (stack) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: _font(size: 10.5, color: _textSecondary)),
+                const SizedBox(height: 1),
+                Text(
+                  value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: _font(
+                    size: 11,
+                    weight: FontWeight.w600,
+                    color: _textPrimary,
+                    height: 1.25,
+                  ),
+                ),
+              ],
             ),
+          );
+        }
+
+        final labelWidth = constraints.maxWidth < 310 ? 104.0 : 130.0;
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 2),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: labelWidth,
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: _font(size: 11, color: _textSecondary, height: 1.25),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: _font(
+                    size: 11,
+                    weight: FontWeight.w600,
+                    color: _textPrimary,
+                    height: 1.25,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

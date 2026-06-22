@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'api_client.dart';
+import 'utils/error_message.dart';
 
 /// User model
 class UserModel {
@@ -50,6 +53,33 @@ class CaptchaChallenge {
 }
 
 /// Authentication Service
+class AccountModel {
+  final String id;
+  final String name;
+  final String email;
+  final String roleName;
+
+  const AccountModel({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.roleName,
+  });
+
+  factory AccountModel.fromJson(Map<String, dynamic> json) {
+    final role = json['role'];
+    return AccountModel(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      roleName: role is Map
+          ? role['name']?.toString() ?? 'user'
+          : role?.toString() ?? 'user',
+    );
+  }
+}
+
+
 class AuthService extends ChangeNotifier {
   late final ApiClient _apiClient;
   late final FlutterSecureStorage _secureStorage;
@@ -80,7 +110,7 @@ class AuthService extends ChangeNotifier {
       return CaptchaChallenge.fromJson(data);
     }
 
-    throw Exception(response['message'] ?? 'Failed to load captcha');
+    throw ApiException(response['message'] ?? 'Gagal memuat captcha');
   }
 
   Future<bool> login(
@@ -120,6 +150,10 @@ class AuthService extends ChangeNotifier {
           // Keep the in-memory session usable even when persistence fails.
           try {
             await _secureStorage.write(key: 'auth_token', value: token);
+            await _secureStorage.write(
+              key: 'auth_user',
+              value: jsonEncode(_currentUser!.toJson()),
+            );
           } catch (e) {
             if (!kIsWeb) {
               rethrow;
@@ -133,12 +167,12 @@ class AuthService extends ChangeNotifier {
         }
       }
 
-      _errorMessage = response['message'] ?? 'Login failed';
+      _errorMessage = response['message'] ?? 'Login gagal';
       _isLoading = false;
       notifyListeners();
       return false;
     } catch (e) {
-      _errorMessage = 'Error: ${e.toString()}';
+      _errorMessage = userFriendlyError(e, fallback: 'Login gagal');
       _isLoading = false;
       notifyListeners();
       return false;
@@ -161,27 +195,99 @@ class AuthService extends ChangeNotifier {
 
         // Remove token from secure storage
         await _secureStorage.delete(key: 'auth_token');
+        await _secureStorage.delete(key: 'auth_user');
 
         _isLoading = false;
         notifyListeners();
         return true;
       }
 
-      _errorMessage = response['message'] ?? 'Logout failed';
+      _errorMessage = response['message'] ?? 'Logout gagal';
       _isLoading = false;
       notifyListeners();
       return false;
     } catch (e) {
-      _errorMessage = 'Error: ${e.toString()}';
+      _errorMessage = userFriendlyError(e, fallback: 'Logout gagal');
       // Still clear local token even if API call fails
       _token = null;
       _currentUser = null;
       _apiClient.clearToken();
       await _secureStorage.delete(key: 'auth_token');
+      await _secureStorage.delete(key: 'auth_user');
       _isLoading = false;
       notifyListeners();
       return false;
     }
+  }
+
+  Future<List<AccountModel>> getAccounts() async {
+    final response = await _apiClient.get('/api/auth/accounts?_cb=${DateTime.now().millisecondsSinceEpoch}');
+
+    if (response['status'] == true && response['data'] is List) {
+      return (response['data'] as List)
+          .whereType<Map<String, dynamic>>()
+          .map(AccountModel.fromJson)
+          .toList();
+    }
+
+    throw ApiException(response['message'] ?? 'Gagal memuat akun');
+  }
+
+  Future<bool> updateAccount({
+    required String userId,
+    String? name,
+    String? email,
+    String? password,
+    String? passwordConfirmation,
+    int? roleId,
+    String? roleName,
+  }) async {
+    final body = <String, dynamic>{};
+    if (name != null) body['name'] = name;
+    if (email != null) body['email'] = email;
+    if (password != null && password.isNotEmpty) {
+      body['password'] = password;
+      body['password_confirmation'] = passwordConfirmation ?? '';
+    }
+    if (roleId != null) body['role_id'] = roleId;
+    if (roleName != null) body['role_name'] = roleName;
+
+    debugPrint('[updateAccount] body=$body');
+
+    try {
+      final response = await _apiClient.patch(
+        '/api/auth/accounts/$userId',
+        body: body,
+      );
+
+      debugPrint('[updateAccount] response=$response');
+
+      if (response['status'] == true) {
+        _errorMessage = null;
+        return true;
+      }
+
+      // Handle validation errors
+      if (response['errors'] is Map<String, dynamic>) {
+        final errors = response['errors'] as Map<String, dynamic>;
+        final errorList = errors.entries
+            .map((e) => '${e.key}: ${(e.value is List ? (e.value as List).join(', ') : e.value)}')
+            .toList();
+        _errorMessage = errorList.join('\n');
+      } else {
+      _errorMessage = response['message'] ?? 'Gagal mengubah akun';
+      }
+
+      return false;
+    } catch (e) {
+      _errorMessage = userFriendlyError(e, fallback: 'Gagal mengubah akun');
+      return false;
+    }
+  }
+
+  Future<bool> deleteAccount(String userId) async {
+    final response = await _apiClient.delete('/api/auth/accounts/$userId');
+    return response['status'] == true;
   }
 
   /// Register a new user (only for owner role)
@@ -214,12 +320,22 @@ class AuthService extends ChangeNotifier {
         return true;
       }
 
-      _errorMessage = response['message'] ?? 'Registration failed';
+      // Handle validation errors
+      if (response['errors'] is Map<String, dynamic>) {
+        final errors = response['errors'] as Map<String, dynamic>;
+        final errorList = errors.entries
+            .map((e) => '${e.key}: ${(e.value is List ? (e.value as List).join(', ') : e.value)}')
+            .toList();
+        _errorMessage = errorList.join('\n');
+      } else {
+        _errorMessage = response['message'] ?? 'Registrasi gagal';
+      }
+
       _isLoading = false;
       notifyListeners();
       return false;
     } catch (e) {
-      _errorMessage = 'Error: ${e.toString()}';
+      _errorMessage = userFriendlyError(e, fallback: 'Registrasi gagal');
       _isLoading = false;
       notifyListeners();
       return false;
@@ -244,7 +360,7 @@ class AuthService extends ChangeNotifier {
 
       return false;
     } catch (e) {
-      _errorMessage = 'Error: ${e.toString()}';
+      _errorMessage = userFriendlyError(e);
       notifyListeners();
       return false;
     }
@@ -254,21 +370,43 @@ class AuthService extends ChangeNotifier {
   Future<bool> restoreTokenFromStorage() async {
     try {
       final token = await _secureStorage.read(key: 'auth_token');
+      final cachedUser = await _secureStorage.read(key: 'auth_user');
 
       if (token != null && token.isNotEmpty) {
         _token = token;
         _apiClient.setToken(token);
 
+        if (cachedUser != null && cachedUser.isNotEmpty) {
+          final decoded = jsonDecode(cachedUser);
+          if (decoded is Map<String, dynamic>) {
+            _currentUser = UserModel.fromJson(decoded);
+          } else if (decoded is Map) {
+            _currentUser = UserModel.fromJson(Map<String, dynamic>.from(decoded));
+          }
+        }
+
         // Fetch current user data
         final success = await getCurrentUser();
         if (success) {
+          if (_currentUser != null) {
+            await _secureStorage.write(
+              key: 'auth_user',
+              value: jsonEncode(_currentUser!.toJson()),
+            );
+          }
+          notifyListeners();
+          return true;
+        }
+
+        if (_currentUser != null) {
+          _errorMessage = null;
           notifyListeners();
           return true;
         }
       }
       return false;
     } catch (e) {
-      _errorMessage = 'Error restoring token: ${e.toString()}';
+      _errorMessage = userFriendlyError(e, fallback: 'Gagal memulihkan sesi login');
       return false;
     }
   }
@@ -286,6 +424,8 @@ class AuthService extends ChangeNotifier {
     _currentUser = null;
     _errorMessage = null;
     _apiClient.clearToken();
+    _secureStorage.delete(key: 'auth_token');
+    _secureStorage.delete(key: 'auth_user');
     notifyListeners();
   }
 }
