@@ -75,6 +75,8 @@ class TransactionController extends Controller
                 'items.*.product_id' => 'required|exists:products,id',
                 'items.*.quantity' => 'required|integer|min:1',
                 'items.*.unit_price' => 'required|numeric|min:0',
+                'enabled_payments' => 'nullable|array',
+                'enabled_payments.*' => 'string|in:qris,bank_transfer,bca_va,bni_va,bri_va,permata_va,gopay,shopeepay',
             ]);
 
             $channel = $validated['channel'];
@@ -193,7 +195,7 @@ class TransactionController extends Controller
 
                     $this->configureMidtrans();
 
-                    $snapResponse = Snap::createTransaction([
+                    $snapParams = [
                         'transaction_details' => [
                             'order_id' => $midtransOrderId,
                             'gross_amount' => (int) round($total),
@@ -210,7 +212,13 @@ class TransactionController extends Controller
                             'first_name' => auth()->user()?->name ?? 'Kasir',
                             'email' => auth()->user()?->email,
                         ],
-                    ]);
+                    ];
+
+                    if ($validated['payment_method'] === 'qris') {
+                        $snapParams['enabled_payments'] = $validated['enabled_payments'] ?? ['qris'];
+                    }
+
+                    $snapResponse = Snap::createTransaction($snapParams);
 
                     $transaction->update([
                         'midtrans_snap_token' => $snapResponse->token ?? null,

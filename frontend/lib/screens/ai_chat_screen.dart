@@ -335,6 +335,46 @@ class _AiChatScreenState extends State<AiChatScreen>
     );
   }
 
+  Widget _buildDesktopLayout() {
+    return Column(
+      children: [
+        Expanded(flex: 3, child: _buildDesktopChatSection()),
+        if (_showRestockPanel) ...[
+          const Divider(height: 1, thickness: 1, color: Colors.white10),
+          Expanded(flex: 2, child: _buildRestockHorizontalPanel()),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final restockBodyHeight = (constraints.maxHeight * 0.24).clamp(
+          150.0,
+          220.0,
+        );
+
+        return Column(
+          children: [
+            _buildChatHeader(),
+            Expanded(
+              child: Column(
+                children: [
+                  if (_showRestockPanel)
+                    _buildMobileRestockPanel(bodyHeight: restockBodyHeight),
+                  Expanded(child: _buildMessageList()),
+                  if (_messages.length <= 1) _buildMobileSuggestions(),
+                ],
+              ),
+            ),
+            SafeArea(top: false, child: _buildInputBar()),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildChatPanel() {
     return Column(
       children: [
