@@ -35,12 +35,14 @@ class TransactionApiTest extends TestCase
             ->assertJsonPath('data.payment_status', 'completed');
     }
 
-    public function test_admin_cannot_checkout_transaction(): void
+    public function test_admin_can_checkout_transaction(): void
     {
         Sanctum::actingAs($this->userWithRole('admin'));
         $product = $this->product();
 
-        $this->postJson('/api/transactions', $this->checkoutPayload($product->id))->assertForbidden();
+        $this->postJson('/api/transactions', $this->checkoutPayload($product->id))
+            ->assertCreated()
+            ->assertJsonPath('data.payment_status', 'completed');
     }
 
     public function test_checkout_validates_required_items(): void

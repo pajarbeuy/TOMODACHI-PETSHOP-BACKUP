@@ -86,8 +86,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('products/{product}', [ProductController::class, 'destroy']);
     });
 
-    // 4. POS Transactions (Checkout for kasir & owner, history for all auth)
-    Route::post('transactions', [TransactionController::class, 'store'])->middleware('check.role:kasir,owner');
+    // 4. POS Transactions (Checkout for roles with POS access, history for all auth)
+    Route::post('transactions', [TransactionController::class, 'store'])->middleware('check.role:kasir,owner,admin');
     Route::get('transactions', [TransactionController::class, 'index']);
     Route::get('transactions/{id}', [TransactionController::class, 'show']);
     Route::get('transactions/{id}/receipt', [TransactionController::class, 'receipt']);
