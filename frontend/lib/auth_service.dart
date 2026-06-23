@@ -79,7 +79,6 @@ class AccountModel {
   }
 }
 
-
 class AuthService extends ChangeNotifier {
   late final ApiClient _apiClient;
   late final FlutterSecureStorage _secureStorage;
@@ -101,7 +100,7 @@ class AuthService extends ChangeNotifier {
     _secureStorage = const FlutterSecureStorage();
   }
 
-  /// Login with email and password
+  /// Fetch captcha challenge before login
   Future<CaptchaChallenge> fetchCaptcha() async {
     final response = await _apiClient.get('/api/auth/captcha');
     final data = response['data'];
@@ -113,6 +112,7 @@ class AuthService extends ChangeNotifier {
     throw ApiException(response['message'] ?? 'Gagal memuat captcha');
   }
 
+  /// Login with email, password, and captcha
   Future<bool> login(
     String email,
     String password, {
@@ -158,7 +158,7 @@ class AuthService extends ChangeNotifier {
             if (!kIsWeb) {
               rethrow;
             }
-            debugPrint('Token persistence skipped on web: $e');
+            // Token persistence skipped on insecure web origin — session stays in-memory only.
           }
 
           _isLoading = false;
@@ -193,7 +193,6 @@ class AuthService extends ChangeNotifier {
         _currentUser = null;
         _apiClient.clearToken();
 
-        // Remove token from secure storage
         await _secureStorage.delete(key: 'auth_token');
         await _secureStorage.delete(key: 'auth_user');
 
@@ -220,8 +219,11 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  /// Get list of all accounts (owner only)
   Future<List<AccountModel>> getAccounts() async {
-    final response = await _apiClient.get('/api/auth/accounts?_cb=${DateTime.now().millisecondsSinceEpoch}');
+    final response = await _apiClient.get(
+      '/api/auth/accounts?_cb=${DateTime.now().millisecondsSinceEpoch}',
+    );
 
     if (response['status'] == true && response['data'] is List) {
       return (response['data'] as List)
@@ -233,6 +235,7 @@ class AuthService extends ChangeNotifier {
     throw ApiException(response['message'] ?? 'Gagal memuat akun');
   }
 
+  /// Update an account (owner only)
   Future<bool> updateAccount({
     required String userId,
     String? name,
@@ -252,15 +255,11 @@ class AuthService extends ChangeNotifier {
     if (roleId != null) body['role_id'] = roleId;
     if (roleName != null) body['role_name'] = roleName;
 
-    debugPrint('[updateAccount] body=$body');
-
     try {
       final response = await _apiClient.patch(
         '/api/auth/accounts/$userId',
         body: body,
       );
-
-      debugPrint('[updateAccount] response=$response');
 
       if (response['status'] == true) {
         _errorMessage = null;
@@ -275,7 +274,7 @@ class AuthService extends ChangeNotifier {
             .toList();
         _errorMessage = errorList.join('\n');
       } else {
-      _errorMessage = response['message'] ?? 'Gagal mengubah akun';
+        _errorMessage = response['message'] ?? 'Gagal mengubah akun';
       }
 
       return false;
@@ -285,6 +284,7 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  /// Delete an account (owner only)
   Future<bool> deleteAccount(String userId) async {
     final response = await _apiClient.delete('/api/auth/accounts/$userId');
     return response['status'] == true;
@@ -385,7 +385,7 @@ class AuthService extends ChangeNotifier {
           }
         }
 
-        // Fetch current user data
+        // Fetch current user data to validate token is still valid
         final success = await getCurrentUser();
         if (success) {
           if (_currentUser != null) {
