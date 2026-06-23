@@ -315,7 +315,6 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
 
     setState(() => _saving = true);
     final roleId = _roles[_selectedRole.toLowerCase()] ?? 3; // Ensure explicit role lookup with fallback
-    debugPrint('[SAVE] _selectedRole=$_selectedRole, roleId=$roleId, editing=${_editing?.id}, creating=$_creating');
 
     try {
       if (_creating) {
@@ -332,7 +331,6 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
           );
         }
       } else if (_editing != null) {
-        debugPrint('[SAVE] Calling updateAccount userId=${_editing!.id}, roleId=$roleId');
         final ok = await widget.authService.updateAccount(
           userId: _editing!.id,
           name: name,

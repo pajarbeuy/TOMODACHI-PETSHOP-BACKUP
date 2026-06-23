@@ -220,8 +220,6 @@ class AuthController extends Controller
                 'role_name' => 'sometimes|required|string|exists:roles,name',
             ]);
             
-            \Log::info('Update Account Payload: ', $request->all());
-            \Log::info('Validated: ', $validated);
 
             $payload = [];
 
