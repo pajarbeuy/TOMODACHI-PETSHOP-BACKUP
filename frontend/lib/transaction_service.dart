@@ -19,6 +19,10 @@ class TransactionService {
       'items': items,
     };
 
+    if (paymentMethod == 'qris') {
+      body['enabled_payments'] = ['qris'];
+    }
+
     return await _client.post('/api/transactions', body: body);
   }
 
@@ -28,12 +32,16 @@ class TransactionService {
     String? startDate,
     String? endDate,
     int page = 1,
-    int perPage = 15,
+    int perPage = 10,
   }) async {
     final Map<String, String> queryParams = {};
     if (channel != null && channel.isNotEmpty) queryParams['channel'] = channel;
-    if (startDate != null && startDate.isNotEmpty) queryParams['start_date'] = startDate;
-    if (endDate != null && endDate.isNotEmpty) queryParams['end_date'] = endDate;
+    if (startDate != null && startDate.isNotEmpty) {
+      queryParams['start_date'] = startDate;
+    }
+    if (endDate != null && endDate.isNotEmpty) {
+      queryParams['end_date'] = endDate;
+    }
     queryParams['page'] = page.toString();
     queryParams['per_page'] = perPage.toString();
 

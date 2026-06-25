@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../auth_service.dart';
+import '../utils/error_message.dart';
+import '../widgets/app_logo.dart';
 import 'home_screen.dart';
 
 const _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://localhost:8000',
+  defaultValue: 'https://tomodachi-petshop.xyz',
+);
+const _mobileApiBaseUrl = String.fromEnvironment(
+  'MOBILE_API_BASE_URL',
+  defaultValue: 'https://tomodachi-petshop.xyz',
 );
 const _mobileApiBaseUrl = String.fromEnvironment(
   'MOBILE_API_BASE_URL',
@@ -53,6 +59,7 @@ class _DemoRole {
   });
 }
 
+// ignore: unused_element
 final _demoRoles = [
   _DemoRole(
     role: Role.admin,
@@ -145,15 +152,18 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
-  final _emailCtrl = TextEditingController(text: 'admin@tomodachi.com');
-  final _passCtrl = TextEditingController(text: 'password123');
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
+  final _captchaCtrl = TextEditingController();
   bool _showPassword = false;
   bool _rememberMe = false;
   bool _loading = false;
+  bool _captchaLoading = false;
 
   late final AnimationController _fadeCtrl;
   late final Animation<double> _fadeAnim;
   String? _errorMessage;
+  CaptchaChallenge? _captchaChallenge;
   late final AuthService _authService;
 
   @override
@@ -171,6 +181,7 @@ class _LoginScreenState extends State<LoginScreen>
     // flutter run --dart-define=MOBILE_API_BASE_URL=https://your-ngrok-url
     _authService = AuthService();
     _authService.initialize(kIsWeb ? _apiBaseUrl : _mobileApiBaseUrl);
+    _loadCaptcha();
   }
 
   @override
@@ -178,15 +189,44 @@ class _LoginScreenState extends State<LoginScreen>
     _fadeCtrl.dispose();
     _emailCtrl.dispose();
     _passCtrl.dispose();
+    _captchaCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadCaptcha() async {
+    if (mounted) {
+      setState(() => _captchaLoading = true);
+    }
+
+    try {
+      final challenge = await _authService.fetchCaptcha();
+      if (!mounted) return;
+      setState(() {
+        _captchaChallenge = challenge;
+        _captchaCtrl.clear();
+        _captchaLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _captchaLoading = false;
+        _errorMessage = userFriendlyError(e, fallback: 'Gagal memuat captcha');
+      });
+    }
   }
 
   void _handleLogin() async {
     final email = _emailCtrl.text.trim();
     final password = _passCtrl.text.trim();
+    final captchaAnswer = _captchaCtrl.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
       setState(() => _errorMessage = 'Email and password are required');
+      return;
+    }
+
+    if (_captchaChallenge == null || captchaAnswer.isEmpty) {
+      setState(() => _errorMessage = 'Captcha answer is required');
       return;
     }
 
@@ -197,7 +237,13 @@ class _LoginScreenState extends State<LoginScreen>
 
     _showLoadingDialog();
 
-    final success = await _authService.login(email, password);
+    final success = await _authService.login(
+      email,
+      password,
+      captchaKey: _captchaChallenge!.key,
+      captchaAnswer: captchaAnswer,
+      rememberMe: _rememberMe,
+    );
 
     if (!mounted) return;
 
@@ -217,10 +263,11 @@ class _LoginScreenState extends State<LoginScreen>
       setState(() {
         _errorMessage =
             _authService.errorMessage ??
-            'Login failed. Please check your credentials.';
+            'Login gagal. Periksa email, password, dan captcha.';
         _loading = false;
       });
-      _showErrorDialog(_errorMessage ?? 'Login failed');
+      await _loadCaptcha();
+      _showErrorDialog(_errorMessage ?? 'Login gagal');
     }
   }
 
@@ -232,7 +279,27 @@ class _LoginScreenState extends State<LoginScreen>
 
     _showLoadingDialog();
 
-    final success = await _authService.login(demo.user.email, 'password123');
+    bool success = false;
+    try {
+      final challenge = await _authService.fetchCaptcha();
+      success = await _authService.login(
+        demo.user.email,
+        'password123',
+        captchaKey: challenge.key,
+        captchaAnswer: _solveCaptcha(challenge.question),
+        rememberMe: true,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      setState(() {
+        _errorMessage = userFriendlyError(e, fallback: 'Login gagal');
+        _loading = false;
+      });
+      await _loadCaptcha();
+      _showErrorDialog(_errorMessage ?? 'Login gagal');
+      return;
+    }
 
     if (!mounted) return;
 
@@ -250,11 +317,23 @@ class _LoginScreenState extends State<LoginScreen>
       );
     } else {
       setState(() {
-        _errorMessage = _authService.errorMessage ?? 'Login failed';
+        _errorMessage = _authService.errorMessage ?? 'Login gagal';
         _loading = false;
       });
-      _showErrorDialog(_errorMessage ?? 'Login failed');
+      await _loadCaptcha();
+      _showErrorDialog(_errorMessage ?? 'Login gagal');
     }
+  }
+
+  String _solveCaptcha(String question) {
+    final parts = question.split('+');
+    if (parts.length != 2) {
+      return '';
+    }
+
+    final left = int.tryParse(parts[0].trim()) ?? 0;
+    final right = int.tryParse(parts[1].trim()) ?? 0;
+    return (left + right).toString();
   }
 
   Role _roleFromString(String roleString) {
@@ -578,26 +657,7 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildMobileLogo() {
     return Column(
       children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [_orange, _orangeDark],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: _orange.withValues(alpha: 0.4),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Icon(Icons.pets, size: 32, color: Colors.white),
-        ),
+        const AppLogo(size: 92),
         const SizedBox(height: 12),
         Text(
           'TOMODACHI PETSHOP',
@@ -687,6 +747,11 @@ class _LoginScreenState extends State<LoginScreen>
           _buildPasswordField(),
           const SizedBox(height: 18),
 
+          _buildLabel('Captcha Verification'),
+          const SizedBox(height: 6),
+          _buildCaptchaField(),
+          const SizedBox(height: 18),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -737,10 +802,6 @@ class _LoginScreenState extends State<LoginScreen>
           const SizedBox(height: 24),
 
           _buildSignInButton(),
-          const SizedBox(height: 24),
-          _buildDivider(),
-          const SizedBox(height: 16),
-          _buildDemoGrid(),
         ],
       ),
     );
@@ -834,6 +895,102 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
+  Widget _buildCaptchaField() {
+    return TextField(
+      controller: _captchaCtrl,
+      keyboardType: TextInputType.number,
+      style: _iosStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      decoration: InputDecoration(
+        hintText: _captchaLoading
+            ? 'Loading captcha...'
+            : 'Answer: ${_captchaChallenge?.question ?? '-'}',
+        hintStyle: _iosStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: _brown200,
+        ),
+        filled: true,
+        fillColor: _bgInput,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _borderLight, width: 2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _borderLight, width: 2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _orange, width: 2),
+        ),
+        suffixIcon: IconButton(
+          tooltip: 'Refresh captcha',
+          onPressed: _captchaLoading ? null : _loadCaptcha,
+          icon: _captchaLoading
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.refresh_rounded),
+          color: _brown400,
+        ),
+      ),
+    );
+  }
+
+  // Widget _buildCaptchaField() {
+  //   return TextField(
+  //     controller: _captchaCtrl,
+  //     keyboardType: TextInputType.number,
+  //     style: _iosStyle(fontSize: 14, fontWeight: FontWeight.w500),
+  //     decoration: InputDecoration(
+  //       hintText: _captchaLoading
+  //           ? 'Loading captcha...'
+  //           : 'Answer: ${_captchaChallenge?.question ?? '-'}',
+  //       hintStyle: _iosStyle(
+  //         fontSize: 14,
+  //         fontWeight: FontWeight.w400,
+  //         color: _brown200,
+  //       ),
+  //       filled: true,
+  //       fillColor: _bgInput,
+  //       contentPadding: const EdgeInsets.symmetric(
+  //         horizontal: 16,
+  //         vertical: 14,
+  //       ),
+  //       border: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //         borderSide: const BorderSide(color: _borderLight, width: 2),
+  //       ),
+  //       enabledBorder: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //         borderSide: const BorderSide(color: _borderLight, width: 2),
+  //       ),
+  //       focusedBorder: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //         borderSide: const BorderSide(color: _orange, width: 2),
+  //       ),
+  //       suffixIcon: IconButton(
+  //         tooltip: 'Refresh captcha',
+  //         onPressed: _captchaLoading ? null : _loadCaptcha,
+  //         icon: _captchaLoading
+  //             ? const SizedBox(
+  //                 width: 18,
+  //                 height: 18,
+  //                 child: CircularProgressIndicator(strokeWidth: 2),
+  //               )
+  //             : const Icon(Icons.refresh_rounded),
+  //         color: _brown400,
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _buildSignInButton() {
     return SizedBox(
       width: double.infinity,
@@ -893,51 +1050,6 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildDivider() {
-    return Row(
-      children: [
-        Expanded(child: Container(height: 1, color: _borderLight)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            color: Colors.white,
-            child: Text(
-              'Quick Demo Login',
-              style: _iosStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: _brown400,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ),
-        ),
-        Expanded(child: Container(height: 1, color: _borderLight)),
-      ],
-    );
-  }
-
-  Widget _buildDemoGrid() {
-    return Row(
-      children: _demoRoles.map((demo) {
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: demo == _demoRoles.first ? 0 : 6,
-              right: demo == _demoRoles.last ? 0 : 6,
-            ),
-            child: _DemoRoleButton(
-              demo: demo,
-              loading: _loading,
-              onTap: () => _handleQuickLogin(demo),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
   Widget _buildFooter() {
     return Text(
       '© 2024 Tomodachi Petshop · All rights reserved',
@@ -993,7 +1105,7 @@ class _AnimatedLogoBoxState extends State<_AnimatedLogoBox> {
               turns: _hovered ? -0.03 : 0.0,
               duration: const Duration(milliseconds: 240),
               curve: Curves.easeOut,
-              child: const Icon(Icons.pets, size: 48, color: Colors.white),
+              child: const AppLogo(size: 86),
             ),
           ),
         ),

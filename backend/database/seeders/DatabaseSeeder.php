@@ -16,12 +16,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed roles
-        DB::table('roles')->upsert([
-            ['name' => 'owner', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'kasir', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'admin', 'created_at' => now(), 'updated_at' => now()],
-        ], ['name'], ['updated_at']);
+        // Disable foreign key constraints for seeding
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+        // Seed roles with explicit IDs
+        DB::table('roles')->truncate();
+        DB::table('roles')->insert([
+            ['id' => 1, 'name' => 'owner', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 2, 'name' => 'admin', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 3, 'name' => 'kasir', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        // Re-enable foreign key constraints
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         // Seed test users
         $ownerRole = Role::where('name', 'owner')->first();
@@ -35,6 +42,7 @@ class DatabaseSeeder extends Seeder
                     'name' => 'Pak Heri',
                     'password' => Hash::make('password123'),
                     'role_id' => $ownerRole->id,
+                    'email_verified_at' => now(),
                 ]
             );
 
@@ -44,6 +52,7 @@ class DatabaseSeeder extends Seeder
                     'name' => 'Budi Santoso',
                     'password' => Hash::make('password123'),
                     'role_id' => $kasirRole->id,
+                    'email_verified_at' => now(),
                 ]
             );
 
@@ -53,6 +62,7 @@ class DatabaseSeeder extends Seeder
                     'name' => 'Admin Utama',
                     'password' => Hash::make('password123'),
                     'role_id' => $adminRole->id,
+                    'email_verified_at' => now(),
                 ]
             );
         }
@@ -195,6 +205,8 @@ class DatabaseSeeder extends Seeder
             ],
         ], ['product_id'], ['offline_qty', 'online_qty', 'min_threshold', 'last_updated', 'updated_at']);
 
+        $this->call(ProductAndTransactionSeeder::class);
+
         // \App\Models\User::factory(10)->create();
 
         // \App\Models\User::factory()->create([
@@ -203,4 +215,3 @@ class DatabaseSeeder extends Seeder
         // ]);
     }
 }
-

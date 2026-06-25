@@ -26,10 +26,7 @@ class DashboardService {
     required int year,
     int? month,
   }) async {
-    final queryParams = {
-      'period': period,
-      'year': year.toString(),
-    };
+    final queryParams = {'period': period, 'year': year.toString()};
     if (month != null) {
       queryParams['month'] = month.toString();
     }
@@ -44,19 +41,31 @@ class DashboardService {
     String? startDate,
     String? endDate,
   }) async {
-    final queryParams = {
-      'sort_by': sortBy,
-      'limit': limit.toString(),
-    };
-    if (startDate != null && startDate.isNotEmpty) queryParams['start_date'] = startDate;
-    if (endDate != null && endDate.isNotEmpty) queryParams['end_date'] = endDate;
-    
+    final queryParams = {'sort_by': sortBy, 'limit': limit.toString()};
+    if (startDate != null && startDate.isNotEmpty) {
+      queryParams['start_date'] = startDate;
+    }
+    if (endDate != null && endDate.isNotEmpty) {
+      queryParams['end_date'] = endDate;
+    }
+
     final queryString = Uri(queryParameters: queryParams).query;
     return await _client.get('/api/reports/top-products?$queryString');
   }
 
   /// Fetch general dashboard KPIs, sales trends and category distributions
-  Future<Map<String, dynamic>> getAnalytics() async {
-    return await _client.get('/api/dashboard/analytics');
+  Future<Map<String, dynamic>> getAnalytics({int trendDays = 7}) async {
+    final queryString = Uri(
+      queryParameters: {'trend_days': trendDays.toString()},
+    ).query;
+    return await _client.get('/api/dashboard/analytics?$queryString');
+  }
+
+  /// Fetch latest transactions for live dashboard activity
+  Future<Map<String, dynamic>> getRecentTransactions({int limit = 5}) async {
+    final queryString = Uri(
+      queryParameters: {'page': '1', 'per_page': limit.toString()},
+    ).query;
+    return await _client.get('/api/transactions?$queryString');
   }
 }

@@ -17,7 +17,7 @@ return [
 
     'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
         '%s%s',
-        'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1,192.168.101.13,https://crusher-vaguely-tyke.ngrok-free.dev',
+        'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1,192.168.101.13,https://crusher-vaguely-tyke.ngrok-free.dev, https://tomodachi-petshop.xyz',
         Sanctum::currentApplicationUrlWithPort()
     ))),
 
@@ -46,7 +46,7 @@ return [
     |
     */
 
-    'expiration' => null,
+    'expiration' => 60 * 24 * 7, // 7 hari — token akan kadaluarsa otomatis
 
     /*
     |--------------------------------------------------------------------------

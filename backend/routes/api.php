@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\AiController;
+use App\Http\Controllers\Api\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,6 +23,7 @@ use App\Http\Controllers\Api\ReportController;
 
 // ── Public Auth Routes ──────────────────────────────────────────────────────
 
+Route::get('/auth/captcha', [AuthController::class, 'captcha']);
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
 Route::get('/health', function () {
@@ -35,21 +38,43 @@ Route::get('/health', function () {
     ]);
 });
 
-Route::post('/midtrans/notification', [TransactionController::class, 'midtransNotification']);
+Route::post('/midtrans/notification', [TransactionController::class, 'midtransNotification'])
+    ->middleware('throttle:webhook');
 Route::get('/product-images/{path}', [ProductController::class, 'image'])->where('path', '.*');
 
 // ── Protected Auth & User Routes ─────────────────────────────────────────────
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('throttle:logout');
     Route::get('/auth/me', [AuthController::class, 'me']);
     
     // Registering new users is restricted to owner
-    Route::post('/auth/register', [AuthController::class, 'register']);
+    Route::post('/auth/register', [AuthController::class, 'register'])
+        ->middleware(['check.role:owner', 'throttle:register']);
+    Route::get('/auth/accounts', [AuthController::class, 'accounts'])
+        ->middleware('check.role:owner');
+    Route::put('/auth/accounts/{user}', [AuthController::class, 'updateAccount'])
+        ->middleware('check.role:owner');
+    Route::patch('/auth/accounts/{user}', [AuthController::class, 'updateAccount'])
+        ->middleware('check.role:owner');
+    Route::delete('/auth/accounts/{user}', [AuthController::class, 'destroyAccount'])
+        ->middleware('check.role:owner');
     
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+});
+
+// ── User Management (CRUD) — Owner only ──────────────────────────────────────
+
+Route::middleware(['auth:sanctum', 'check.role:owner'])->group(function () {
+    Route::get('users', [UserController::class, 'index']);
+    Route::post('users', [UserController::class, 'store']);
+    Route::get('users/stats', [UserController::class, 'stats']);
+    Route::get('users/{user}', [UserController::class, 'show']);
+    Route::put('users/{user}', [UserController::class, 'update']);
+    Route::patch('users/{user}', [UserController::class, 'update']);
+    Route::delete('users/{user}', [UserController::class, 'destroy']);
 });
 
 // ── Protected POS & Product Features Routes ───────────────────────────────────
@@ -57,7 +82,14 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     
     // 1. Categories
-    Route::apiResource('categories', CategoryController::class);
+    Route::get('categories', [CategoryController::class, 'index']);
+    Route::get('categories/{category}', [CategoryController::class, 'show']);
+    Route::middleware('check.role:owner,admin')->group(function () {
+        Route::post('categories', [CategoryController::class, 'store']);
+        Route::put('categories/{category}', [CategoryController::class, 'update']);
+        Route::patch('categories/{category}', [CategoryController::class, 'update']);
+        Route::delete('categories/{category}', [CategoryController::class, 'destroy']);
+    });
     
     // Grouped categories endpoint (required before products show route)
     Route::get('products/categories', [CategoryController::class, 'productCategories']);
@@ -76,7 +108,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // 4. POS Transactions (Checkout for kasir & owner, history for all auth)
-    Route::post('transactions', [TransactionController::class, 'store'])->middleware('check.role:kasir,owner');
+    Route::post('transactions', [TransactionController::class, 'store'])->middleware('check.role:kasir,owner,admin');
     Route::get('transactions', [TransactionController::class, 'index']);
     Route::get('transactions/{id}', [TransactionController::class, 'show']);
     Route::get('transactions/{id}/receipt', [TransactionController::class, 'receipt']);
@@ -87,5 +119,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('reports/sales/summary', [ReportController::class, 'salesSummary']);
         Route::get('reports/top-products', [ReportController::class, 'topProducts']);
         Route::get('dashboard/analytics', [ReportController::class, 'analytics']);
+    });
+
+    // 6. AI Chatbot — Owner only
+    Route::middleware('check.role:owner')->group(function () {
+        Route::prefix('ai')->group(function () {
+            Route::post('chat', [AiController::class, 'chat'])->middleware('throttle:ai');
+            Route::get('chat/history', [AiController::class, 'history']);
+            Route::get('restock', [AiController::class, 'restock']);
+        });
     });
 });

@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../auth_service.dart';
 import '../product_service.dart';
+import '../category_service.dart';
 import '../transaction_service.dart';
 import '../dashboard_service.dart';
 import 'tabs/pos_tab.dart';
 import 'tabs/products_tab.dart';
 import 'tabs/transactions_history_tab.dart';
 import 'tabs/dashboard_owner.dart';
+import 'ai_chat_screen.dart';
 import 'login_screen.dart';
+import '../ai_chat_service.dart';
+import 'owner_accounts_screen.dart';
+import 'category_management_screen.dart';
+import '../widgets/app_logo.dart';
 
 class HomeScreen extends StatefulWidget {
   final AuthService authService;
@@ -45,12 +51,20 @@ class _HomeScreenState extends State<HomeScreen> {
     letterSpacing: letterSpacing,
   );
 
+  // Cached styles for frequently used combinations (OPT-05)
+  late final TextStyle _styleBold14 = _plusJakarta(fontWeight: FontWeight.w900);
+  late final TextStyle _styleNav11 = _plusJakarta(fontSize: 11, fontWeight: FontWeight.w700);
+  late final TextStyle _styleNavUnsel11 = _plusJakarta(fontSize: 11, color: const Color(0xFF9E8F85));
+
   late final ProductService _productService;
+  late final CategoryService _categoryService;
   late final TransactionService _transactionService;
   late final DashboardService _dashboardService;
+  late final AiChatService _aiChatService;
 
   int _currentIndex = 0;
   bool _loadingLogout = false;
+  List<_NavigationItem> _navItems = [];
 
   @override
   void initState() {
@@ -58,8 +72,14 @@ class _HomeScreenState extends State<HomeScreen> {
     // Initialize services by accessing apiClient from AuthService
     final client = widget.authService.apiClient;
     _productService = ProductService(client);
+    _categoryService = CategoryService(client);
     _transactionService = TransactionService(client);
     _dashboardService = DashboardService(client);
+    _aiChatService = AiChatService(client);
+
+    // Build navigation items once and cache them (OPT-01)
+    final role = widget.authService.currentUser?.role ?? 'kasir';
+    _navItems = _getNavigationItems(role);
   }
 
   List<_NavigationItem> _getNavigationItems(String role) {
@@ -88,11 +108,28 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           _NavigationItem(
+            label: 'Kategori Produk',
+            icon: Icons.category_outlined,
+            widget: CategoryManagementScreen(
+              categoryService: _categoryService,
+            ),
+          ),
+          _NavigationItem(
             label: 'Riwayat Transaksi',
             icon: Icons.history,
             widget: TransactionsHistoryTab(
               transactionService: _transactionService,
             ),
+          ),
+          _NavigationItem(
+            label: 'Manajemen Akun',
+            icon: Icons.manage_accounts,
+            widget: OwnerAccountsScreen(authService: widget.authService),
+          ),
+          _NavigationItem(
+            label: 'AI Asisten',
+            icon: Icons.auto_awesome,
+            widget: AiChatScreen(chatService: _aiChatService),
           ),
         ];
 
@@ -104,6 +141,13 @@ class _HomeScreenState extends State<HomeScreen> {
             widget: ProductsTab(
               productService: _productService,
               userRole: role,
+            ),
+          ),
+          _NavigationItem(
+            label: 'Kategori Produk',
+            icon: Icons.category_outlined,
+            widget: CategoryManagementScreen(
+              categoryService: _categoryService,
             ),
           ),
           _NavigationItem(
@@ -179,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final user = widget.authService.currentUser;
     final role = user?.role ?? 'kasir';
-    final items = _getNavigationItems(role);
+    final items = _navItems;
 
     // Adjust selected index if navigation items count changed dynamically
     if (_currentIndex >= items.length) {
@@ -188,6 +232,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final screenWidth = MediaQuery.of(context).size.width;
     final isWide = screenWidth >= 900;
+
+    // OPT-01: IndexedStack keeps all tabs alive across switches
+    final tabBody = IndexedStack(
+      index: _currentIndex,
+      children: items.map((item) => item.widget).toList(),
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFDF9),
@@ -199,10 +249,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildSidebar(items),
                 const VerticalDivider(width: 1, thickness: 1),
                 // Core screen content
-                Expanded(child: items[_currentIndex].widget),
+                Expanded(child: tabBody),
               ],
             )
-          : items[_currentIndex].widget,
+          : tabBody,
       bottomNavigationBar: !isWide
           ? BottomNavigationBar(
               currentIndex: _currentIndex,
@@ -210,14 +260,8 @@ class _HomeScreenState extends State<HomeScreen> {
               unselectedItemColor: const Color(0xFF9E8F85),
               showUnselectedLabels: true,
               type: BottomNavigationBarType.fixed,
-              selectedLabelStyle: _plusJakarta(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-              unselectedLabelStyle: _plusJakarta(
-                fontSize: 11,
-                color: const Color(0xFF9E8F85),
-              ),
+              selectedLabelStyle: _styleNav11,
+              unselectedLabelStyle: _styleNavUnsel11,
               onTap: (index) => setState(() => _currentIndex = index),
               items: items.map((item) {
                 return BottomNavigationBarItem(
@@ -237,11 +281,17 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'Manajemen Produk':
       case 'Stok Produk':
         return 'Produk';
+      case 'Kategori Produk':
+        return 'Kategori';
       case 'Riwayat Transaksi':
       case 'Riwayat Kasir':
         return 'Riwayat';
       case 'POS Kasir':
         return 'POS';
+      case 'Manajemen Akun':
+        return 'Akun';
+      case 'AI Asisten':
+        return 'AI';
       default:
         return label;
     }
@@ -270,23 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
       titleSpacing: isCompact ? 12 : 16,
       title: Row(
         children: [
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: isCompact ? 8 : 10,
-              vertical: 4,
-            ),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFB570), Color(0xFFFF9A4D)],
-              ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              Icons.pets,
-              size: isCompact ? 18 : 20,
-              color: Colors.white,
-            ),
-          ),
+          AppLogo(size: isCompact ? 36 : 42),
           SizedBox(width: isCompact ? 8 : 10),
           Flexible(
             child: Text(

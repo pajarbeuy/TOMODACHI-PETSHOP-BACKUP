@@ -42,12 +42,16 @@ class ApiClient {
     final url = _baseUri.resolve(cleanPath).toString();
 
     final headers = {'Accept': 'application/json'};
+    _addNgrokHeader(headers);
     _addAuthHeader(headers);
 
     try {
       final response = await _makeRequest(url, 'GET', headers, null);
       return response;
     } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
       throw ApiException('GET $path failed: $e');
     }
   }
@@ -64,6 +68,7 @@ class ApiClient {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
     };
+    _addNgrokHeader(headers);
     _addAuthHeader(headers);
 
     try {
@@ -71,6 +76,9 @@ class ApiClient {
       final response = await _makeRequest(url, 'POST', headers, bodyStr);
       return response;
     } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
       throw ApiException('POST $path failed: $e');
     }
   }
@@ -87,6 +95,7 @@ class ApiClient {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
     };
+    _addNgrokHeader(headers);
     _addAuthHeader(headers);
 
     try {
@@ -94,7 +103,37 @@ class ApiClient {
       final response = await _makeRequest(url, 'PUT', headers, bodyStr);
       return response;
     } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
       throw ApiException('PUT $path failed: $e');
+    }
+  }
+
+  /// Make a PATCH request
+  Future<Map<String, dynamic>> patch(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
+    final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    final url = _baseUri.resolve(cleanPath).toString();
+
+    final headers = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
+    _addNgrokHeader(headers);
+    _addAuthHeader(headers);
+
+    try {
+      final bodyStr = body != null ? jsonEncode(body) : null;
+      final response = await _makeRequest(url, 'PATCH', headers, bodyStr);
+      return response;
+    } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
+      throw ApiException('PATCH $path failed: $e');
     }
   }
 
@@ -104,12 +143,16 @@ class ApiClient {
     final url = _baseUri.resolve(cleanPath).toString();
 
     final headers = {'Accept': 'application/json'};
+    _addNgrokHeader(headers);
     _addAuthHeader(headers);
 
     try {
       final response = await _makeRequest(url, 'DELETE', headers, null);
       return response;
     } catch (e) {
+      if (e is ApiException || e is FormatException) {
+        rethrow;
+      }
       throw ApiException('DELETE $path failed: $e');
     }
   }
@@ -133,7 +176,7 @@ class ApiClient {
           if (status < 200 || status >= 300) {
             final responseText = request.responseText;
             completer.completeError(
-              ApiException('HTTP $status: $responseText'),
+              ApiException(_formatHttpError(status, responseText)),
             );
             return;
           }
@@ -225,7 +268,7 @@ class ApiClient {
           if (status < 200 || status >= 300) {
             final responseText = request.responseText;
             completer.completeError(
-              ApiException('HTTP $status: $responseText'),
+              ApiException(_formatHttpError(status, responseText)),
             );
             return;
           }
@@ -261,6 +304,7 @@ class ApiClient {
         request.setRequestHeader('Authorization', 'Bearer $_token');
       }
       request.setRequestHeader('Accept', 'application/json');
+      request.setRequestHeader('ngrok-skip-browser-warning', 'true');
 
       request.send(formData);
 
@@ -278,6 +322,61 @@ class ApiClient {
     if (_token != null && _token!.isNotEmpty) {
       headers['Authorization'] = 'Bearer $_token';
     }
+  }
+
+  void _addNgrokHeader(Map<String, String> headers) {
+    if (_baseUri.host.contains('ngrok')) {
+      headers['ngrok-skip-browser-warning'] = 'true';
+    }
+  }
+
+  String _formatHttpError(int status, String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map && decoded['message'] != null) {
+        String msg = decoded['message'];
+        
+        // Extract validation errors if present
+        if (decoded['errors'] is Map) {
+          final errors = decoded['errors'] as Map;
+          final errorList = <String>[];
+          for (final key in errors.keys) {
+            final value = errors[key];
+            if (value is List && value.isNotEmpty) {
+              errorList.add(value.first.toString());
+            } else {
+              errorList.add(value.toString());
+            }
+          }
+          if (errorList.isNotEmpty) {
+            msg += ': ' + errorList.join(', ');
+          }
+        }
+        
+        return msg;
+      }
+    } catch (_) {
+      // Keep the raw response below if it is not JSON.
+    }
+
+    return 'HTTP $status: $body';
+  }
+
+  String? _formatValidationErrors(dynamic errors) {
+    if (errors is! Map) {
+      return null;
+    }
+
+    final messages = <String>[];
+    errors.forEach((field, value) {
+      if (value is List) {
+        messages.addAll(value.map((item) => item.toString()));
+      } else if (value != null) {
+        messages.add(value.toString());
+      }
+    });
+
+    return messages.isEmpty ? null : messages.join('\n');
   }
 }
 

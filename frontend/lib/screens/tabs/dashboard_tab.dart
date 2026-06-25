@@ -1,6 +1,10 @@
+﻿import 'dart:async';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '../../dashboard_service.dart';
 
 class SalesData {
   final String day;
@@ -77,9 +81,30 @@ class LowStockItem {
   });
 }
 
-class DashboardTab extends StatelessWidget {
-  DashboardTab({super.key});
+enum _SalesTrendRange { sevenDays, thirtyDays, threeMonths }
 
+class _SalesTrendPoint {
+  final DateTime date;
+  final double sales;
+  final int transactions;
+
+  const _SalesTrendPoint({
+    required this.date,
+    required this.sales,
+    required this.transactions,
+  });
+}
+
+class DashboardTab extends StatefulWidget {
+  final DashboardService? dashboardService;
+
+  const DashboardTab({super.key, this.dashboardService});
+
+  @override
+  State<DashboardTab> createState() => _DashboardTabState();
+}
+
+class _DashboardTabState extends State<DashboardTab> {
   static const _brown900 = Color(0xFF3D2314);
   static const _brown700 = Color(0xFF6B4F3E);
   static const _brown400 = Color(0xFF9B7B6B);
@@ -243,9 +268,291 @@ class DashboardTab extends StatelessWidget {
     decimalDigits: 0,
   );
 
+  List<RecentTransaction> _liveRecentTransactions = recentTransactions;
+  bool _recentTransactionsLoading = false;
+  Map<String, dynamic>? _analyticsData;
+  bool _analyticsLoading = false;
+  Timer? _recentTransactionsTimer;
+  _SalesTrendRange _selectedSalesRange = _SalesTrendRange.sevenDays;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAnalytics();
+    _fetchRecentTransactions();
+    _recentTransactionsTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _fetchAnalytics(silent: true, trendDays: _selectedSalesTrendDays);
+      _fetchRecentTransactions(silent: true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _recentTransactionsTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchRecentTransactions({bool silent = false}) async {
+    final service = widget.dashboardService;
+    if (service == null) return;
+
+    if (!silent && mounted) {
+      setState(() => _recentTransactionsLoading = true);
+    }
+
+    try {
+      final res = await service.getRecentTransactions(limit: 5);
+      final data = res['data'];
+      final rows = data is List
+          ? data
+          : data is Map && data['data'] is List
+          ? data['data'] as List
+          : const [];
+
+      final transactions = rows
+          .whereType<Map>()
+          .map((row) => _recentTransactionFromJson(row))
+          .toList();
+
+      if (!mounted) return;
+      setState(() {
+        if (transactions.isNotEmpty) {
+          _liveRecentTransactions = transactions;
+        }
+        _recentTransactionsLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _recentTransactionsLoading = false);
+    }
+  }
+
+  Future<void> _fetchAnalytics({bool silent = false, int? trendDays}) async {
+    final service = widget.dashboardService;
+    if (service == null) return;
+
+    final days = trendDays ?? _selectedSalesTrendDays;
+
+    if (!silent && mounted) {
+      setState(() => _analyticsLoading = true);
+    }
+
+    try {
+      final res = await service.getAnalytics(trendDays: days);
+      final data = res['data'];
+
+      if (!mounted) return;
+      setState(() {
+        if (data is Map<String, dynamic>) {
+          _analyticsData = data;
+        } else if (data is Map) {
+          _analyticsData = Map<String, dynamic>.from(data);
+        }
+        _analyticsLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _analyticsLoading = false);
+    }
+  }
+
+  Map<String, dynamic> _mapValue(Object? value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return const {};
+  }
+
+  double _doubleValue(Object? value, [double fallback = 0]) {
+    if (value is num) return value.toDouble();
+    return double.tryParse('$value') ?? fallback;
+  }
+
+  int _intValue(Object? value, [int fallback = 0]) {
+    if (value is int) return value;
+    if (value is num) return value.round();
+    return int.tryParse('$value') ?? fallback;
+  }
+
+  String _formatSignedPercent(double value) {
+    final prefix = value > 0 ? '+' : '';
+    return '$prefix${value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 1)}%';
+  }
+
+  RecentTransaction _recentTransactionFromJson(Map<dynamic, dynamic> row) {
+    final code = (row['transaction_code'] ?? row['transaction_id'] ?? '-')
+        .toString();
+    final cashier = row['cashier'];
+    final cashierName = cashier is Map
+        ? (cashier['name'] ?? '').toString()
+        : (row['kasir_name'] ?? row['cashier_name'] ?? '').toString();
+    final customer = cashierName.isNotEmpty ? cashierName : 'Transaksi Kasir';
+    final items = row['items'];
+    final itemCount = items is List
+        ? items.fold<int>(0, (sum, item) {
+            if (item is! Map) return sum;
+            return sum + (int.tryParse('${item['quantity'] ?? 0}') ?? 0);
+          })
+        : int.tryParse('${row['items_count'] ?? row['total_items'] ?? 0}') ?? 0;
+    final total =
+        double.tryParse('${row['total'] ?? row['grand_total'] ?? 0}') ?? 0;
+    final method = (row['payment_method'] ?? row['channel'] ?? '-')
+        .toString()
+        .toUpperCase();
+    final createdAt = DateTime.tryParse('${row['created_at'] ?? ''}');
+
+    return RecentTransaction(
+      id: code,
+      customer: customer,
+      items: itemCount,
+      total: total,
+      method: method,
+      time: _formatRelativeTime(createdAt),
+    );
+  }
+
+  String _formatRelativeTime(DateTime? value) {
+    if (value == null) return '-';
+    final now = DateTime.now();
+    final local = value.toLocal();
+    final diff = now.difference(local);
+
+    if (diff.inMinutes < 1) return 'baru saja';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return DateFormat('d MMM').format(local);
+  }
+
   String formatRp(double n) => _currency.format(n);
 
   String formatRpFull(double n) => _currency.format(n);
+
+  int get _selectedSalesTrendDays {
+    final today = DateTime.now();
+    final startOfToday = DateTime(today.year, today.month, today.day);
+
+    return switch (_selectedSalesRange) {
+      _SalesTrendRange.sevenDays => 7,
+      _SalesTrendRange.thirtyDays => 30,
+      _SalesTrendRange.threeMonths =>
+        startOfToday
+                .difference(DateTime(today.year, today.month - 3, today.day))
+                .inDays +
+            1,
+    };
+  }
+
+  String get _selectedSalesTrendSubtitle {
+    return switch (_selectedSalesRange) {
+      _SalesTrendRange.sevenDays => 'Last 7 days',
+      _SalesTrendRange.thirtyDays => 'Last 30 days',
+      _SalesTrendRange.threeMonths => 'Last 3 months',
+    };
+  }
+
+  List<_SalesTrendPoint> _buildSalesTrendPoints() {
+    // Prioritaskan data real dari API
+    final trend = _analyticsData?['sales_trend'];
+    if (trend is List && trend.isNotEmpty) {
+      return trend.whereType<Map>().map((row) {
+        final date = DateTime.tryParse('${row['date'] ?? ''}') ?? DateTime.now();
+        return _SalesTrendPoint(
+          date: date,
+          sales: _doubleValue(row['revenue'], 0),
+          transactions: _intValue(row['transactions'], 0),
+        );
+      }).toList();
+    }
+
+    // Fallback ke data dummy saat API belum siap
+    final today = DateTime.now();
+    final startOfToday = DateTime(today.year, today.month, today.day);
+    final days = _selectedSalesTrendDays;
+
+    return List.generate(days, (index) {
+      final date = startOfToday.subtract(Duration(days: days - index - 1));
+      final base = salesData[index % salesData.length];
+      final weekPulse = ((index % 7) - 3) * 0.045;
+      final rangeGrowth = days == 1 ? 0.0 : (index / (days - 1)) * 0.16;
+      final sales = base.sales * (1 + weekPulse + rangeGrowth);
+      final transactions = (base.transactions * (sales / base.sales)).round();
+
+      return _SalesTrendPoint(
+        date: date,
+        sales: sales,
+        transactions: transactions,
+      );
+    });
+  }
+
+  /// Best Sellers — dari API (top_products), fallback ke dummy saat loading
+  List<ProductRank> _bestSellerItems() {
+    final rows = _analyticsData?['top_products'];
+    if (rows is! List || rows.isEmpty) {
+      return _analyticsData != null ? [] : bestSellers;
+    }
+    return rows.whereType<Map>().toList().asMap().entries.map((entry) {
+      final row = entry.value;
+      return ProductRank(
+        id: _intValue(row['product_id'], entry.key + 1),
+        name: (row['product_name'] ?? '-').toString(),
+        category: (row['category'] ?? '-').toString(),
+        sales: _intValue(row['quantity_sold'], 0),
+        revenue: _doubleValue(row['total_revenue'], 0),
+        icon: Icons.pets,
+        trend: 0,
+      );
+    }).toList();
+  }
+
+  /// Low Stock Alert — dari API (low_stock_alerts), fallback ke dummy saat loading
+  List<LowStockItem> _lowStockItems() {
+    final rows = _analyticsData?['low_stock_alerts'];
+    if (rows is! List || rows.isEmpty) {
+      return _analyticsData != null ? [] : lowStockItems;
+    }
+    return rows.whereType<Map>().map((row) {
+      final stock = _intValue(row['stock'], 0);
+      final threshold = _intValue(row['threshold'], 10);
+      return LowStockItem(
+        id: _intValue(row['product_id'], 0),
+        name: (row['product_name'] ?? '-').toString(),
+        stock: stock,
+        min: threshold <= 0 ? 1 : threshold,
+        icon: Icons.inventory_2_outlined,
+        critical: row['critical'] == true,
+      );
+    }).toList();
+  }
+
+  /// Monthly Revenue — dari API (monthly_revenue), fallback ke dummy saat loading
+  List<MonthlyData> _monthlyRevenueItems() {
+    final rows = _analyticsData?['monthly_revenue'];
+    if (rows is! List || rows.isEmpty) {
+      return _analyticsData != null ? [] : monthlyData;
+    }
+    return rows.whereType<Map>().map((row) {
+      return MonthlyData(
+        month: (row['month'] ?? '-').toString(),
+        revenue: _doubleValue(row['total_revenue'], 0),
+      );
+    }).toList();
+  }
+
+
+  String _formatTrendDate(DateTime date) {
+    return DateFormat('d MMM').format(date);
+  }
+
+  bool _showTrendDateLabel(int index, int total) {
+    if (total <= 7) return true;
+
+    final labelIndexes = total <= 30
+        ? <int>{0, total ~/ 3, (total * 2) ~/ 3, total - 1}
+        : <int>{0, total ~/ 4, total ~/ 2, (total * 3) ~/ 4, total - 1};
+
+    return labelIndexes.contains(index);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -302,9 +609,9 @@ class DashboardTab extends StatelessWidget {
             OutlinedButton(
               onPressed: () {},
               style: OutlinedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: _brown700,
-                side: const BorderSide(color: Color(0x4DFFB570)),
+                backgroundColor: _orange,
+                foregroundColor: Colors.white,
+                side: const BorderSide(color: _orange),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -314,11 +621,6 @@ class DashboardTab extends StatelessWidget {
                 ),
               ),
               child: const Text('Today'),
-            ),
-            _gradientButton(
-              icon: Icons.add,
-              label: 'New Transaction',
-              onPressed: () {},
             ),
           ],
         );
@@ -356,6 +658,20 @@ class DashboardTab extends StatelessWidget {
   }
 
   Widget _buildStats(BuildContext context) {
+    final kpi = _mapValue(_analyticsData?['kpi']);
+    final todaySales = _doubleValue(kpi['today_sales'], 0);
+    final todayTransactions = _intValue(kpi['total_transactions_today'], 0);
+    final transactionsChange = _intValue(kpi['transactions_change'], 0);
+    final monthlyRevenue = _doubleValue(kpi['monthly_revenue'], 0);
+    final activeProducts = _intValue(kpi['active_products'], 0);
+    final lowStockProducts = _intValue(kpi['low_stock_products'], 0);
+    final todaySalesTrend = _doubleValue(kpi['today_sales_change_percent'], 0);
+    final monthlyRevenueTrend = _doubleValue(
+      kpi['monthly_revenue_change_percent'],
+      0,
+    );
+    final monthLabel = DateFormat('MMMM yyyy').format(DateTime.now());
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -373,44 +689,46 @@ class DashboardTab extends StatelessWidget {
             _buildStatCard(
               width: cardWidth,
               label: "Today's Sales",
-              value: formatRp(1890000),
-              sub: 'From 28 transactions',
+              value: _analyticsLoading ? 'Memuat...' : formatRp(todaySales),
+              sub: 'From $todayTransactions transactions',
               icon: Icons.attach_money,
               iconColor: _orangeDark,
-              trend: 12,
+              trend: todaySalesTrend.round(),
               gradient: const [Color(0xFFFFF6E9), Color(0xFFFFE8CC)],
               iconBg: const Color(0x33FFB570),
             ),
             _buildStatCard(
               width: cardWidth,
               label: 'Total Transactions',
-              value: '28',
-              sub: '8 more than yesterday',
+              value: _analyticsLoading ? '...' : '$todayTransactions',
+              sub: transactionsChange == 0
+                  ? 'Same as yesterday'
+                  : '${transactionsChange.abs()} ${transactionsChange > 0 ? 'more' : 'less'} than yesterday',
               icon: Icons.shopping_bag_outlined,
               iconColor: _pink,
-              trend: 8,
+              trend: transactionsChange,
               gradient: const [Color(0xFFFFF0F5), Color(0xFFFFE0EC)],
               iconBg: const Color(0x4DFFC7D1),
             ),
             _buildStatCard(
               width: cardWidth,
               label: 'Monthly Revenue',
-              value: formatRp(42000000),
-              sub: 'June 2024',
+              value: _analyticsLoading ? 'Memuat...' : formatRp(monthlyRevenue),
+              sub: '$monthLabel (${_formatSignedPercent(monthlyRevenueTrend)})',
               icon: Icons.trending_up,
               iconColor: _green,
-              trend: 15,
+              trend: monthlyRevenueTrend.round(),
               gradient: const [Color(0xFFF0FDF9), Color(0xFFD4F5EE)],
               iconBg: const Color(0x80B8F2E6),
             ),
             _buildStatCard(
               width: cardWidth,
               label: 'Active Products',
-              value: '48',
-              sub: '4 need restocking',
+              value: _analyticsLoading ? '...' : '$activeProducts',
+              sub: '$lowStockProducts need restocking',
               icon: Icons.inventory_2_outlined,
               iconColor: _blue,
-              trend: -2,
+              trend: -lowStockProducts,
               gradient: const [Color(0xFFF0FAFE), Color(0xFFD4EFFD)],
               iconBg: const Color(0x66A0E7E5),
             ),
@@ -585,7 +903,13 @@ class DashboardTab extends StatelessWidget {
   }
 
   Widget _buildSalesTrendCard() {
-    final spots = salesData.asMap().entries.map((entry) {
+    final trendPoints = _buildSalesTrendPoints();
+    final maxSales = trendPoints
+        .map((item) => item.sales)
+        .reduce((value, item) => value > item ? value : item);
+    final maxY = (maxSales * 1.2).clamp(1000000.0, double.infinity);
+    final leftInterval = maxY / 4;
+    final spots = trendPoints.asMap().entries.map((entry) {
       return FlSpot(entry.key.toDouble(), entry.value.sales);
     }).toList();
 
@@ -598,15 +922,39 @@ class DashboardTab extends StatelessWidget {
         children: [
           _cardHeader(
             title: 'Sales Trend',
-            subtitle: 'Last 7 days',
+            subtitle: _selectedSalesTrendSubtitle,
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _rangeButton('7D', selected: true),
+                _rangeButton(
+                  '7D',
+                  selected: _selectedSalesRange == _SalesTrendRange.sevenDays,
+                  onPressed: () {
+                    if (_selectedSalesRange == _SalesTrendRange.sevenDays) return;
+                    setState(() => _selectedSalesRange = _SalesTrendRange.sevenDays);
+                    _fetchAnalytics(trendDays: 7);
+                  },
+                ),
                 const SizedBox(width: 6),
-                _rangeButton('30D'),
+                _rangeButton(
+                  '30D',
+                  selected: _selectedSalesRange == _SalesTrendRange.thirtyDays,
+                  onPressed: () {
+                    if (_selectedSalesRange == _SalesTrendRange.thirtyDays) return;
+                    setState(() => _selectedSalesRange = _SalesTrendRange.thirtyDays);
+                    _fetchAnalytics(trendDays: 30);
+                  },
+                ),
                 const SizedBox(width: 6),
-                _rangeButton('3M'),
+                _rangeButton(
+                  '3M',
+                  selected: _selectedSalesRange == _SalesTrendRange.threeMonths,
+                  onPressed: () {
+                    if (_selectedSalesRange == _SalesTrendRange.threeMonths) return;
+                    setState(() => _selectedSalesRange = _SalesTrendRange.threeMonths);
+                    _fetchAnalytics(trendDays: 90);
+                  },
+                ),
               ],
             ),
           ),
@@ -615,9 +963,9 @@ class DashboardTab extends StatelessWidget {
             child: LineChart(
               LineChartData(
                 minX: 0,
-                maxX: (salesData.length - 1).toDouble(),
+                maxX: (trendPoints.length - 1).toDouble(),
                 minY: 0,
-                maxY: 2400000,
+                maxY: maxY,
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
@@ -641,14 +989,23 @@ class DashboardTab extends StatelessWidget {
                       interval: 1,
                       getTitlesWidget: (value, meta) {
                         final index = value.toInt();
-                        if (index < 0 || index >= salesData.length) {
+                        if (index < 0 ||
+                            index >= trendPoints.length ||
+                            !_showTrendDateLabel(index, trendPoints.length)) {
                           return const SizedBox.shrink();
                         }
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            salesData[index].day,
-                            style: _text(size: 10, color: _brown400),
+                        return SideTitleWidget(
+                          axisSide: meta.axisSide,
+                          space: 8,
+                          child: SizedBox(
+                            width: 44,
+                            child: Text(
+                              _formatTrendDate(trendPoints[index].date),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.visible,
+                              style: _text(size: 10, color: _brown400),
+                            ),
                           ),
                         );
                       },
@@ -658,7 +1015,7 @@ class DashboardTab extends StatelessWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 46,
-                      interval: 600000,
+                      interval: leftInterval,
                       getTitlesWidget: (value, meta) => Text(
                         '${(value / 1000000).toStringAsFixed(1)}jt',
                         style: _text(size: 10, color: _brown400),
@@ -671,9 +1028,9 @@ class DashboardTab extends StatelessWidget {
                     tooltipBgColor: Colors.white,
                     tooltipRoundedRadius: 12,
                     getTooltipItems: (items) => items.map((item) {
-                      final data = salesData[item.x.toInt()];
+                      final data = trendPoints[item.x.toInt()];
                       return LineTooltipItem(
-                        '${data.day}\n${formatRpFull(data.sales)}\n${data.transactions} transactions',
+                        '${_formatTrendDate(data.date)}\n${formatRpFull(data.sales)}\n${data.transactions} transactions',
                         _text(size: 11, weight: FontWeight.w800),
                       );
                     }).toList(),
@@ -698,6 +1055,11 @@ class DashboardTab extends StatelessWidget {
                     ),
                     dotData: FlDotData(
                       show: true,
+                      checkToShowDot: (spot, barData) {
+                        final index = spot.x.toInt();
+                        return trendPoints.length <= 30 ||
+                            _showTrendDateLabel(index, trendPoints.length);
+                      },
                       getDotPainter: (spot, percent, bar, index) {
                         return FlDotCirclePainter(
                           radius: 4,
@@ -718,6 +1080,7 @@ class DashboardTab extends StatelessWidget {
   }
 
   Widget _buildBestSellersCard() {
+    final products = _bestSellerItems();
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: _cardDecoration(),
@@ -726,11 +1089,19 @@ class DashboardTab extends StatelessWidget {
         children: [
           _cardHeader(
             title: 'Best Sellers',
-            subtitle: 'This month',
+            subtitle: _analyticsLoading ? 'Memuat data...' : 'Berdasarkan transaksi',
             trailing: const Icon(Icons.star, size: 18, color: _orange),
           ),
           const SizedBox(height: 16),
-          ...bestSellers.asMap().entries.map((entry) {
+          if (products.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                _analyticsLoading ? 'Memuat...' : 'Belum ada produk terjual.',
+                style: _text(size: 12, color: _brown400),
+              ),
+            ),
+          ...products.asMap().entries.map((entry) {
             final index = entry.key;
             final product = entry.value;
             final rankColor = index == 0
@@ -765,7 +1136,9 @@ class DashboardTab extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
+                  Icon(product.icon, color: _orangeDark, size: 22),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -802,9 +1175,9 @@ class DashboardTab extends StatelessWidget {
     );
   }
 
-
-
   Widget _buildRecentTransactionsCard() {
+    final transactions = _liveRecentTransactions;
+
     return Container(
       decoration: _cardDecoration(),
       clipBehavior: Clip.antiAlias,
@@ -815,20 +1188,21 @@ class DashboardTab extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: _cardHeader(
               title: 'Recent Transactions',
-              subtitle: "Today's activity",
-              trailing: TextButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.arrow_outward, size: 13),
-                label: const Text('View all'),
-                style: TextButton.styleFrom(
-                  foregroundColor: _orange,
-                  textStyle: _text(size: 12, weight: FontWeight.w900),
-                ),
+              subtitle: _recentTransactionsLoading
+                  ? 'Memuat aktivitas terbaru...'
+                  : "Today's activity",
+              trailing: IconButton(
+                tooltip: 'Refresh',
+                onPressed: _recentTransactionsLoading
+                    ? null
+                    : () => _fetchRecentTransactions(),
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                color: _orange,
               ),
             ),
           ),
           const Divider(height: 1, color: Color(0x1FFFB570)),
-          ...recentTransactions.map((transaction) {
+          ...transactions.map((transaction) {
             return Column(
               children: [
                 Padding(
@@ -906,7 +1280,7 @@ class DashboardTab extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (transaction != recentTransactions.last)
+                if (transaction != transactions.last)
                   const Divider(height: 1, color: Color(0x11FFB570)),
               ],
             );
@@ -917,6 +1291,7 @@ class DashboardTab extends StatelessWidget {
   }
 
   Widget _buildLowStockCard() {
+    final items = _lowStockItems();
     return Container(
       decoration: _cardDecoration(),
       clipBehavior: Clip.antiAlias,
@@ -927,7 +1302,9 @@ class DashboardTab extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: _cardHeader(
               title: 'Low Stock Alert',
-              subtitle: '${lowStockItems.length} items need restocking',
+              subtitle: _analyticsLoading
+                  ? 'Memuat stok...'
+                  : '${items.length} produk stok <= min stok',
               trailing: Container(
                 width: 32,
                 height: 32,
@@ -944,7 +1321,15 @@ class DashboardTab extends StatelessWidget {
             ),
           ),
           const Divider(height: 1, color: Color(0x1FFFB570)),
-          ...lowStockItems.map((item) {
+          if (items.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                _analyticsLoading ? 'Memuat...' : 'Tidak ada produk stok rendah.',
+                style: _text(size: 12, color: _brown400),
+              ),
+            ),
+          ...items.map((item) {
             final progress = (item.stock / item.min).clamp(0.0, 1.0);
             final alertColor = item.critical
                 ? const Color(0xFFFF6B6B)
@@ -1025,31 +1410,27 @@ class DashboardTab extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (item != lowStockItems.last)
+                if (item != items.last)
                   const Divider(height: 1, color: Color(0x11FFB570)),
               ],
             );
           }),
-          const Divider(height: 1, color: Color(0x1FFFB570)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: SizedBox(
-              width: double.infinity,
-              child: _gradientButton(
-                label: 'Restock All',
-                dense: true,
-                onPressed: () {},
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
 
   Widget _buildMonthlyRevenueCard() {
+    final chartData = _monthlyRevenueItems();
+    final maxRevenue = chartData.isEmpty
+        ? 50000000.0
+        : chartData.map((d) => d.revenue).reduce((a, b) => a > b ? a : b);
+    final maxY = (maxRevenue * 1.25).clamp(1000000.0, double.infinity);
+    final interval = (maxY / 5).ceilToDouble();
+    final currentYear = DateTime.now().year;
+
     return Container(
-      height: 280,
+      height: 300,
       padding: const EdgeInsets.all(20),
       decoration: _cardDecoration(),
       child: Column(
@@ -1057,7 +1438,7 @@ class DashboardTab extends StatelessWidget {
         children: [
           _cardHeader(
             title: 'Monthly Revenue Overview',
-            subtitle: 'January - June 2024',
+            subtitle: _analyticsLoading ? 'Memuat data...' : '12 bulan terakhir',
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -1067,111 +1448,108 @@ class DashboardTab extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.trending_up,
-                    size: 13,
-                    color: Color(0xFF1B7A65),
-                  ),
+                  const Icon(Icons.calendar_month, size: 13, color: Color(0xFF1B7A65)),
                   const SizedBox(width: 5),
                   Text(
-                    '+18.5% YoY',
-                    style: _text(
-                      size: 11,
-                      weight: FontWeight.w900,
-                      color: const Color(0xFF1B7A65),
-                    ),
+                    '$currentYear',
+                    style: _text(size: 11, weight: FontWeight.w900, color: const Color(0xFF1B7A65)),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 16),
           Expanded(
-            child: BarChart(
-              BarChartData(
-                maxY: 50000000,
-                alignment: BarChartAlignment.spaceAround,
-                barTouchData: BarTouchData(
-                  enabled: true,
-                  touchTooltipData: BarTouchTooltipData(
-                    tooltipBgColor: Colors.white,
-                    tooltipRoundedRadius: 12,
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final item = monthlyData[group.x.toInt()];
-                      return BarTooltipItem(
-                        '${item.month}\n${formatRpFull(item.revenue)}',
-                        _text(size: 11, weight: FontWeight.w800),
-                      );
-                    },
-                  ),
-                ),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  getDrawingHorizontalLine: (_) => FlLine(
-                    color: _orange.withValues(alpha: 0.12),
-                    strokeWidth: 1,
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 26,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index < 0 || index >= monthlyData.length) {
-                          return const SizedBox.shrink();
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            monthlyData[index].month,
-                            style: _text(size: 11, color: _brown400),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                      interval: 10000000,
-                      getTitlesWidget: (value, meta) => Text(
-                        '${(value / 1000000).toStringAsFixed(0)}jt',
-                        style: _text(size: 10, color: _brown400),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final availableWidth = constraints.maxWidth - 40;
+                final count = chartData.isEmpty ? 12 : chartData.length;
+                final barW = ((availableWidth / count) * 0.55).clamp(6.0, 22.0);
+                final showEvery = availableWidth < 300 ? 3 : availableWidth < 450 ? 2 : 1;
+
+                return BarChart(
+                  BarChartData(
+                    maxY: maxY,
+                    alignment: BarChartAlignment.spaceAround,
+                    barTouchData: BarTouchData(
+                      enabled: true,
+                      touchTooltipData: BarTouchTooltipData(
+                        tooltipBgColor: Colors.white,
+                        tooltipRoundedRadius: 12,
+                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                          if (group.x.toInt() >= chartData.length) return null;
+                          final item = chartData[group.x.toInt()];
+                          return BarTooltipItem(
+                            '${item.month}\n${formatRpFull(item.revenue)}',
+                            _text(size: 11, weight: FontWeight.w800),
+                          );
+                        },
                       ),
                     ),
-                  ),
-                ),
-                barGroups: monthlyData.asMap().entries.map((entry) {
-                  final isCurrent = entry.key == monthlyData.length - 1;
-                  return BarChartGroupData(
-                    x: entry.key,
-                    barRods: [
-                      BarChartRodData(
-                        toY: entry.value.revenue,
-                        width: 36,
-                        color: isCurrent
-                            ? _orangeDark
-                            : const Color(0xFFFFD4A8),
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(8),
-                          topRight: Radius.circular(8),
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      getDrawingHorizontalLine: (_) => FlLine(
+                        color: _orange.withValues(alpha: 0.12),
+                        strokeWidth: 1,
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    titlesData: FlTitlesData(
+                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 24,
+                          getTitlesWidget: (value, meta) {
+                            final index = value.toInt();
+                            if (index < 0 || index >= chartData.length) return const SizedBox.shrink();
+                            if (showEvery > 1 && index % showEvery != 0) return const SizedBox.shrink();
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(chartData[index].month, style: _text(size: 9, color: _brown400)),
+                            );
+                          },
                         ),
                       ),
-                    ],
-                  );
-                }).toList(),
-              ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 36,
+                          interval: interval,
+                          getTitlesWidget: (value, meta) => Text(
+                            '${(value / 1000000).toStringAsFixed(0)}jt',
+                            style: _text(size: 9, color: _brown400),
+                          ),
+                        ),
+                      ),
+                    ),
+                    barGroups: chartData.asMap().entries.map((entry) {
+                      final isCurrent = entry.key == chartData.length - 1;
+                      final toY = entry.value.revenue <= 0 ? 0.0 : entry.value.revenue;
+                      return BarChartGroupData(
+                        x: entry.key,
+                        barRods: [
+                          BarChartRodData(
+                            toY: toY,
+                            width: barW,
+                            color: isCurrent
+                                ? _orangeDark
+                                : entry.value.revenue > 0
+                                    ? const Color(0xFFFFD4A8)
+                                    : const Color(0xFFEEE8E0),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(6),
+                              topRight: Radius.circular(6),
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -1203,68 +1581,29 @@ class DashboardTab extends StatelessWidget {
     );
   }
 
-  Widget _rangeButton(String label, {bool selected = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: selected ? _orange : const Color(0xFFFFF0E0),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: _text(
-          size: 11,
-          weight: FontWeight.w900,
-          color: selected ? Colors.white : _brown400,
-        ),
-      ),
-    );
-  }
-
-  Widget _gradientButton({
-    required String label,
+  Widget _rangeButton(
+    String label, {
+    bool selected = false,
     required VoidCallback onPressed,
-    IconData? icon,
-    bool dense = false,
   }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         child: Ink(
-          padding: EdgeInsets.symmetric(
-            horizontal: dense ? 12 : 16,
-            vertical: dense ? 9 : 11,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [_orange, _orangeDark]),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFFF9650).withValues(alpha: 0.3),
-                blurRadius: 14,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            color: selected ? _orange : const Color(0xFFFFF0E0),
+            borderRadius: BorderRadius.circular(8),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 16, color: Colors.white),
-                const SizedBox(width: 6),
-              ],
-              Text(
-                label,
-                style: _text(
-                  size: dense ? 12 : 13,
-                  weight: FontWeight.w900,
-                  color: Colors.white,
-                ),
-              ),
-            ],
+          child: Text(
+            label,
+            style: _text(
+              size: 11,
+              weight: FontWeight.w900,
+              color: selected ? Colors.white : _brown400,
+            ),
           ),
         ),
       ),

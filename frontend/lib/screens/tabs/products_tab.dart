@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../product_image_picker.dart';
 import '../../product_service.dart';
 import '../../utils/currency_formatter.dart';
+import '../../utils/error_message.dart';
 
 class ProductsTab extends StatefulWidget {
   final ProductService productService;
@@ -35,6 +38,7 @@ class _ProductsTabState extends State<ProductsTab> {
   );
 
   final _searchCtrl = TextEditingController();
+  Timer? _searchDebounce;
   List<dynamic> _products = [];
   List<dynamic> _categoriesList = [];
   bool _loading = false;
@@ -51,12 +55,17 @@ class _ProductsTabState extends State<ProductsTab> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchCtrl.dispose();
     super.dispose();
   }
 
   void _onSearchChanged() {
-    _fetchProducts();
+    if (mounted) {
+      setState(() {});
+    }
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), _fetchProducts);
   }
 
   Future<void> _fetchCategories() async {
@@ -99,7 +108,7 @@ class _ProductsTabState extends State<ProductsTab> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading products: ${e.toString()}'),
+            content: Text(userFriendlyError(e, fallback: 'Gagal memuat produk')),
             backgroundColor: Colors.red.shade700,
           ),
         );
@@ -166,7 +175,11 @@ class _ProductsTabState extends State<ProductsTab> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menghapus produk: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              userFriendlyError(e, fallback: 'Gagal menghapus produk'),
+            ),
+          ),
         );
       }
     }
@@ -206,6 +219,37 @@ class _ProductsTabState extends State<ProductsTab> {
     bool confirmBelowCost = false;
     ProductImageSelection? selectedImage;
 
+    InputDecoration modalInputDecoration(
+      String label, {
+      String? prefixText,
+      String? hintText,
+    }) {
+      return InputDecoration(
+        labelText: label,
+        hintText: hintText,
+        prefixText: prefixText,
+        isDense: true,
+        filled: true,
+        fillColor: const Color(0xFFFFF9F2),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.brown.shade100),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.brown.shade100),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFFFB570), width: 1.4),
+        ),
+      );
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -218,9 +262,9 @@ class _ProductsTabState extends State<ProductsTab> {
           builder: (context, setModalState) {
             return Padding(
               padding: EdgeInsets.only(
-                top: 24,
-                left: 24,
-                right: 24,
+                top: 22,
+                left: 20,
+                right: 20,
                 bottom: MediaQuery.of(context).viewInsets.bottom + 24,
               ),
               child: SingleChildScrollView(
@@ -231,13 +275,17 @@ class _ProductsTabState extends State<ProductsTab> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          isEdit
-                              ? 'Ubah Informasi Produk'
-                              : 'Tambah Produk Baru',
-                          style: _plusJakarta(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                        Expanded(
+                          child: Text(
+                            isEdit
+                                ? 'Ubah Informasi Produk'
+                                : 'Tambah Produk Baru',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: _plusJakarta(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         IconButton(
@@ -252,74 +300,86 @@ class _ProductsTabState extends State<ProductsTab> {
                     TextField(
                       controller: nameCtrl,
                       style: _plusJakarta(fontSize: 14),
-                      decoration: const InputDecoration(
-                        labelText: 'Nama Produk *',
+                      decoration: modalInputDecoration('Nama Produk *'),
+                    ),
+                    const SizedBox(height: 12),
+                    if (isEdit) ...[
+                      TextField(
+                        controller: skuCtrl,
+                        style: _plusJakarta(fontSize: 14),
+                        decoration: modalInputDecoration('SKU Produk *'),
+                      ),
+                      const SizedBox(height: 12),
+                    ] else ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7ED),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFFD4A8)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.auto_awesome,
+                              size: 18,
+                              color: Color(0xFFFF9A4D),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'SKU akan dibuat otomatis dari kategori dan nama produk.',
+                                style: _plusJakarta(
+                                  fontSize: 12,
+                                  color: const Color(0xFF6B4F3E),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedCategoryId,
+                      isExpanded: true,
+                      style: _plusJakarta(fontSize: 14),
+                      decoration: modalInputDecoration('Kategori *'),
+                      items: _categoriesList.map((cat) {
+                        return DropdownMenuItem<String>(
+                          value: cat['id'].toString(),
+                          child: Text(
+                            cat['name'],
+                            overflow: TextOverflow.ellipsis,
+                            style: _plusJakarta(fontSize: 13),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (v) =>
+                          setModalState(() => selectedCategoryId = v),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: buyPriceCtrl,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [RupiahInputFormatter()],
+                      style: _plusJakarta(fontSize: 14),
+                      decoration: modalInputDecoration(
+                        'Harga Beli *',
+                        prefixText: 'Rp ',
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: skuCtrl,
-                            style: _plusJakarta(fontSize: 14),
-                            decoration: const InputDecoration(
-                              labelText: 'SKU Produk *',
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            initialValue: selectedCategoryId,
-                            style: _plusJakarta(fontSize: 14),
-                            decoration: const InputDecoration(
-                              labelText: 'Kategori *',
-                            ),
-                            items: _categoriesList.map((cat) {
-                              return DropdownMenuItem<String>(
-                                value: cat['id'].toString(),
-                                child: Text(
-                                  cat['name'],
-                                  style: _plusJakarta(fontSize: 13),
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (v) =>
-                                setModalState(() => selectedCategoryId = v),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: buyPriceCtrl,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [RupiahInputFormatter()],
-                            style: _plusJakarta(fontSize: 14),
-                            decoration: const InputDecoration(
-                              labelText: 'Harga Beli (Rp) *',
-                              prefixText: 'Rp ',
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            controller: sellPriceCtrl,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [RupiahInputFormatter()],
-                            style: _plusJakarta(fontSize: 14),
-                            decoration: const InputDecoration(
-                              labelText: 'Harga Jual (Rp) *',
-                              prefixText: 'Rp ',
-                            ),
-                          ),
-                        ),
-                      ],
+                    TextField(
+                      controller: sellPriceCtrl,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [RupiahInputFormatter()],
+                      style: _plusJakarta(fontSize: 14),
+                      decoration: modalInputDecoration(
+                        'Harga Jual *',
+                        prefixText: 'Rp ',
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -329,9 +389,7 @@ class _ProductsTabState extends State<ProductsTab> {
                             controller: offlineQtyCtrl,
                             keyboardType: TextInputType.number,
                             style: _plusJakarta(fontSize: 14),
-                            decoration: const InputDecoration(
-                              labelText: 'Stok Offline *',
-                            ),
+                            decoration: modalInputDecoration('Stok Offline *'),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -340,31 +398,25 @@ class _ProductsTabState extends State<ProductsTab> {
                             controller: onlineQtyCtrl,
                             keyboardType: TextInputType.number,
                             style: _plusJakarta(fontSize: 14),
-                            decoration: const InputDecoration(
-                              labelText: 'Stok Online *',
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            controller: minThresholdCtrl,
-                            keyboardType: TextInputType.number,
-                            style: _plusJakarta(fontSize: 14),
-                            decoration: const InputDecoration(
-                              labelText: 'Batas Minimum *',
-                            ),
+                            decoration: modalInputDecoration('Stok Online *'),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
                     TextField(
+                      controller: minThresholdCtrl,
+                      keyboardType: TextInputType.number,
+                      style: _plusJakarta(fontSize: 14),
+                      decoration: modalInputDecoration('Batas Minimum *'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
                       controller: imgUrlCtrl,
                       style: _plusJakarta(fontSize: 14),
-                      decoration: const InputDecoration(
-                        labelText:
-                            'URL Foto Produk (Opsional jika tidak upload file)',
+                      decoration: modalInputDecoration(
+                        'URL Foto Produk',
+                        hintText: 'Opsional jika tidak upload file',
                       ),
                       onChanged: (_) => setModalState(() {}),
                     ),
@@ -379,6 +431,14 @@ class _ProductsTabState extends State<ProductsTab> {
                                   ? 'Pilih Foto JPEG/PNG'
                                   : selectedImage!.name,
                               overflow: TextOverflow.ellipsis,
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF8A5A2B),
+                              minimumSize: const Size.fromHeight(48),
+                              side: BorderSide(color: Colors.brown.shade200),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
                             ),
                             onPressed: () async {
                               try {
@@ -424,7 +484,10 @@ class _ProductsTabState extends State<ProductsTab> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        'Gagal memilih foto: ${e.toString()}',
+                                        userFriendlyError(
+                                          e,
+                                          fallback: 'Gagal memilih foto',
+                                        ),
                                       ),
                                     ),
                                   );
@@ -433,15 +496,14 @@ class _ProductsTabState extends State<ProductsTab> {
                             },
                           ),
                         ),
-                        if (selectedImage != null) ...[
-                          const SizedBox(width: 8),
+                        const SizedBox(width: 12),
+                        if (selectedImage != null)
                           IconButton(
                             tooltip: 'Hapus foto terpilih',
                             icon: const Icon(Icons.close),
                             onPressed: () =>
                                 setModalState(() => selectedImage = null),
                           ),
-                        ],
                       ],
                     ),
                     if (selectedImage != null ||
@@ -458,12 +520,12 @@ class _ProductsTabState extends State<ProductsTab> {
                                   Uint8List.fromList(selectedImage!.bytes),
                                   fit: BoxFit.cover,
                                 )
-                              : Image.network(
-                                  widget.productService.resolveImageUrl(
+                              : CachedNetworkImage(
+                                  imageUrl: widget.productService.resolveImageUrl(
                                     imgUrlCtrl.text.trim(),
                                   ),
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => Center(
+                                  errorWidget: (context, url, error) => Center(
                                     child: Text(
                                       'Preview foto tidak dapat dimuat',
                                       style: _plusJakarta(
@@ -479,11 +541,9 @@ class _ProductsTabState extends State<ProductsTab> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: descCtrl,
-                      maxLines: 2,
+                      maxLines: 3,
                       style: _plusJakarta(fontSize: 14),
-                      decoration: const InputDecoration(
-                        labelText: 'Deskripsi Produk',
-                      ),
+                      decoration: modalInputDecoration('Deskripsi Produk'),
                     ),
                     const SizedBox(height: 24),
 
@@ -505,7 +565,7 @@ class _ProductsTabState extends State<ProductsTab> {
                           final imgUrl = imgUrlCtrl.text.trim();
 
                           if (name.isEmpty ||
-                              sku.isEmpty ||
+                              (isEdit && sku.isEmpty) ||
                               selectedCategoryId == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -576,7 +636,6 @@ class _ProductsTabState extends State<ProductsTab> {
                             } else {
                               res = await widget.productService.createProduct(
                                 name: name,
-                                sku: sku,
                                 categoryId: selectedCategoryId!,
                                 buyPrice: buyVal,
                                 sellPrice: sellVal,
@@ -612,7 +671,10 @@ class _ProductsTabState extends State<ProductsTab> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    'Gagal menyimpan: ${e.toString()}',
+                                    userFriendlyError(
+                                      e,
+                                      fallback: 'Gagal menyimpan produk',
+                                    ),
                                   ),
                                   backgroundColor: Colors.red.shade700,
                                 ),
@@ -623,8 +685,9 @@ class _ProductsTabState extends State<ProductsTab> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFFFB570),
                           foregroundColor: Colors.white,
+                          elevation: 2,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                         ),
                         child: Text(
@@ -732,13 +795,15 @@ class _ProductsTabState extends State<ProductsTab> {
           else
             Row(
               children: [
-                Expanded(child: _buildSearchField()),
+                Expanded(flex: 3, child: _buildSearchField()),
                 const SizedBox(width: 12),
-                Expanded(flex: 3, child: _buildAnimalDropdown()),
+                Expanded(flex: 2, child: _buildAnimalDropdown()),
                 const SizedBox(width: 12),
-                Expanded(child: _buildSubCategoryDropdown()),
+                Expanded(flex: 2, child: _buildSubCategoryDropdown()),
               ],
             ),
+          const SizedBox(height: 10),
+          _buildSubCategoryChips(),
           const SizedBox(height: 16),
 
           // Table / List of products
@@ -876,6 +941,58 @@ class _ProductsTabState extends State<ProductsTab> {
     );
   }
 
+  Widget _buildSubCategoryChips() {
+    final subCategories = _availableSubCategories();
+    if (subCategories.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return SizedBox(
+      height: 42,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: subCategories.length + 1,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final String? value = index == 0 ? null : subCategories[index - 1];
+          final selected = _selectedSubCategory == value;
+          final label = value ?? 'Semua Sub-kategori';
+
+          return ChoiceChip(
+            showCheckmark: false,
+            selected: selected,
+            selectedColor: const Color(0xFFFFB570),
+            backgroundColor: const Color(0xFFFFFDFB),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 10),
+            label: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.visible,
+              softWrap: false,
+              style: _plusJakarta(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+                color: selected ? Colors.white : const Color(0xFF3D2314),
+              ),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+              side: BorderSide(
+                color: selected
+                    ? const Color(0xFFFFB570)
+                    : const Color(0x33FFB570),
+              ),
+            ),
+            onSelected: (_) {
+              setState(() => _selectedSubCategory = value);
+              _fetchProducts();
+            },
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildProductsList() {
     if (_loading && _products.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -943,10 +1060,10 @@ class _ProductsTabState extends State<ProductsTab> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: imageUrl != null
-                      ? Image.network(
-                          imageUrl,
+                      ? CachedNetworkImage(
+                          imageUrl: imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) =>
+                          errorWidget: (context, url, error) =>
                               const Icon(Icons.pets, color: Color(0xFFFFB570)),
                         )
                       : const Icon(Icons.pets, color: Color(0xFFFFB570)),
@@ -1065,52 +1182,56 @@ class _ProductsTabState extends State<ProductsTab> {
                 // Edit/Delete buttons (For owner and admin only)
                 if (isOwnerOrAdmin) ...[
                   SizedBox(width: isCompact ? 4 : 12),
-                  PopupMenuButton<String>(
-                    padding: EdgeInsets.zero,
-                    iconSize: 22,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 34,
-                      height: 40,
+                  SizedBox(
+                    width: 34,
+                    height: 40,
+                    child: PopupMenuButton<String>(
+                      padding: EdgeInsets.zero,
+                      iconSize: 22,
+                      constraints: const BoxConstraints(minWidth: 128),
+                      onSelected: (action) {
+                        if (action == 'edit') {
+                          _showProductForm(product: prod);
+                        } else if (action == 'delete') {
+                          _handleDeleteProduct(id, name);
+                        }
+                      },
+                      itemBuilder: (context) {
+                        return [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.edit,
+                                  size: 16,
+                                  color: Colors.blue,
+                                ),
+                                const SizedBox(width: 8),
+                                Text('Ubah', style: _plusJakarta(fontSize: 13)),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.delete,
+                                  size: 16,
+                                  color: Colors.red,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Hapus',
+                                  style: _plusJakarta(fontSize: 13),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ];
+                      },
                     ),
-                    onSelected: (action) {
-                      if (action == 'edit') {
-                        _showProductForm(product: prod);
-                      } else if (action == 'delete') {
-                        _handleDeleteProduct(id, name);
-                      }
-                    },
-                    itemBuilder: (context) {
-                      return [
-                        PopupMenuItem(
-                          value: 'edit',
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.edit,
-                                size: 16,
-                                color: Colors.blue,
-                              ),
-                              const SizedBox(width: 8),
-                              Text('Ubah', style: _plusJakarta(fontSize: 13)),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.delete,
-                                size: 16,
-                                color: Colors.red,
-                              ),
-                              const SizedBox(width: 8),
-                              Text('Hapus', style: _plusJakarta(fontSize: 13)),
-                            ],
-                          ),
-                        ),
-                      ];
-                    },
                   ),
                 ],
               ],
