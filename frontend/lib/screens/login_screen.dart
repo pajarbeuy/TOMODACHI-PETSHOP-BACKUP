@@ -14,10 +14,6 @@ const _mobileApiBaseUrl = String.fromEnvironment(
   'MOBILE_API_BASE_URL',
   defaultValue: 'https://tomodachi-petshop.xyz',
 );
-const _mobileApiBaseUrl = String.fromEnvironment(
-  'MOBILE_API_BASE_URL',
-  defaultValue: 'https://crusher-vaguely-tyke.ngrok-free.dev',
-);
 
 // ── Models ──────────────────────────────────────────────────────────────────
 
@@ -152,8 +148,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
-  final _emailCtrl = TextEditingController(text: 'admin@tomodachi.com');
-  final _passCtrl = TextEditingController(text: 'password123');
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
   final _captchaCtrl = TextEditingController();
   bool _showPassword = false;
   bool _rememberMe = false;

@@ -101,9 +101,11 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
   }
 
   List<AccountModel> _filter(List<AccountModel> source) {
+    // Akun dengan role owner tidak ditampilkan di halaman manajemen
+    final nonOwner = source.where((a) => a.roleName.toLowerCase() != 'owner').toList();
     final q = _searchCtrl.text.trim().toLowerCase();
-    if (q.isEmpty) return source;
-    return source
+    if (q.isEmpty) return nonOwner;
+    return nonOwner
         .where(
           (a) =>
               a.name.toLowerCase().contains(q) ||
@@ -814,41 +816,42 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
                       ),
                     ),
                   ),
-                  PopupMenuButton(
-                    onSelected: (value) async {
-                      if (value == 'edit') {
-                        _openForm(account: account);
-                      } else if (value == 'delete') {
-                        await _delete(account);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.edit, size: 18, color: _orange),
-                            const SizedBox(width: 8),
-                            const Text('Edit'),
-                          ],
+                  if (account.roleName.toLowerCase() != 'owner')
+                    PopupMenuButton(
+                      onSelected: (value) async {
+                        if (value == 'edit') {
+                          _openForm(account: account);
+                        } else if (value == 'delete') {
+                          await _delete(account);
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.edit, size: 18, color: _orange),
+                              const SizedBox(width: 8),
+                              const Text('Edit'),
+                            ],
+                          ),
                         ),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, size: 18, color: _error),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Hapus',
-                              style: _iosStyle(color: _error),
-                            ),
-                          ],
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete, size: 18, color: _error),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Hapus',
+                                style: _iosStyle(color: _error),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                    icon: const Icon(Icons.more_vert, color: _brown400),
-                  ),
+                      ],
+                      icon: const Icon(Icons.more_vert, color: _brown400),
+                    ),
                 ],
               ),
             ],
