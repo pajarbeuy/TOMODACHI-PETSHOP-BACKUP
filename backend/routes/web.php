@@ -17,3 +17,22 @@ Route::get('/status', function () {
         ],
     ]);
 });
+
+// SEO Routes for Web Catalog & Blog
+Route::get('/products', function () {
+    return view('products.index');
+})->name('products.index');
+
+Route::get('/products/{slug}', function ($slug) {
+    return view('products.show', compact('slug'));
+})->name('products.show');
+
+Route::get('/blog', function () {
+    return view('blog.index');
+})->name('blog.index');
+
+Route::get('/blog/{slug}', function ($slug) {
+    return view('blog.show', compact('slug'));
+})->name('blog.show');
+
+Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');

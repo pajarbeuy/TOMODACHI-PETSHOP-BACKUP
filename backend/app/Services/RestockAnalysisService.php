@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\DB;
  * Menerapkan formula restock dari CODEX.md:
  *   avg_daily_sales      = total_qty_sold_last_30_days / 30
  *   predicted_need_7days = avg_daily_sales * 7
- *   status               = current_stock < predicted_need_7days ? "RESTOCK" : "SAFE"
+ *   status               = offline_stock <= min_threshold
+ *                          OR offline_stock < predicted_need_7days
+ *                          ? "RESTOCK" : "SAFE"
  *
  * Laravel adalah yang menghitung — LLM hanya menjelaskan hasilnya.
  */
@@ -26,6 +28,9 @@ class RestockAnalysisService
      *   product_name: string,
      *   sku: string,
      *   current_stock: int,
+     *   offline_qty: int,
+     *   online_qty: int,
+     *   total_stock: int,
      *   avg_daily_sales: float,
      *   predicted_need_7days: float,
      *   status: 'RESTOCK'|'SAFE'
@@ -56,34 +61,45 @@ class RestockAnalysisService
         $results = [];
 
         foreach ($products as $product) {
-            $currentStock = ($product->stock?->offline_qty ?? 0)
-                          + ($product->stock?->online_qty  ?? 0);
+            $offlineStock = (int) ($product->stock?->offline_qty ?? 0);
+            $onlineStock  = (int) ($product->stock?->online_qty ?? 0);
+            $totalStock   = $offlineStock + $onlineStock;
+            $minThreshold = (int) ($product->stock?->min_threshold ?? 0);
 
             $totalSold30Days = $salesData[$product->id] ?? 0;
 
             $avgDailySales      = $totalSold30Days / 30;
             $predictedNeed7Days = $avgDailySales * 7;
 
-            $status = $currentStock < $predictedNeed7Days ? 'RESTOCK' : 'SAFE';
+            $status = (
+                $offlineStock <= $minThreshold ||
+                $offlineStock < $predictedNeed7Days
+            ) ? 'RESTOCK' : 'SAFE';
 
             $results[] = [
                 'product_id'          => $product->id,
                 'product_name'        => $product->name,
                 'sku'                 => $product->sku,
                 'category'            => $product->category?->name ?? 'N/A',
-                'current_stock'       => $currentStock,
+                'current_stock'       => $offlineStock,
+                'offline_qty'         => $offlineStock,
+                'online_qty'          => $onlineStock,
+                'total_stock'         => $totalStock,
                 'total_sold_30_days'  => (int) $totalSold30Days,
                 'avg_daily_sales'     => round($avgDailySales, 2),
                 'predicted_need_7days'=> round($predictedNeed7Days, 2),
                 'status'              => $status,
-                'min_threshold'       => $product->stock?->min_threshold ?? 0,
+                'min_threshold'       => $minThreshold,
             ];
         }
 
-        // Urutkan: RESTOCK dulu, lalu berdasarkan nama
+        // Urutkan: RESTOCK dulu, lalu stok offline terendah.
         usort($results, function ($a, $b) {
             if ($a['status'] !== $b['status']) {
                 return $a['status'] === 'RESTOCK' ? -1 : 1;
+            }
+            if ($a['current_stock'] !== $b['current_stock']) {
+                return $a['current_stock'] <=> $b['current_stock'];
             }
             return strcmp($a['product_name'], $b['product_name']);
         });

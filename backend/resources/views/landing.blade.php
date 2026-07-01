@@ -3,8 +3,61 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Tomodachi Pet Shop POS — Sistem manajemen toko hewan peliharaan modern berbasis Laravel & Flutter dengan AI Assistant.">
-<title>Tomodachi Pet Shop POS</title>
+    <meta name="description" content="Tomodachi Pet Shop POS — Sistem manajemen toko hewan peliharaan modern berbasis Laravel & Flutter dengan AI Assistant.">
+    <title>Tomodachi Pet Shop POS - Sistem Manajemen Cerdas</title>
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ url('/') }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url('/') }}">
+    <meta property="og:title" content="Tomodachi Pet Shop POS - Sistem Manajemen Cerdas">
+    <meta property="og:description" content="Sistem manajemen toko hewan peliharaan modern berbasis Laravel & Flutter. Mengelola produk, stok, transaksi, dan analytics secara terpusat dengan dukungan AI.">
+    <meta property="og:image" content="{{ asset('images/cat.png') }}">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ url('/') }}">
+    <meta property="twitter:title" content="Tomodachi Pet Shop POS">
+    <meta property="twitter:description" content="Sistem manajemen toko hewan peliharaan modern berbasis Laravel & Flutter.">
+    <meta property="twitter:image" content="{{ asset('images/cat.png') }}">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "{{ url('/') }}#organization",
+          "name": "Tomodachi Pet Shop",
+          "url": "{{ url('/') }}",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "{{ asset('images/logo.png') }}"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+62-123-4567-8910",
+            "contactType": "customer service",
+            "areaServed": "ID",
+            "availableLanguage": "Indonesian"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "{{ url('/') }}#website",
+          "url": "{{ url('/') }}",
+          "name": "Tomodachi Pet Shop POS",
+          "description": "Sistem manajemen toko hewan peliharaan modern.",
+          "publisher": {
+            "@id": "{{ url('/') }}#organization"
+          }
+        }
+      ]
+    }
+    </script>
 <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 

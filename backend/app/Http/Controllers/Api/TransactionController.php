@@ -67,6 +67,7 @@ class TransactionController extends Controller
     public function store(Request $request)
     {
         try {
+
             $validated = $request->validate([
                 'channel' => 'required|in:offline,online',
                 'payment_method' => 'required|in:cash,qris,transfer',
@@ -76,7 +77,7 @@ class TransactionController extends Controller
                 'items.*.quantity' => 'required|integer|min:1',
                 'items.*.unit_price' => 'required|numeric|min:0',
                 'enabled_payments' => 'nullable|array',
-                'enabled_payments.*' => 'string|in:qris,bank_transfer,bca_va,bni_va,bri_va,permata_va,gopay,shopeepay',
+                'enabled_payments.*' => 'string|in:qris,bank_transfer,bca_va,bni_va,bri_va,permata_va,other_va,gopay,shopeepay,echannel,credit_card',
             ]);
 
             $channel = $validated['channel'];
@@ -214,8 +215,15 @@ class TransactionController extends Controller
                         ],
                     ];
 
-                    if ($validated['payment_method'] === 'qris') {
-                        $snapParams['enabled_payments'] = $validated['enabled_payments'] ?? ['qris'];
+                    // Set enabled_payments based on payment method
+                    if (!empty($validated['enabled_payments'])) {
+                        // Use explicitly provided enabled_payments if given
+                        $snapParams['enabled_payments'] = $validated['enabled_payments'];
+                    } elseif ($validated['payment_method'] === 'qris') {
+                        $snapParams['enabled_payments'] = ['qris'];
+                    } elseif ($validated['payment_method'] === 'transfer') {
+                        // Default bank transfer channels
+                        $snapParams['enabled_payments'] = ['bca_va', 'bni_va', 'bri_va', 'permata_va', 'other_va'];
                     }
 
                     $snapResponse = Snap::createTransaction($snapParams);

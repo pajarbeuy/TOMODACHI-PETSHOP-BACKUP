@@ -20,7 +20,11 @@ class TransactionService {
     };
 
     if (paymentMethod == 'qris') {
-      body['enabled_payments'] = ['qris'];
+      // QRIS di Midtrans Snap tersedia via gopay & shopeepay (keduanya support QRIS)
+      body['enabled_payments'] = ['gopay', 'shopeepay', 'qris'];
+    } else if (paymentMethod == 'transfer') {
+      // bank_transfer adalah tipe umbrella untuk semua Virtual Account di Midtrans Snap
+      body['enabled_payments'] = ['bank_transfer', 'bca_va', 'bni_va', 'bri_va', 'permata_va', 'other_va'];
     }
 
     return await _client.post('/api/transactions', body: body);
