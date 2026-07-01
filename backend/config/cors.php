@@ -32,6 +32,9 @@ return [
     ],
 
     'allowed_origins_patterns' => [
+        // Flutter web memakai port acak saat development.
+        '/^http:\/\/localhost(:[0-9]+)?$/',
+        '/^http:\/\/127\.0\.0\.1(:[0-9]+)?$/',
         // Izinkan ngrok tunnel saat development/demo
         '/^https:\/\/[a-z0-9\-]+\.ngrok(-free)?\.app$/',
         '/^https:\/\/[a-z0-9\-]+\.ngrok-free\.dev$/',

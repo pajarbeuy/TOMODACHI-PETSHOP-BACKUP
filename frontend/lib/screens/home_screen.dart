@@ -92,36 +92,6 @@ class _HomeScreenState extends State<HomeScreen> {
             widget: DashboardOwner(dashboardService: _dashboardService),
           ),
           _NavigationItem(
-            label: 'POS Kasir',
-            icon: Icons.point_of_sale,
-            widget: PosTab(
-              productService: _productService,
-              transactionService: _transactionService,
-            ),
-          ),
-          _NavigationItem(
-            label: 'Manajemen Produk',
-            icon: Icons.inventory,
-            widget: ProductsTab(
-              productService: _productService,
-              userRole: role,
-            ),
-          ),
-          _NavigationItem(
-            label: 'Kategori Produk',
-            icon: Icons.category_outlined,
-            widget: CategoryManagementScreen(
-              categoryService: _categoryService,
-            ),
-          ),
-          _NavigationItem(
-            label: 'Riwayat Transaksi',
-            icon: Icons.history,
-            widget: TransactionsHistoryTab(
-              transactionService: _transactionService,
-            ),
-          ),
-          _NavigationItem(
             label: 'Manajemen Akun',
             icon: Icons.manage_accounts,
             widget: OwnerAccountsScreen(authService: widget.authService),
@@ -150,6 +120,11 @@ class _HomeScreenState extends State<HomeScreen> {
               categoryService: _categoryService,
             ),
           ),
+        ];
+
+      case 'kasir':
+      default:
+        return [
           _NavigationItem(
             label: 'POS Kasir',
             icon: Icons.point_of_sale,
@@ -166,36 +141,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ];
-
-      case 'kasir':
-      default:
-        return [
-          _NavigationItem(
-            label: 'POS Kasir',
-            icon: Icons.point_of_sale,
-            widget: PosTab(
-              productService: _productService,
-              transactionService: _transactionService,
-            ),
-          ),
-          _NavigationItem(
-            label: 'Stok Produk',
-            icon: Icons.inventory_2,
-            widget: ProductsTab(
-              productService: _productService,
-              userRole: role,
-            ), // Read-only for Kasir
-          ),
-          _NavigationItem(
-            label: 'Riwayat Kasir',
-            icon: Icons.history,
-            widget: TransactionsHistoryTab(
-              transactionService: _transactionService,
-            ),
-          ),
-        ];
     }
   }
+
 
   void _handleLogout() async {
     setState(() => _loadingLogout = true);

@@ -207,10 +207,13 @@ class AiService
         $restockLines = '';
         foreach ($ctx['restockAnalysis'] as $p) {
             $restockLines .= sprintf(
-                "  - %s (SKU: %s): Stok=%d, Avg Jual/Hari=%.1f, Perlu 7hr=%.1f → %s\n",
+                "  - %s (SKU: %s): Stok Offline=%d, Stok Online=%d, Total=%d, Min=%d, Avg Jual/Hari=%.1f, Perlu 7hr=%.1f -> %s\n",
                 $p['product_name'],
                 $p['sku'],
                 $p['current_stock'],
+                $p['online_qty'] ?? 0,
+                $p['total_stock'] ?? $p['current_stock'],
+                $p['min_threshold'],
                 $p['avg_daily_sales'],
                 $p['predicted_need_7days'],
                 $p['status']
@@ -247,7 +250,8 @@ DATA INVENTARIS & PENJUALAN SAAT INI ({$monthName} {$ctx['currentYear']}):
 **Top 5 Produk Terlaris Bulan Ini:**
 {$topLines}
 
-**Status Stok & Rekomendasi Restock (Formula: rata-rata jual/hari × 7 vs stok saat ini):**
+**Status Stok & Rekomendasi Restock (berdasarkan stok offline realtime):**
+- RESTOCK jika stok offline <= batas minimum atau stok offline < prediksi kebutuhan 7 hari.
 - Produk perlu restock: {$ctx['needRestock']} produk
 - Produk aman: {$ctx['safe']} produk
 

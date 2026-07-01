@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -117,150 +117,7 @@ class _DashboardTabState extends State<DashboardTab> {
   static const _dangerBg = Color(0xFFFFD4D4);
   static const _pageBg = Color(0xFFFDFBF7);
 
-  static const List<SalesData> salesData = [
-    SalesData(day: 'Mon', sales: 1250000, transactions: 18),
-    SalesData(day: 'Tue', sales: 980000, transactions: 14),
-    SalesData(day: 'Wed', sales: 1450000, transactions: 22),
-    SalesData(day: 'Thu', sales: 1100000, transactions: 16),
-    SalesData(day: 'Fri', sales: 1680000, transactions: 25),
-    SalesData(day: 'Sat', sales: 2100000, transactions: 32),
-    SalesData(day: 'Sun', sales: 1890000, transactions: 28),
-  ];
 
-  static const List<MonthlyData> monthlyData = [
-    MonthlyData(month: 'Jan', revenue: 32000000),
-    MonthlyData(month: 'Feb', revenue: 28500000),
-    MonthlyData(month: 'Mar', revenue: 35200000),
-    MonthlyData(month: 'Apr', revenue: 31800000),
-    MonthlyData(month: 'May', revenue: 38500000),
-    MonthlyData(month: 'Jun', revenue: 42000000),
-  ];
-
-  static const List<ProductRank> bestSellers = [
-    ProductRank(
-      id: 1,
-      name: 'Royal Canin Dog Food 2kg',
-      category: 'Food',
-      sales: 124,
-      revenue: 18045000,
-      icon: Icons.pets,
-      trend: 12,
-    ),
-    ProductRank(
-      id: 2,
-      name: 'Whiskas Cat Food 1.2kg',
-      category: 'Food',
-      sales: 98,
-      revenue: 6370000,
-      icon: Icons.pets,
-      trend: 8,
-    ),
-    ProductRank(
-      id: 3,
-      name: 'Kong Classic Dog Toy',
-      category: 'Toys',
-      sales: 87,
-      revenue: 7743000,
-      icon: Icons.sports_baseball,
-      trend: -3,
-    ),
-    ProductRank(
-      id: 4,
-      name: 'Frontline Plus Antiparasitic',
-      category: 'Medicine',
-      sales: 65,
-      revenue: 9425000,
-      icon: Icons.medication_outlined,
-      trend: 15,
-    ),
-    ProductRank(
-      id: 5,
-      name: 'Dog Shampoo Premium',
-      category: 'Grooming',
-      sales: 54,
-      revenue: 2970000,
-      icon: Icons.spa_outlined,
-      trend: 5,
-    ),
-  ];
-
-  static const List<RecentTransaction> recentTransactions = [
-    RecentTransaction(
-      id: 'TRX-0241',
-      customer: 'Budi Santoso',
-      items: 3,
-      total: 285000,
-      method: 'Cash',
-      time: '10 min ago',
-    ),
-    RecentTransaction(
-      id: 'TRX-0240',
-      customer: 'Siti Rahayu',
-      items: 2,
-      total: 155000,
-      method: 'QRIS',
-      time: '28 min ago',
-    ),
-    RecentTransaction(
-      id: 'TRX-0239',
-      customer: 'Ahmad Fadli',
-      items: 5,
-      total: 520000,
-      method: 'Card',
-      time: '1h ago',
-    ),
-    RecentTransaction(
-      id: 'TRX-0238',
-      customer: 'Dewi Kusuma',
-      items: 1,
-      total: 89000,
-      method: 'Cash',
-      time: '2h ago',
-    ),
-    RecentTransaction(
-      id: 'TRX-0237',
-      customer: 'Rizki Pratama',
-      items: 4,
-      total: 375000,
-      method: 'Transfer',
-      time: '3h ago',
-    ),
-  ];
-
-  static const List<LowStockItem> lowStockItems = [
-    LowStockItem(
-      id: 1,
-      name: 'Cat Litter Silica Gel 5kg',
-      stock: 3,
-      min: 10,
-      icon: Icons.pets,
-      critical: true,
-    ),
-    LowStockItem(
-      id: 2,
-      name: 'Whiskas Tuna Cat Food',
-      stock: 8,
-      min: 15,
-      icon: Icons.pets,
-      critical: false,
-    ),
-    LowStockItem(
-      id: 3,
-      name: 'Aquarium Starter Kit 20L',
-      stock: 5,
-      min: 10,
-      icon: Icons.water,
-      critical: false,
-    ),
-    LowStockItem(
-      id: 4,
-      name: 'Bird Cage Medium',
-      stock: 7,
-      min: 10,
-      icon: Icons.catching_pokemon,
-      critical: false,
-    ),
-  ];
 
   final NumberFormat _currency = NumberFormat.currency(
     locale: 'id_ID',
@@ -268,7 +125,7 @@ class _DashboardTabState extends State<DashboardTab> {
     decimalDigits: 0,
   );
 
-  List<RecentTransaction> _liveRecentTransactions = recentTransactions;
+  List<RecentTransaction> _liveRecentTransactions = [];
   bool _recentTransactionsLoading = false;
   Map<String, dynamic>? _analyticsData;
   bool _analyticsLoading = false;
@@ -321,9 +178,14 @@ class _DashboardTabState extends State<DashboardTab> {
         }
         _recentTransactionsLoading = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() => _recentTransactionsLoading = false);
+      if (!silent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal memuat transaksi terbaru')),
+        );
+      }
     }
   }
 
@@ -350,9 +212,14 @@ class _DashboardTabState extends State<DashboardTab> {
         }
         _analyticsLoading = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() => _analyticsLoading = false);
+      if (!silent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal memuat data dashboard')),
+        );
+      }
     }
   }
 
@@ -464,32 +331,14 @@ class _DashboardTabState extends State<DashboardTab> {
       }).toList();
     }
 
-    // Fallback ke data dummy saat API belum siap
-    final today = DateTime.now();
-    final startOfToday = DateTime(today.year, today.month, today.day);
-    final days = _selectedSalesTrendDays;
-
-    return List.generate(days, (index) {
-      final date = startOfToday.subtract(Duration(days: days - index - 1));
-      final base = salesData[index % salesData.length];
-      final weekPulse = ((index % 7) - 3) * 0.045;
-      final rangeGrowth = days == 1 ? 0.0 : (index / (days - 1)) * 0.16;
-      final sales = base.sales * (1 + weekPulse + rangeGrowth);
-      final transactions = (base.transactions * (sales / base.sales)).round();
-
-      return _SalesTrendPoint(
-        date: date,
-        sales: sales,
-        transactions: transactions,
-      );
-    });
+    return [];
   }
 
   /// Best Sellers — dari API (top_products), fallback ke dummy saat loading
   List<ProductRank> _bestSellerItems() {
     final rows = _analyticsData?['top_products'];
     if (rows is! List || rows.isEmpty) {
-      return _analyticsData != null ? [] : bestSellers;
+      return [];
     }
     return rows.whereType<Map>().toList().asMap().entries.map((entry) {
       final row = entry.value;
@@ -509,7 +358,7 @@ class _DashboardTabState extends State<DashboardTab> {
   List<LowStockItem> _lowStockItems() {
     final rows = _analyticsData?['low_stock_alerts'];
     if (rows is! List || rows.isEmpty) {
-      return _analyticsData != null ? [] : lowStockItems;
+      return [];
     }
     return rows.whereType<Map>().map((row) {
       final stock = _intValue(row['stock'], 0);
@@ -529,7 +378,7 @@ class _DashboardTabState extends State<DashboardTab> {
   List<MonthlyData> _monthlyRevenueItems() {
     final rows = _analyticsData?['monthly_revenue'];
     if (rows is! List || rows.isEmpty) {
-      return _analyticsData != null ? [] : monthlyData;
+      return [];
     }
     return rows.whereType<Map>().map((row) {
       return MonthlyData(

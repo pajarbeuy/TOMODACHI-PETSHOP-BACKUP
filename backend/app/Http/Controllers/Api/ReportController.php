@@ -215,10 +215,13 @@ class ReportController extends Controller
     public function analytics(Request $request)
     {
         // Cache key dibuat unik berdasarkan trend_days + tanggal hari ini
+        // dan fingerprint produk/stok agar alert stok berubah setelah produk diedit.
         // agar setiap kombinasi parameter punya cache sendiri,
         // dan otomatis tidak relevan keesokan harinya.
         $trendDays = min(90, max(7, intval($request->query('trend_days', 7))));
-        $cacheKey  = 'dashboard_analytics_' . $trendDays . '_' . now()->toDateString();
+        $stockFingerprint = DB::table('stocks')->max('updated_at') ?? DB::table('stocks')->max('last_updated') ?? 'none';
+        $productFingerprint = DB::table('products')->max('updated_at') ?? 'none';
+        $cacheKey  = 'dashboard_analytics_' . $trendDays . '_' . now()->toDateString() . '_' . md5($stockFingerprint . '|' . $productFingerprint);
         $ttl       = 600; // 10 menit dalam detik
 
         $data = Cache::remember($cacheKey, $ttl, function () use ($trendDays) {
@@ -254,7 +257,7 @@ class ReportController extends Controller
                 ->sum('total'));
             $activeProducts = Product::count();
             $lowStockProducts = Product::join('stocks', 'products.id', '=', 'stocks.product_id')
-                ->whereRaw('(stocks.offline_qty + stocks.online_qty) <= stocks.min_threshold')
+                ->whereColumn('stocks.offline_qty', '<=', 'stocks.min_threshold')
                 ->count();
 
             $todayItemsQuery = TransactionItem::whereIn('transaction_id', $todaySalesQuery->pluck('id'));
@@ -306,7 +309,7 @@ class ReportController extends Controller
             // 4. Low stock alerts
             $lowStockAlerts = Product::with('stock')
                 ->join('stocks', 'products.id', '=', 'stocks.product_id')
-                ->whereRaw('(stocks.offline_qty + stocks.online_qty) <= stocks.min_threshold')
+                ->whereColumn('stocks.offline_qty', '<=', 'stocks.min_threshold')
                 ->select(
                     'products.id',
                     'products.name',
@@ -315,7 +318,7 @@ class ReportController extends Controller
                     'stocks.online_qty',
                     'stocks.min_threshold'
                 )
-                ->orderByRaw('(stocks.offline_qty + stocks.online_qty) asc')
+                ->orderBy('stocks.offline_qty')
                 ->limit(20)
                 ->get();
 
@@ -406,7 +409,8 @@ class ReportController extends Controller
                     ];
                 })->all(),
                 'low_stock_alerts' => $lowStockAlerts->map(function ($item) {
-                    $stock        = intval($item->offline_qty) + intval($item->online_qty);
+                    $stock        = intval($item->offline_qty);
+                    $onlineStock  = intval($item->online_qty);
                     $minThreshold = intval($item->min_threshold);
 
                     return [
@@ -415,7 +419,8 @@ class ReportController extends Controller
                         'sku'           => $item->sku,
                         'stock'         => $stock,
                         'offline_qty'   => intval($item->offline_qty),
-                        'online_qty'    => intval($item->online_qty),
+                        'online_qty'    => $onlineStock,
+                        'total_stock'   => $stock + $onlineStock,
                         'threshold'     => $minThreshold,
                         'min_threshold' => $minThreshold,
                         'critical'      => $stock <= max(1, intval(floor($minThreshold / 2))),
