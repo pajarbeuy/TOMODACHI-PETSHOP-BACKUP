@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import '../report_exporter.dart';
 import '../widgets/app_logo.dart';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -476,6 +477,284 @@ class _ReportsScreenState extends State<ReportsScreen> {
   _MonthlyData get _bestMonth =>
       _monthly.reduce((a, b) => b.revenue > a.revenue ? b : a);
 
+  String get _exportDateStamp {
+    final now = DateTime.now();
+    String two(int value) => value.toString().padLeft(2, '0');
+    return '${now.year}${two(now.month)}${two(now.day)}-${two(now.hour)}${two(now.minute)}';
+  }
+
+  void _showExportOptions() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Export Laporan Penjualan',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF3D2314),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Pilih format laporan yang ingin dibuat.',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF9B7B6B)),
+                ),
+                const SizedBox(height: 16),
+                _exportOptionTile(
+                  icon: Icons.picture_as_pdf_rounded,
+                  title: 'Export PDF',
+                  subtitle: 'Buka laporan siap print / Save as PDF',
+                  color: const Color(0xFFE85D5D),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _exportSalesReportPdf();
+                  },
+                ),
+                const SizedBox(height: 10),
+                _exportOptionTile(
+                  icon: Icons.table_chart_rounded,
+                  title: 'Export Excel',
+                  subtitle: 'Download file .xls untuk Excel atau Sheets',
+                  color: const Color(0xFF1B9E85),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _exportSalesReportExcel();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _exportOptionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF3D2314),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF9B7B6B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: Color(0xFF9B7B6B)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _exportSalesReportPdf() {
+    final opened = openPrintableReport(
+      title: 'Laporan Penjualan Tomodachi',
+      htmlContent: _buildPrintableReportHtml(),
+    );
+
+    _showExportSnack(
+      opened
+          ? 'Laporan PDF dibuka. Pilih "Save as PDF" di dialog print.'
+          : 'Export PDF hanya tersedia di Flutter Web untuk saat ini.',
+    );
+  }
+
+  void _exportSalesReportExcel() {
+    final downloaded = downloadReportFile(
+      fileName: 'laporan-penjualan-tomodachi-$_exportDateStamp.xls',
+      mimeType: 'application/vnd.ms-excel;charset=utf-8',
+      content: _buildExcelReportHtml(),
+    );
+
+    _showExportSnack(
+      downloaded
+          ? 'File Excel laporan penjualan berhasil dibuat.'
+          : 'Export Excel hanya tersedia di Flutter Web untuk saat ini.',
+    );
+  }
+
+  void _showExportSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF3D2314),
+      ),
+    );
+  }
+
+  String _escapeHtml(Object? value) {
+    return value
+        .toString()
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+  }
+
+  String _buildPrintableReportHtml() {
+    final body = _buildReportTablesHtml();
+    return '''
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Laporan Penjualan Tomodachi</title>
+  <style>
+    @page { size: A4; margin: 18mm; }
+    body { font-family: Arial, sans-serif; color: #3D2314; margin: 0; }
+    h1 { margin: 0 0 4px; font-size: 24px; }
+    h2 { margin: 22px 0 8px; font-size: 15px; color: #5A3D2B; }
+    .meta { color: #9B7B6B; font-size: 12px; margin-bottom: 18px; }
+    .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 18px 0; }
+    .card { border: 1px solid #FFD4A8; border-radius: 10px; padding: 12px; background: #FFF8F2; }
+    .label { color: #9B7B6B; font-size: 11px; }
+    .value { font-weight: 800; font-size: 16px; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    th { background: #3D2314; color: white; text-align: left; padding: 8px; }
+    td { border-bottom: 1px solid #F3DEC8; padding: 7px 8px; }
+    tr:nth-child(even) td { background: #FFF8F2; }
+  </style>
+</head>
+<body>
+  <h1>Laporan Penjualan Tomodachi Pet Shop</h1>
+  <div class="meta">Periode: ${_escapeHtml(_period)} · Dibuat: ${_escapeHtml(DateTime.now().toString().substring(0, 16))}</div>
+  $body
+  <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 300); };</script>
+</body>
+</html>
+''';
+  }
+
+  String _buildExcelReportHtml() {
+    return '''
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    table { border-collapse: collapse; }
+    th, td { border: 1px solid #c9b49d; padding: 6px; }
+    th { background: #3D2314; color: #ffffff; }
+    .title { font-size: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="title">Laporan Penjualan Tomodachi Pet Shop</div>
+  <div>Periode: ${_escapeHtml(_period)}</div>
+  <div>Dibuat: ${_escapeHtml(DateTime.now().toString().substring(0, 16))}</div>
+  ${_buildReportTablesHtml()}
+</body>
+</html>
+''';
+  }
+
+  String _buildReportTablesHtml() {
+    final monthlyRows = _monthly.map((m) {
+      return '<tr><td>${_escapeHtml(m.month)}</td><td>${m.transactions}</td><td>${m.revenue}</td><td>${_escapeHtml(formatRp(m.revenue))}</td></tr>';
+    }).join();
+
+    final categoryRows = _categories.map((c) {
+      return '<tr><td>${_escapeHtml(c.name)}</td><td>${c.value}%</td><td>${c.amount}</td><td>${_escapeHtml(formatRp(c.amount))}</td></tr>';
+    }).join();
+
+    final productRows = _topProducts.map((p) {
+      return '<tr><td>${p.rank}</td><td>${_escapeHtml(p.name)}</td><td>${_escapeHtml(p.category)}</td><td>${p.unitsSold}</td><td>${p.revenue}</td><td>${_escapeHtml(formatRp(p.revenue))}</td><td>${p.trend}%</td></tr>';
+    }).join();
+
+    final transactionRows = _transactions.map((t) {
+      return '<tr><td>${_escapeHtml(t.id)}</td><td>${_escapeHtml(t.customer)}</td><td>${_escapeHtml(t.date)}</td><td>${_escapeHtml(t.method)}</td><td>${t.items}</td><td>${t.total}</td><td>${_escapeHtml(formatRp(t.total))}</td></tr>';
+    }).join();
+
+    return '''
+  <div class="summary">
+    <div class="card"><div class="label">Total Revenue</div><div class="value">${_escapeHtml(formatRp(_totalRevenue))}</div></div>
+    <div class="card"><div class="label">Total Transactions</div><div class="value">${_escapeHtml(_totalTx)}</div></div>
+    <div class="card"><div class="label">Avg. Transaction</div><div class="value">${_escapeHtml(formatRp(_avgTx))}</div></div>
+    <div class="card"><div class="label">Best Month</div><div class="value">${_escapeHtml(_bestMonth.month)} (${_escapeHtml(formatRp(_bestMonth.revenue))})</div></div>
+  </div>
+
+  <h2>Penjualan Bulanan</h2>
+  <table>
+    <thead><tr><th>Bulan</th><th>Transaksi</th><th>Revenue Raw</th><th>Revenue</th></tr></thead>
+    <tbody>$monthlyRows</tbody>
+  </table>
+
+  <h2>Penjualan per Kategori</h2>
+  <table>
+    <thead><tr><th>Kategori</th><th>Kontribusi</th><th>Revenue Raw</th><th>Revenue</th></tr></thead>
+    <tbody>$categoryRows</tbody>
+  </table>
+
+  <h2>Produk Terlaris</h2>
+  <table>
+    <thead><tr><th>Rank</th><th>Produk</th><th>Kategori</th><th>Unit Terjual</th><th>Revenue Raw</th><th>Revenue</th><th>Trend</th></tr></thead>
+    <tbody>$productRows</tbody>
+  </table>
+
+  <h2>Transaksi Terbaru</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Pelanggan</th><th>Tanggal</th><th>Metode</th><th>Item</th><th>Total Raw</th><th>Total</th></tr></thead>
+    <tbody>$transactionRows</tbody>
+  </table>
+''';
+  }
+
   @override
   Widget build(BuildContext context) {
     // ✅ Wrap with Material to fix DropdownButton errors
@@ -591,7 +870,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         ),
         const SizedBox(width: 10),
         _HoverButton(
-          onPressed: () {},
+          onPressed: _showExportOptions,
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
