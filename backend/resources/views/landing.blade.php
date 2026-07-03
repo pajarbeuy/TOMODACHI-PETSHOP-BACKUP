@@ -391,6 +391,92 @@ section { padding: 100px 7%; position: relative; z-index: 1; }
     border: 1px solid rgba(255,138,0,0.2);
 }
 
+/* ── Guide ───────────────────────────────────────────────────────────────── */
+#guide { background: var(--bg2); }
+
+.guide-grid {
+    display: flex;
+    flex-direction: column;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.guide-item {
+    display: flex;
+    gap: 24px;
+    align-items: stretch;
+}
+
+.guide-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+}
+.guide-marker-line {
+    flex: 1;
+    width: 2px;
+    min-height: 24px;
+    margin-top: 8px;
+    background: linear-gradient(var(--orange), transparent);
+}
+.guide-item:last-child .guide-marker-line { display: none; }
+
+.guide-card {
+    flex: 1;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 24px;
+    transition: var(--transition);
+    backdrop-filter: blur(10px);
+    position: relative; overflow: hidden;
+}
+.guide-card:hover {
+    border-color: rgba(255,138,0,0.25);
+    transform: translateX(4px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+}
+
+.guide-step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--orange), var(--orange-deep));
+    color: #0B0C10;
+    font-size: 15px; font-weight: 800;
+    flex-shrink: 0;
+}
+.guide-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+.guide-card p { font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 14px; }
+
+.guide-steps {
+    list-style: none;
+    display: flex; flex-direction: column; gap: 10px;
+    padding-top: 4px;
+    border-top: 1px solid var(--glass-border);
+}
+.guide-steps li {
+    position: relative;
+    padding-left: 20px;
+    font-size: 13px; color: var(--muted); line-height: 1.6;
+}
+.guide-steps li::before {
+    content: '';
+    position: absolute; left: 0; top: 7px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--orange);
+}
+.guide-steps li strong { color: var(--text); font-weight: 600; }
+.guide-steps li code {
+    background: rgba(255,138,0,0.1);
+    color: var(--orange-light);
+    padding: 1px 6px; border-radius: 4px;
+    font-size: 12px;
+}
+
 /* ── Stats ───────────────────────────────────────────────────────────────── */
 #stats { background: var(--bg2); }
 
@@ -553,6 +639,7 @@ footer p { color: var(--muted); font-size: 14px; }
         <a href="#about">About</a>
         <a href="#features">Features</a>
         <a href="#roles">Roles</a>
+        <a href="#guide">User Guide</a>
         <a href="#technology">Tech</a>
         <a href="#contact">Contact</a>
         <a href="#download" class="nav-cta">Download APK</a>
@@ -567,6 +654,7 @@ footer p { color: var(--muted); font-size: 14px; }
     <a href="#about"      onclick="closeMobileNav()">About</a>
     <a href="#features"   onclick="closeMobileNav()">Features</a>
     <a href="#roles"      onclick="closeMobileNav()">Roles</a>
+    <a href="#guide"      onclick="closeMobileNav()">User Guide</a>
     <a href="#technology" onclick="closeMobileNav()">Technology</a>
     <a href="#contact"    onclick="closeMobileNav()">Contact Us</a>
     <a href="#download"   onclick="closeMobileNav()">Download APK</a>
@@ -725,6 +813,78 @@ footer p { color: var(--muted); font-size: 14px; }
             <h3>Kasir</h3>
             <p>Melakukan transaksi penjualan, mencetak struk, dan mengelola pembayaran pelanggan.</p>
             <span class="role-tag">POS & Transactions</span>
+        </div>
+    </div>
+</section>
+
+<!-- ── Panduan Pengguna ──────────────────────────────────────────────────── -->
+<section id="guide">
+    <div class="section-head reveal">
+        <div class="section-label">Panduan</div>
+        <h2 class="section-title">Cara Menggunakan Tomodachi</h2>
+        <p class="section-sub">Mulai kelola toko hewan peliharaanmu hanya dengan beberapa langkah mudah.</p>
+    </div>
+
+    <div class="guide-grid">
+        <div class="guide-item reveal reveal-delay-1">
+            <div class="guide-marker"><span class="guide-step-num">1</span><div class="guide-marker-line"></div></div>
+            <div class="guide-card">
+                <h3>Download & Install APK</h3>
+                <p>Siapkan aplikasi Tomodachi di perangkat Android kamu sebelum mulai digunakan.</p>
+                <ol class="guide-steps">
+                    <li>Klik tombol <strong>Download APK</strong> di navbar atau bagian Download halaman ini.</li>
+                    <li>Buka file <code>.apk</code> yang terunduh dan izinkan instalasi jika diminta sistem.</li>
+                    <li>Tunggu instalasi selesai, lalu buka aplikasi Tomodachi.</li>
+                </ol>
+            </div>
+        </div>
+        <div class="guide-item reveal reveal-delay-2">
+            <div class="guide-marker"><span class="guide-step-num">2</span><div class="guide-marker-line"></div></div>
+            <div class="guide-card">
+                <h3>Login & Akses Dashboard</h3>
+                <p>Masuk dengan akun terdaftar, tampilan menu menyesuaikan otomatis sesuai peran.</p>
+                <ol class="guide-steps">
+                    <li>Buka menu <strong>Login</strong>, masukkan email dan password akun.</li>
+                    <li><strong>Owner</strong> masuk ke dashboard analytics, <strong>Admin</strong> ke menu produk, <strong>Kasir</strong> ke halaman POS.</li>
+                    <li>Lupa password? Hubungi Owner toko untuk reset akun.</li>
+                </ol>
+            </div>
+        </div>
+        <div class="guide-item reveal reveal-delay-3">
+            <div class="guide-marker"><span class="guide-step-num">3</span><div class="guide-marker-line"></div></div>
+            <div class="guide-card">
+                <h3>Kelola Produk & Stok</h3>
+                <p>Langkah untuk Owner dan Admin dalam mengatur data produk dan stok barang.</p>
+                <ol class="guide-steps">
+                    <li>Buka menu <strong>Produk</strong>, klik <strong>Tambah Produk</strong>, isi nama, kategori, dan harga.</li>
+                    <li>Stok berkurang otomatis setiap ada transaksi dari Kasir.</li>
+                    <li>Sistem mengirim notifikasi jika stok mulai menipis.</li>
+                </ol>
+            </div>
+        </div>
+        <div class="guide-item reveal reveal-delay-4">
+            <div class="guide-marker"><span class="guide-step-num">4</span><div class="guide-marker-line"></div></div>
+            <div class="guide-card">
+                <h3>Lakukan Transaksi POS</h3>
+                <p>Alur transaksi cepat untuk peran Kasir saat melayani pelanggan.</p>
+                <ol class="guide-steps">
+                    <li>Pilih produk dari katalog atau scan barcode, total dihitung otomatis.</li>
+                    <li>Pilih metode pembayaran: tunai, QRIS, atau transfer via Midtrans.</li>
+                    <li>Cetak atau kirim struk digital ke pelanggan.</li>
+                </ol>
+            </div>
+        </div>
+        <div class="guide-item reveal reveal-delay-5">
+            <div class="guide-marker"><span class="guide-step-num">5</span><div class="guide-marker-line"></div></div>
+            <div class="guide-card">
+                <h3>Pantau Laporan & AI Assistant</h3>
+                <p>Fitur khusus Owner untuk memantau performa bisnis dan mendapat insight otomatis.</p>
+                <ol class="guide-steps">
+                    <li>Buka menu <strong>Laporan</strong>, filter data berdasarkan tanggal atau kategori.</li>
+                    <li>Tanya <strong>Tommi AI Assistant</strong> untuk rekomendasi restock dan insight bisnis.</li>
+                    <li>Export laporan jika dibutuhkan untuk arsip atau presentasi.</li>
+                </ol>
+            </div>
         </div>
     </div>
 </section>
