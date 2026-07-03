@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../dashboard_service.dart';
+import '../../report_exporter.dart';
 
 class SalesData {
   final String day;
@@ -117,8 +118,6 @@ class _DashboardTabState extends State<DashboardTab> {
   static const _dangerBg = Color(0xFFFFD4D4);
   static const _pageBg = Color(0xFFFDFBF7);
 
-
-
   final NumberFormat _currency = NumberFormat.currency(
     locale: 'id_ID',
     symbol: 'Rp ',
@@ -137,7 +136,7 @@ class _DashboardTabState extends State<DashboardTab> {
     super.initState();
     _fetchAnalytics();
     _fetchRecentTransactions();
-    _recentTransactionsTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    _recentTransactionsTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       _fetchAnalytics(silent: true, trendDays: _selectedSalesTrendDays);
       _fetchRecentTransactions(silent: true);
     });
@@ -294,6 +293,281 @@ class _DashboardTabState extends State<DashboardTab> {
 
   String formatRpFull(double n) => _currency.format(n);
 
+  String get _exportDateStamp {
+    final now = DateTime.now();
+    String two(int value) => value.toString().padLeft(2, '0');
+    return '${now.year}${two(now.month)}${two(now.day)}-${two(now.hour)}${two(now.minute)}';
+  }
+
+  String _escapeHtml(Object? value) {
+    return value
+        .toString()
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+  }
+
+  void _showExportOptions() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Export Laporan Penjualan',
+                  style: _text(size: 18, weight: FontWeight.w900),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Data diambil dari dashboard analitik terbaru.',
+                  style: _text(size: 13, color: _brown400),
+                ),
+                const SizedBox(height: 16),
+                _exportOptionTile(
+                  icon: Icons.picture_as_pdf_rounded,
+                  title: 'Export PDF',
+                  subtitle: 'Buka laporan siap print / Save as PDF',
+                  color: const Color(0xFFE85D5D),
+                  onTap: () {
+                    Navigator.pop(context);
+                    unawaited(_exportSalesReportPdf());
+                  },
+                ),
+                const SizedBox(height: 10),
+                _exportOptionTile(
+                  icon: Icons.table_chart_rounded,
+                  title: 'Export Excel',
+                  subtitle: 'Download file .xls untuk Excel atau Sheets',
+                  color: _green,
+                  onTap: () {
+                    Navigator.pop(context);
+                    unawaited(_exportSalesReportExcel());
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _exportOptionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: _text(size: 14, weight: FontWeight.w800)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: _text(size: 12, color: _brown400)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: _brown400),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _refreshReportDataForExport() async {
+    await _fetchAnalytics(silent: true, trendDays: _selectedSalesTrendDays);
+    await _fetchRecentTransactions(silent: true);
+  }
+
+  Future<void> _exportSalesReportPdf() async {
+    await _refreshReportDataForExport();
+    if (!mounted) return;
+
+    final opened = openPrintableReport(
+      title: 'Laporan Penjualan Tomodachi',
+      htmlContent: _buildPrintableReportHtml(),
+    );
+
+    _showExportSnack(
+      opened
+          ? 'Laporan PDF dibuka. Pilih "Save as PDF" di dialog print.'
+          : 'Export PDF hanya tersedia di Flutter Web untuk saat ini.',
+    );
+  }
+
+  Future<void> _exportSalesReportExcel() async {
+    await _refreshReportDataForExport();
+    if (!mounted) return;
+
+    final downloaded = downloadReportFile(
+      fileName: 'laporan-penjualan-tomodachi-$_exportDateStamp.xls',
+      mimeType: 'application/vnd.ms-excel;charset=utf-8',
+      content: _buildExcelReportHtml(),
+    );
+
+    _showExportSnack(
+      downloaded
+          ? 'File Excel laporan penjualan berhasil dibuat.'
+          : 'Export Excel hanya tersedia di Flutter Web untuk saat ini.',
+    );
+  }
+
+  void _showExportSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: _brown900,
+      ),
+    );
+  }
+
+  String _buildPrintableReportHtml() {
+    final body = _buildReportTablesHtml();
+    return '''
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Laporan Penjualan Tomodachi</title>
+  <style>
+    @page { size: A4; margin: 18mm; }
+    body { font-family: Arial, sans-serif; color: #3D2314; margin: 0; }
+    h1 { margin: 0 0 4px; font-size: 24px; }
+    h2 { margin: 22px 0 8px; font-size: 15px; color: #5A3D2B; }
+    .meta { color: #9B7B6B; font-size: 12px; margin-bottom: 18px; }
+    .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 18px 0; }
+    .card { border: 1px solid #FFD4A8; border-radius: 10px; padding: 12px; background: #FFF8F2; }
+    .label { color: #9B7B6B; font-size: 11px; }
+    .value { font-weight: 800; font-size: 16px; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    th { background: #3D2314; color: white; text-align: left; padding: 8px; }
+    td { border-bottom: 1px solid #F3DEC8; padding: 7px 8px; }
+    tr:nth-child(even) td { background: #FFF8F2; }
+  </style>
+</head>
+<body>
+  <h1>Laporan Penjualan Tomodachi Pet Shop</h1>
+  <div class="meta">Sumber: Dashboard Analitik real-time - Dibuat: ${_escapeHtml(DateFormat('d MMM yyyy HH:mm').format(DateTime.now()))}</div>
+  $body
+  <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 300); };</script>
+</body>
+</html>
+''';
+  }
+
+  String _buildExcelReportHtml() {
+    return '''
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    table { border-collapse: collapse; }
+    th, td { border: 1px solid #c9b49d; padding: 6px; }
+    th { background: #3D2314; color: #ffffff; }
+    .title { font-size: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="title">Laporan Penjualan Tomodachi Pet Shop</div>
+  <div>Sumber: Dashboard Analitik real-time</div>
+  <div>Dibuat: ${_escapeHtml(DateFormat('d MMM yyyy HH:mm').format(DateTime.now()))}</div>
+  ${_buildReportTablesHtml()}
+</body>
+</html>
+''';
+  }
+
+  String _buildReportTablesHtml() {
+    final kpi = _mapValue(_analyticsData?['kpi']);
+    final todaySales = _doubleValue(kpi['today_sales'], 0);
+    final todayTransactions = _intValue(kpi['total_transactions_today'], 0);
+    final monthlyRevenue = _doubleValue(kpi['monthly_revenue'], 0);
+    final avgTransaction = _doubleValue(kpi['average_transaction_value'], 0);
+    final trendRows = _buildSalesTrendPoints().map((item) {
+      return '<tr><td>${_escapeHtml(DateFormat('yyyy-MM-dd').format(item.date))}</td><td>${item.transactions}</td><td>${item.sales}</td><td>${_escapeHtml(formatRpFull(item.sales))}</td></tr>';
+    }).join();
+    final monthlyRows = _monthlyRevenueItems().map((item) {
+      return '<tr><td>${_escapeHtml(item.month)}</td><td>${item.revenue}</td><td>${_escapeHtml(formatRpFull(item.revenue))}</td></tr>';
+    }).join();
+    final productRows = _bestSellerItems().asMap().entries.map((entry) {
+      final item = entry.value;
+      return '<tr><td>${entry.key + 1}</td><td>${_escapeHtml(item.name)}</td><td>${_escapeHtml(item.category)}</td><td>${item.sales}</td><td>${item.revenue}</td><td>${_escapeHtml(formatRpFull(item.revenue))}</td></tr>';
+    }).join();
+    final transactionRows = _liveRecentTransactions.map((item) {
+      return '<tr><td>${_escapeHtml(item.id)}</td><td>${_escapeHtml(item.customer)}</td><td>${item.items}</td><td>${_escapeHtml(item.method)}</td><td>${item.total}</td><td>${_escapeHtml(formatRpFull(item.total))}</td><td>${_escapeHtml(item.time)}</td></tr>';
+    }).join();
+
+    return '''
+  <div class="summary">
+    <div class="card"><div class="label">Penjualan Hari Ini</div><div class="value">${_escapeHtml(formatRpFull(todaySales))}</div></div>
+    <div class="card"><div class="label">Transaksi Hari Ini</div><div class="value">${_escapeHtml(todayTransactions)}</div></div>
+    <div class="card"><div class="label">Pendapatan Bulan Ini</div><div class="value">${_escapeHtml(formatRpFull(monthlyRevenue))}</div></div>
+    <div class="card"><div class="label">Rata-rata Transaksi</div><div class="value">${_escapeHtml(formatRpFull(avgTransaction))}</div></div>
+  </div>
+
+  <h2>Tren Penjualan</h2>
+  <table>
+    <thead><tr><th>Tanggal</th><th>Transaksi</th><th>Revenue Raw</th><th>Revenue</th></tr></thead>
+    <tbody>$trendRows</tbody>
+  </table>
+
+  <h2>Pendapatan Bulanan</h2>
+  <table>
+    <thead><tr><th>Bulan</th><th>Revenue Raw</th><th>Revenue</th></tr></thead>
+    <tbody>$monthlyRows</tbody>
+  </table>
+
+  <h2>Produk Terlaris</h2>
+  <table>
+    <thead><tr><th>Rank</th><th>Produk</th><th>Kategori</th><th>Unit Terjual</th><th>Revenue Raw</th><th>Revenue</th></tr></thead>
+    <tbody>$productRows</tbody>
+  </table>
+
+  <h2>Transaksi Terbaru</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Kasir</th><th>Item</th><th>Metode</th><th>Total Raw</th><th>Total</th><th>Waktu</th></tr></thead>
+    <tbody>$transactionRows</tbody>
+  </table>
+''';
+  }
+
   int get _selectedSalesTrendDays {
     final today = DateTime.now();
     final startOfToday = DateTime(today.year, today.month, today.day);
@@ -322,7 +596,8 @@ class _DashboardTabState extends State<DashboardTab> {
     final trend = _analyticsData?['sales_trend'];
     if (trend is List && trend.isNotEmpty) {
       return trend.whereType<Map>().map((row) {
-        final date = DateTime.tryParse('${row['date'] ?? ''}') ?? DateTime.now();
+        final date =
+            DateTime.tryParse('${row['date'] ?? ''}') ?? DateTime.now();
         return _SalesTrendPoint(
           date: date,
           sales: _doubleValue(row['revenue'], 0),
@@ -388,7 +663,6 @@ class _DashboardTabState extends State<DashboardTab> {
     }).toList();
   }
 
-
   String _formatTrendDate(DateTime date) {
     return DateFormat('d MMM').format(date);
   }
@@ -425,6 +699,8 @@ class _DashboardTabState extends State<DashboardTab> {
               _buildHeader(greeting, today),
               const SizedBox(height: 24),
               _buildStats(context),
+              const SizedBox(height: 16),
+              _buildSalesReportCard(),
               const SizedBox(height: 24),
               _buildResponsivePair(
                 firstFlex: 2,
@@ -456,7 +732,12 @@ class _DashboardTabState extends State<DashboardTab> {
           runSpacing: 8,
           children: [
             OutlinedButton(
-              onPressed: () {},
+              onPressed: _analyticsLoading
+                  ? null
+                  : () {
+                      _fetchAnalytics(trendDays: _selectedSalesTrendDays);
+                      _fetchRecentTransactions();
+                    },
               style: OutlinedButton.styleFrom(
                 backgroundColor: _orange,
                 foregroundColor: Colors.white,
@@ -469,7 +750,30 @@ class _DashboardTabState extends State<DashboardTab> {
                   vertical: 12,
                 ),
               ),
-              child: const Text('Today'),
+              child: Text(
+                _analyticsLoading ? 'Syncing...' : 'Today',
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: _showExportOptions,
+              style: OutlinedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: _brown900,
+                side: BorderSide(color: _orange.withValues(alpha: 0.35)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+              ),
+              icon: const Icon(Icons.download_rounded, size: 18),
+              label: const Text(
+                'Export',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
             ),
           ],
         );
@@ -503,6 +807,107 @@ class _DashboardTabState extends State<DashboardTab> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildSalesReportCard() {
+    final kpi = _mapValue(_analyticsData?['kpi']);
+    final todaySales = _doubleValue(kpi['today_sales'], 0);
+    final todayTransactions = _intValue(kpi['total_transactions_today'], 0);
+    final todayItemsSold = _intValue(kpi['items_sold_today'], 0);
+    final avgTransaction = _doubleValue(kpi['average_transaction_value'], 0);
+    final lastSynced = DateFormat('HH:mm:ss').format(DateTime.now());
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _cardHeader(
+            title: 'Laporan Penjualan',
+            subtitle: _analyticsLoading
+                ? 'Memuat data real-time...'
+                : 'Real-time - diperbarui otomatis tiap 15 detik',
+            trailing: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _smallActionButton(
+                  icon: Icons.refresh_rounded,
+                  label: 'Refresh',
+                  onPressed: _analyticsLoading
+                      ? null
+                      : () {
+                          _fetchAnalytics(trendDays: _selectedSalesTrendDays);
+                          _fetchRecentTransactions();
+                        },
+                ),
+                _smallActionButton(
+                  icon: Icons.picture_as_pdf_rounded,
+                  label: 'PDF',
+                  onPressed: () => unawaited(_exportSalesReportPdf()),
+                ),
+                _smallActionButton(
+                  icon: Icons.table_chart_rounded,
+                  label: 'Excel',
+                  onPressed: () => unawaited(_exportSalesReportExcel()),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 900
+                  ? 4
+                  : constraints.maxWidth >= 560
+                  ? 2
+                  : 1;
+              final itemWidth =
+                  (constraints.maxWidth - (12 * (columns - 1))) / columns;
+              final items = [
+                ('Penjualan Hari Ini', formatRpFull(todaySales)),
+                ('Transaksi Hari Ini', '$todayTransactions transaksi'),
+                ('Item Terjual Hari Ini', '$todayItemsSold item'),
+                ('Rata-rata Transaksi', formatRpFull(avgTransaction)),
+              ];
+
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: items.map((item) {
+                  return Container(
+                    width: itemWidth,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF8F2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0x1FFFB570)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item.$1, style: _text(size: 11, color: _brown400)),
+                        const SizedBox(height: 6),
+                        Text(
+                          _analyticsLoading ? 'Memuat...' : item.$2,
+                          style: _text(size: 15, weight: FontWeight.w900),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Sinkron terakhir: $lastSynced - export memakai data dashboard yang sedang tampil.',
+            style: _text(size: 11, color: _brown400),
+          ),
+        ],
+      ),
     );
   }
 
@@ -779,8 +1184,12 @@ class _DashboardTabState extends State<DashboardTab> {
                   '7D',
                   selected: _selectedSalesRange == _SalesTrendRange.sevenDays,
                   onPressed: () {
-                    if (_selectedSalesRange == _SalesTrendRange.sevenDays) return;
-                    setState(() => _selectedSalesRange = _SalesTrendRange.sevenDays);
+                    if (_selectedSalesRange == _SalesTrendRange.sevenDays) {
+                      return;
+                    }
+                    setState(
+                      () => _selectedSalesRange = _SalesTrendRange.sevenDays,
+                    );
                     _fetchAnalytics(trendDays: 7);
                   },
                 ),
@@ -789,8 +1198,12 @@ class _DashboardTabState extends State<DashboardTab> {
                   '30D',
                   selected: _selectedSalesRange == _SalesTrendRange.thirtyDays,
                   onPressed: () {
-                    if (_selectedSalesRange == _SalesTrendRange.thirtyDays) return;
-                    setState(() => _selectedSalesRange = _SalesTrendRange.thirtyDays);
+                    if (_selectedSalesRange == _SalesTrendRange.thirtyDays) {
+                      return;
+                    }
+                    setState(
+                      () => _selectedSalesRange = _SalesTrendRange.thirtyDays,
+                    );
                     _fetchAnalytics(trendDays: 30);
                   },
                 ),
@@ -799,8 +1212,12 @@ class _DashboardTabState extends State<DashboardTab> {
                   '3M',
                   selected: _selectedSalesRange == _SalesTrendRange.threeMonths,
                   onPressed: () {
-                    if (_selectedSalesRange == _SalesTrendRange.threeMonths) return;
-                    setState(() => _selectedSalesRange = _SalesTrendRange.threeMonths);
+                    if (_selectedSalesRange == _SalesTrendRange.threeMonths) {
+                      return;
+                    }
+                    setState(
+                      () => _selectedSalesRange = _SalesTrendRange.threeMonths,
+                    );
                     _fetchAnalytics(trendDays: 90);
                   },
                 ),
@@ -938,7 +1355,9 @@ class _DashboardTabState extends State<DashboardTab> {
         children: [
           _cardHeader(
             title: 'Best Sellers',
-            subtitle: _analyticsLoading ? 'Memuat data...' : 'Berdasarkan transaksi',
+            subtitle: _analyticsLoading
+                ? 'Memuat data...'
+                : 'Berdasarkan transaksi',
             trailing: const Icon(Icons.star, size: 18, color: _orange),
           ),
           const SizedBox(height: 16),
@@ -1174,7 +1593,9 @@ class _DashboardTabState extends State<DashboardTab> {
             Padding(
               padding: const EdgeInsets.all(20),
               child: Text(
-                _analyticsLoading ? 'Memuat...' : 'Tidak ada produk stok rendah.',
+                _analyticsLoading
+                    ? 'Memuat...'
+                    : 'Tidak ada produk stok rendah.',
                 style: _text(size: 12, color: _brown400),
               ),
             ),
@@ -1287,7 +1708,9 @@ class _DashboardTabState extends State<DashboardTab> {
         children: [
           _cardHeader(
             title: 'Monthly Revenue Overview',
-            subtitle: _analyticsLoading ? 'Memuat data...' : '12 bulan terakhir',
+            subtitle: _analyticsLoading
+                ? 'Memuat data...'
+                : '12 bulan terakhir',
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -1297,11 +1720,19 @@ class _DashboardTabState extends State<DashboardTab> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.calendar_month, size: 13, color: Color(0xFF1B7A65)),
+                  const Icon(
+                    Icons.calendar_month,
+                    size: 13,
+                    color: Color(0xFF1B7A65),
+                  ),
                   const SizedBox(width: 5),
                   Text(
                     '$currentYear',
-                    style: _text(size: 11, weight: FontWeight.w900, color: const Color(0xFF1B7A65)),
+                    style: _text(
+                      size: 11,
+                      weight: FontWeight.w900,
+                      color: const Color(0xFF1B7A65),
+                    ),
                   ),
                 ],
               ),
@@ -1314,7 +1745,11 @@ class _DashboardTabState extends State<DashboardTab> {
                 final availableWidth = constraints.maxWidth - 40;
                 final count = chartData.isEmpty ? 12 : chartData.length;
                 final barW = ((availableWidth / count) * 0.55).clamp(6.0, 22.0);
-                final showEvery = availableWidth < 300 ? 3 : availableWidth < 450 ? 2 : 1;
+                final showEvery = availableWidth < 300
+                    ? 3
+                    : availableWidth < 450
+                    ? 2
+                    : 1;
 
                 return BarChart(
                   BarChartData(
@@ -1345,19 +1780,30 @@ class _DashboardTabState extends State<DashboardTab> {
                     ),
                     borderData: FlBorderData(show: false),
                     titlesData: FlTitlesData(
-                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
                           reservedSize: 24,
                           getTitlesWidget: (value, meta) {
                             final index = value.toInt();
-                            if (index < 0 || index >= chartData.length) return const SizedBox.shrink();
-                            if (showEvery > 1 && index % showEvery != 0) return const SizedBox.shrink();
+                            if (index < 0 || index >= chartData.length) {
+                              return const SizedBox.shrink();
+                            }
+                            if (showEvery > 1 && index % showEvery != 0) {
+                              return const SizedBox.shrink();
+                            }
                             return Padding(
                               padding: const EdgeInsets.only(top: 6),
-                              child: Text(chartData[index].month, style: _text(size: 9, color: _brown400)),
+                              child: Text(
+                                chartData[index].month,
+                                style: _text(size: 9, color: _brown400),
+                              ),
                             );
                           },
                         ),
@@ -1376,7 +1822,9 @@ class _DashboardTabState extends State<DashboardTab> {
                     ),
                     barGroups: chartData.asMap().entries.map((entry) {
                       final isCurrent = entry.key == chartData.length - 1;
-                      final toY = entry.value.revenue <= 0 ? 0.0 : entry.value.revenue;
+                      final toY = entry.value.revenue <= 0
+                          ? 0.0
+                          : entry.value.revenue;
                       return BarChartGroupData(
                         x: entry.key,
                         barRods: [
@@ -1386,8 +1834,8 @@ class _DashboardTabState extends State<DashboardTab> {
                             color: isCurrent
                                 ? _orangeDark
                                 : entry.value.revenue > 0
-                                    ? const Color(0xFFFFD4A8)
-                                    : const Color(0xFFEEE8E0),
+                                ? const Color(0xFFFFD4A8)
+                                : const Color(0xFFEEE8E0),
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(6),
                               topRight: Radius.circular(6),
@@ -1456,6 +1904,25 @@ class _DashboardTabState extends State<DashboardTab> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _smallActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback? onPressed,
+  }) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: _brown900,
+        side: BorderSide(color: _orange.withValues(alpha: 0.28)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      ),
+      icon: Icon(icon, size: 16),
+      label: Text(label, style: _text(size: 11, weight: FontWeight.w900)),
     );
   }
 
