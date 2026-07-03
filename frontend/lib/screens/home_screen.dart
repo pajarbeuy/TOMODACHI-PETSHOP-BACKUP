@@ -11,7 +11,6 @@ import 'tabs/transactions_history_tab.dart';
 import 'tabs/dashboard_owner.dart';
 import 'ai_chat_screen.dart';
 import 'login_screen.dart';
-import 'reports_screen.dart';
 import '../ai_chat_service.dart';
 import 'owner_accounts_screen.dart';
 import 'category_management_screen.dart';
@@ -53,7 +52,6 @@ class _HomeScreenState extends State<HomeScreen> {
   );
 
   // Cached styles for frequently used combinations (OPT-05)
-  late final TextStyle _styleBold14 = _plusJakarta(fontWeight: FontWeight.w900);
   late final TextStyle _styleNav11 = _plusJakarta(
     fontSize: 11,
     fontWeight: FontWeight.w700,
@@ -102,11 +100,6 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Manajemen Akun',
             icon: Icons.manage_accounts,
             widget: OwnerAccountsScreen(authService: widget.authService),
-          ),
-          const _NavigationItem(
-            label: 'Laporan Penjualan',
-            icon: Icons.assessment_outlined,
-            widget: ReportsScreen(),
           ),
           _NavigationItem(
             label: 'AI Asisten',
