@@ -25,10 +25,12 @@ class TomodachiApp extends StatelessWidget {
 
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFFFB570),
-          brightness: Brightness.light,
+          seedColor: const Color(0xFFB570FF), // Neon Purple seed
+          brightness: Brightness.dark,
+          surface: const Color(0xFF0F0C29), // Very dark background
+          background: const Color(0xFF0F0C29),
         ),
-
+        scaffoldBackgroundColor: const Color(0xFF0F0C29),
         useMaterial3: true,
         fontFamily: 'Poppins',
       ),

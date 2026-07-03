@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../transaction_service.dart';
 import '../../utils/currency_formatter.dart';
 import '../../utils/error_message.dart';
+import '../../widgets/glass_container.dart';
 
 class TransactionsHistoryTab extends StatefulWidget {
   final TransactionService transactionService;
@@ -18,7 +19,7 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
   TextStyle _plusJakarta({
     double fontSize = 14,
     FontWeight fontWeight = FontWeight.w500,
-    Color color = const Color(0xFF3D2314),
+    Color color = Colors.white,
     double letterSpacing = -0.3,
   }) => GoogleFonts.plusJakartaSans(
     fontSize: fontSize,
@@ -163,9 +164,10 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
             final items = data['items'] as List<dynamic>;
 
             return AlertDialog(
-              backgroundColor: const Color(0xFFFFFDF9),
+              backgroundColor: const Color(0xFF1E1A38),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
+                side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
               ),
               title: Center(
                 child: Text(
@@ -378,8 +380,9 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
                       height: 50,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFF9F2),
+                        color: Colors.white.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
@@ -466,8 +469,9 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
                         height: 50,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFF9F2),
+                          color: Colors.white.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -522,8 +526,9 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
                         height: 50,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFF9F2),
+                          color: Colors.white.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -575,7 +580,7 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF9F2),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -636,13 +641,9 @@ class _TransactionsHistoryTabState extends State<TransactionsHistoryTab> {
           trx['created_at']?.toString() ?? '',
         );
 
-        return Card(
-          color: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.grey.shade100),
-          ),
+        return GlassContainer(
+          padding: EdgeInsets.zero,
+          borderRadius: BorderRadius.circular(16),
           margin: const EdgeInsets.only(bottom: 10),
           child: ListTile(
             leading: CircleAvatar(

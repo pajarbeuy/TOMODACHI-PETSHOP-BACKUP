@@ -1,9 +1,11 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../auth_service.dart';
 import '../utils/error_message.dart';
 import '../widgets/app_logo.dart';
+import '../widgets/glass_container.dart';
 import 'home_screen.dart';
 
 const _apiBaseUrl = String.fromEnvironment(
@@ -102,18 +104,18 @@ final _demoRoles = [
   ),
 ];
 
-// ── Colors ───────────────────────────────────────────────────────────────────
+// ── Dark Neon Colors ───────────────────────────────────────────────────────────
 
-const _brown900 = Color(0xFF3D2314);
-const _brown700 = Color(0xFF5A3D2B);
-const _brown500 = Color(0xFF6B4F3E);
-const _brown400 = Color(0xFF9B7B6B);
-const _brown200 = Color(0xFFC5A882);
-const _orange = Color(0xFFFFB570);
-const _orangeDark = Color(0xFFFF9A4D);
-const _bgPage = Color(0xFFFFF6E9);
-const _bgInput = Color(0xFFFFF8F2);
-const _borderLight = Color(0x4DFFB570);
+const _brown900 = Colors.white;
+const _brown700 = Color(0xE6FFFFFF); // 90% white
+const _brown500 = Color(0xB3FFFFFF); // 70% white
+const _brown400 = Color(0x99FFFFFF); // 60% white
+const _brown200 = Color(0x66FFFFFF); // 40% white
+const _orange = Color(0xFFB570FF); // Primary Neon Purple
+const _orangeDark = Color(0xFFFF5EEA); // Secondary Neon Pink
+const _bgPage = Color(0xFF0F0C29); // Dark background
+const _bgInput = Color(0x0CFFFFFF); // 5% white
+const _borderLight = Color(0x26FFFFFF); // 15% white
 
 // ── iOS-style TextStyle helpers ───────────────────────────────────────────────
 //
@@ -127,7 +129,7 @@ const _borderLight = Color(0x4DFFB570);
 TextStyle _iosStyle({
   double fontSize = 14,
   FontWeight fontWeight = FontWeight.w500,
-  Color color = _brown900,
+  Color color = Colors.white,
   double letterSpacing = -0.3,
   double height = 1.4,
 }) => GoogleFonts.plusJakartaSans(
@@ -148,7 +150,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _captchaCtrl = TextEditingController();
@@ -158,6 +160,7 @@ class _LoginScreenState extends State<LoginScreen>
   bool _captchaLoading = false;
 
   late final AnimationController _fadeCtrl;
+  late final AnimationController _bgAnimCtrl;
   late final Animation<double> _fadeAnim;
   String? _errorMessage;
   CaptchaChallenge? _captchaChallenge;
@@ -172,6 +175,12 @@ class _LoginScreenState extends State<LoginScreen>
     )..forward();
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
 
+    // Continuous background animation for left panel
+    _bgAnimCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 12),
+    )..repeat();
+
     // Chrome/web uses local backend, while phone/native builds use ngrok.
     // Override with:
     // flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000
@@ -184,6 +193,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void dispose() {
     _fadeCtrl.dispose();
+    _bgAnimCtrl.dispose();
     _emailCtrl.dispose();
     _passCtrl.dispose();
     _captchaCtrl.dispose();
@@ -459,9 +469,15 @@ class _LoginScreenState extends State<LoginScreen>
     final isWide = MediaQuery.of(context).size.width >= 900;
     return Scaffold(
       backgroundColor: _bgPage,
-      body: FadeTransition(
-        opacity: _fadeAnim,
-        child: isWide ? _buildWideLayout() : _buildNarrowLayout(),
+      body: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.03),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut)),
+        child: FadeTransition(
+          opacity: _fadeAnim,
+          child: isWide ? _buildWideLayout() : _buildNarrowLayout(),
+        ),
       ),
     );
   }
@@ -499,132 +515,203 @@ class _LoginScreenState extends State<LoginScreen>
   // ── Left decorative panel ─────────────────────────────────────────────────
 
   Widget _buildLeftPanel() {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFFFB570),
-            Color(0xFFFF9A4D),
-            Color(0xFFFFB88C),
-            Color(0xFFFFC7D1),
-          ],
-          stops: [0.0, 0.35, 0.65, 1.0],
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned(top: -96, left: -96, child: _blob(320)),
-          Positioned(bottom: -64, right: -64, child: _blob(288)),
-          Positioned(
-            top: 0,
-            bottom: 0,
-            right: -32,
-            child: Center(child: _blob(160)),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 32,
-            child: Align(
-              alignment: Alignment.bottomLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 80),
-                child: _blob(96),
+    return AnimatedBuilder(
+      animation: _bgAnimCtrl,
+      builder: (context, centerChild) {
+        final t = _bgAnimCtrl.value;
+        return LayoutBuilder(
+          builder: (context, box) {
+            final h = box.maxHeight.isFinite ? box.maxHeight : 800.0;
+            final w = box.maxWidth.isFinite ? box.maxWidth : 400.0;
+            return Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF0F0C29),
+                    Color(0xFF191238),
+                    Color(0xFF0F0C29),
+                    Color(0xFF1E112A),
+                  ],
+                  stops: [0.0, 0.4, 0.7, 1.0],
+                ),
               ),
-            ),
-          ),
-
-          // Animated paw prints
-          Positioned(
-            top: 64,
-            right: 96,
-            child: _AnimatedPawIcon(size: 40, angle: 0.21),
-          ),
-          Positioned(
-            bottom: 96,
-            left: 64,
-            child: _AnimatedPawIcon(size: 32, angle: -0.21),
-          ),
-
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 48),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              child: Stack(
+                clipBehavior: Clip.hardEdge,
                 children: [
-                  // Logo box with hover animation
-                  _AnimatedLogoBox(),
-                  const SizedBox(height: 24),
-                  Text(
-                    'TOMODACHI',
-                    style: _iosStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: 4,
-                    ),
+                  // ── Large floating blobs ──────────────────────────────
+                  Positioned(
+                    top: -96 + sin(t * 2 * pi) * 28,
+                    left: -96 + cos(t * 2 * pi + 0.5) * 16,
+                    child: _blob(320, opacity: 0.15 + sin(t * pi) * 0.04, color: _orange),
                   ),
-                  Text(
-                    'PETSHOP',
-                    style: _iosStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: 10,
-                    ),
+                  Positioned(
+                    bottom: -64 + cos(t * 2 * pi + 1.0) * 24,
+                    right: -64 + sin(t * 2 * pi + 1.0) * 14,
+                    child: _blob(288, opacity: 0.12 + cos(t * pi + 1.0) * 0.03, color: _orangeDark),
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Your trusted pet care management system',
-                    textAlign: TextAlign.center,
-                    style: _iosStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white.withValues(alpha: 0.85),
-                      height: 1.6,
-                    ),
+                  Positioned(
+                    top: h / 2 - 80 + sin(t * 2 * pi + 1.5) * 36,
+                    right: -32,
+                    child: _blob(160, opacity: 0.15 + sin(t * pi + 1.5) * 0.04, color: const Color(0xFF00F0FF)), // Neon Cyan
                   ),
-                  const SizedBox(height: 40),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
+                  Positioned(
+                    bottom: 80 + sin(t * 2 * pi + 2.5) * 18,
+                    left: 32 + cos(t * 2 * pi + 2.5) * 10,
+                    child: _blob(96, opacity: 0.18 + sin(t * pi + 2.5) * 0.05, color: _orange),
+                  ),
+
+                  // ── Medium accent blobs ───────────────────────────────
+                  Positioned(
+                    top: h * 0.22 + sin(t * 2 * pi + 0.8) * 22,
+                    left: w * 0.10 + cos(t * 2 * pi + 0.8) * 12,
+                    child: _blob(60,
+                        opacity: 0.15 + sin(t * pi + 0.8) * 0.04,
+                        color: _orangeDark),
+                  ),
+                  Positioned(
+                    top: h * 0.60 + cos(t * 2 * pi + 2.3) * 20,
+                    right: w * 0.12 + sin(t * 2 * pi + 2.3) * 10,
+                    child: _blob(48, opacity: 0.15 + cos(t * pi + 2.3) * 0.04, color: _orange),
+                  ),
+                  Positioned(
+                    top: h * 0.78 + sin(t * 2 * pi + 4.0) * 16,
+                    left: w * 0.50 + cos(t * 2 * pi + 4.0) * 8,
+                    child: _blob(36, opacity: 0.12 + sin(t * pi + 4.0) * 0.03, color: const Color(0xFF00F0FF)),
+                  ),
+                  Positioned(
+                    top: h * 0.12 + cos(t * 2 * pi + 5.0) * 14,
+                    right: w * 0.08 + sin(t * 2 * pi + 5.0) * 10,
+                    child: _blob(28, opacity: 0.18 + cos(t * pi + 5.0) * 0.05, color: _orangeDark),
+                  ),
+
+                  // ── Floating paw prints ───────────────────────────────
+                  Positioned(
+                    top: 64 + sin(t * 2 * pi + 0.5) * 14,
+                    right: 96 + cos(t * 2 * pi + 0.5) * 6,
+                    child: Opacity(
+                      opacity:
+                          (0.18 + sin(t * pi + 0.5) * 0.10).clamp(0.0, 1.0),
+                      child: Transform.rotate(
+                        angle: 0.21 + sin(t * pi) * 0.08,
+                        child: const Icon(Icons.pets,
+                            size: 40, color: Colors.white),
                       ),
                     ),
-                    child: Text(
-                      '💕 Because every pet deserves the best',
-                      style: _iosStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: -0.1,
+                  ),
+                  Positioned(
+                    bottom: 96 + cos(t * 2 * pi + 2.0) * 12,
+                    left: 64 + sin(t * 2 * pi + 2.0) * 8,
+                    child: Opacity(
+                      opacity:
+                          (0.18 + cos(t * pi + 2.0) * 0.10).clamp(0.0, 1.0),
+                      child: Transform.rotate(
+                        angle: -0.21 + cos(t * pi + 2.0) * 0.08,
+                        child: const Icon(Icons.pets,
+                            size: 32, color: Colors.white),
                       ),
                     ),
                   ),
+                  Positioned(
+                    top: h * 0.48 + sin(t * 2 * pi + 3.7) * 18,
+                    left: 44 + cos(t * 2 * pi + 3.7) * 8,
+                    child: Opacity(
+                      opacity:
+                          (0.12 + sin(t * pi + 3.7) * 0.06).clamp(0.0, 1.0),
+                      child: Transform.rotate(
+                        angle: 0.9 + sin(t * pi + 3.7) * 0.12,
+                        child: const Icon(Icons.pets,
+                            size: 22, color: Colors.white),
+                      ),
+                    ),
+                  ),
+
+                  // ── Center content (rebuilt once, passed as child) ─────
+                  centerChild!,
                 ],
               ),
-            ),
+            );
+          },
+        );
+      },
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 48),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _AnimatedLogoBox(),
+              const SizedBox(height: 24),
+              Text(
+                'TOMODACHI',
+                style: _iosStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: 4,
+                ),
+              ),
+              Text(
+                'PETSHOP',
+                style: _iosStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 10,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Your trusted pet care management system',
+                textAlign: TextAlign.center,
+                style: _iosStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.85),
+                  height: 1.6,
+                ),
+              ),
+              const SizedBox(height: 40),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Text(
+                  '💕 Because every pet deserves the best',
+                  style: _iosStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: -0.1,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _blob(double size) => Container(
-    width: size,
-    height: size,
-    decoration: const BoxDecoration(
-      shape: BoxShape.circle,
-      color: Colors.white10,
-    ),
-  );
+  Widget _blob(double size,
+      {double opacity = 0.10, Color color = Colors.white}) =>
+      Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color.withValues(alpha: opacity.clamp(0.0, 1.0)),
+        ),
+      );
 
   // ── Right panel ───────────────────────────────────────────────────────────
 
@@ -672,133 +759,211 @@ class _LoginScreenState extends State<LoginScreen>
   // ── Card ──────────────────────────────────────────────────────────────────
 
   Widget _buildCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: _orange.withValues(alpha: 0.15),
-            blurRadius: 48,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(32),
+    return GlassContainer(
+      glowColor: _orange,
+      glowIntensity: 0.15,
+      blur: 24.0,
+      borderRadius: BorderRadius.circular(28),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Welcome back! 👋',
-            style: _iosStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-              color: _brown900,
-              letterSpacing: -0.8,
+          // ── Premium Header ───────────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.fromLTRB(28, 24, 28, 20),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.03),
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Sign in to manage your petshop',
-            style: _iosStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: _brown400,
-              letterSpacing: -0.2,
-            ),
-          ),
-          const SizedBox(height: 28),
-
-          // Error message display
-          if (_errorMessage != null) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
-                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                _errorMessage!,
-                style: _iosStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.red.shade700,
+            child: Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [_orange, _orangeDark],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _orange.withValues(alpha: 0.45),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.pets_rounded,
+                      color: Colors.white, size: 26),
                 ),
-              ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Selamat Datang! 👋',
+                        style: _iosStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w900,
+                          color: _brown900,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Masuk ke panel manajemen petshop',
+                        style: _iosStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: _brown400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-          ],
-
-          _buildLabel('Email Address'),
-          const SizedBox(height: 6),
-          _buildTextField(
-            controller: _emailCtrl,
-            hintText: 'you@example.com',
-            keyboardType: TextInputType.emailAddress,
           ),
-          const SizedBox(height: 18),
 
-          _buildLabel('Password'),
-          const SizedBox(height: 6),
-          _buildPasswordField(),
-          const SizedBox(height: 18),
+          // Thin separator
+          Container(height: 1, color: const Color(0x19FFB570)),
 
-          _buildLabel('Captcha Verification'),
-          const SizedBox(height: 6),
-          _buildCaptchaField(),
-          const SizedBox(height: 18),
+          // ── Form Section ────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(28, 24, 28, 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Error banner
+                if (_errorMessage != null) ...[
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline_rounded,
+                            color: Colors.redAccent, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _errorMessage!,
+                            style: _iosStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.redAccent,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                ],
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: Checkbox(
-                      value: _rememberMe,
-                      onChanged: (v) =>
-                          setState(() => _rememberMe = v ?? false),
-                      activeColor: _orange,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(5),
+                _buildLabel('Email'),
+                const SizedBox(height: 6),
+                _buildTextField(
+                  controller: _emailCtrl,
+                  hintText: 'contoh@email.com',
+                  keyboardType: TextInputType.emailAddress,
+                  prefixIcon: Icons.email_outlined,
+                ),
+                const SizedBox(height: 16),
+
+                _buildLabel('Password'),
+                const SizedBox(height: 6),
+                _buildPasswordField(),
+                const SizedBox(height: 16),
+
+                _buildLabel('Verifikasi Captcha'),
+                const SizedBox(height: 6),
+                _buildCaptchaField(),
+                const SizedBox(height: 16),
+
+                // Remember me
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: Checkbox(
+                        value: _rememberMe,
+                        onChanged: (v) =>
+                            setState(() => _rememberMe = v ?? false),
+                        activeColor: _orange,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Remember me',
-                    style: _iosStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: _brown500,
+                    const SizedBox(width: 8),
+                    Text(
+                      'Ingat saya di perangkat ini',
+                      style: _iosStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: _brown500,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              TextButton(
-                onPressed: () {},
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ],
                 ),
-                child: Text(
-                  'Forgot password?',
-                  style: _iosStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: _orange,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
-          _buildSignInButton(),
+                _buildSignInButton(),
+
+                const SizedBox(height: 22),
+
+                // Quick login divider
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                          color: _brown200.withValues(alpha: 0.4)),
+                    ),
+                    Padding(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(
+                        'atau masuk cepat sebagai',
+                        style: _iosStyle(
+                          fontSize: 11,
+                          color: _brown400,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(
+                          color: _brown200.withValues(alpha: 0.4)),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Quick role login cards
+                Row(
+                  children: [
+                    for (int i = 0; i < _demoRoles.length; i++) ...[
+                      if (i > 0) const SizedBox(width: 8),
+                      Expanded(
+                        child: _DemoRoleButton(
+                          demo: _demoRoles[i],
+                          loading: _loading,
+                          onTap: () => _handleQuickLogin(_demoRoles[i]),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -808,10 +973,10 @@ class _LoginScreenState extends State<LoginScreen>
     return Text(
       text,
       style: _iosStyle(
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: FontWeight.w700,
         color: _brown700,
-        letterSpacing: -0.1,
+        letterSpacing: 0.3,
       ),
     );
   }
@@ -820,6 +985,7 @@ class _LoginScreenState extends State<LoginScreen>
     required TextEditingController controller,
     required String hintText,
     TextInputType keyboardType = TextInputType.text,
+    IconData? prefixIcon,
   }) {
     return TextField(
       controller: controller,
@@ -832,10 +998,13 @@ class _LoginScreenState extends State<LoginScreen>
           fontWeight: FontWeight.w400,
           color: _brown200,
         ),
+        prefixIcon: prefixIcon != null
+            ? Icon(prefixIcon, color: _brown400, size: 18)
+            : null,
         filled: true,
         fillColor: _bgInput,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: prefixIcon != null ? 8 : 16,
           vertical: 14,
         ),
         border: OutlineInputBorder(
@@ -860,18 +1029,18 @@ class _LoginScreenState extends State<LoginScreen>
       obscureText: !_showPassword,
       style: _iosStyle(fontSize: 14, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
-        hintText: 'Enter your password',
+        hintText: 'Masukkan password kamu',
         hintStyle: _iosStyle(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: _brown200,
         ),
+        prefixIcon:
+            const Icon(Icons.lock_outline_rounded, color: _brown400, size: 18),
         filled: true,
         fillColor: _bgInput,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
-        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: _borderLight, width: 2),
@@ -893,157 +1062,91 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildCaptchaField() {
-    return TextField(
-      controller: _captchaCtrl,
-      keyboardType: TextInputType.number,
-      style: _iosStyle(fontSize: 14, fontWeight: FontWeight.w500),
-      decoration: InputDecoration(
-        hintText: _captchaLoading
-            ? 'Loading captcha...'
-            : 'Answer: ${_captchaChallenge?.question ?? '-'}',
-        hintStyle: _iosStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-          color: _brown200,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Visual math question chip
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            color: _orange.withValues(alpha: 0.09),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: _orange.withValues(alpha: 0.22)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.calculate_outlined, size: 15, color: _orangeDark),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _captchaLoading
+                      ? 'Memuat soal...'
+                      : 'Berapa ${_captchaChallenge?.question ?? '? + ?'} = ?',
+                  style: _iosStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _orangeDark,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: _captchaLoading ? null : _loadCaptcha,
+                child: _captchaLoading
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: _orangeDark,
+                        ),
+                      )
+                    : const Icon(Icons.refresh_rounded,
+                        size: 16, color: _orangeDark),
+              ),
+            ],
+          ),
         ),
-        filled: true,
-        fillColor: _bgInput,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
+        const SizedBox(height: 8),
+        // Answer input
+        TextField(
+          controller: _captchaCtrl,
+          keyboardType: TextInputType.number,
+          style: _iosStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          decoration: InputDecoration(
+            hintText: 'Ketik jawabanmu di sini...',
+            hintStyle: _iosStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: _brown200,
+            ),
+            prefixIcon:
+                const Icon(Icons.tag_rounded, color: _brown400, size: 18),
+            filled: true,
+            fillColor: _bgInput,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: _borderLight, width: 2),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: _borderLight, width: 2),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: _orange, width: 2),
+            ),
+          ),
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _borderLight, width: 2),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _borderLight, width: 2),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _orange, width: 2),
-        ),
-        suffixIcon: IconButton(
-          tooltip: 'Refresh captcha',
-          onPressed: _captchaLoading ? null : _loadCaptcha,
-          icon: _captchaLoading
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.refresh_rounded),
-          color: _brown400,
-        ),
-      ),
+      ],
     );
   }
 
-  // Widget _buildCaptchaField() {
-  //   return TextField(
-  //     controller: _captchaCtrl,
-  //     keyboardType: TextInputType.number,
-  //     style: _iosStyle(fontSize: 14, fontWeight: FontWeight.w500),
-  //     decoration: InputDecoration(
-  //       hintText: _captchaLoading
-  //           ? 'Loading captcha...'
-  //           : 'Answer: ${_captchaChallenge?.question ?? '-'}',
-  //       hintStyle: _iosStyle(
-  //         fontSize: 14,
-  //         fontWeight: FontWeight.w400,
-  //         color: _brown200,
-  //       ),
-  //       filled: true,
-  //       fillColor: _bgInput,
-  //       contentPadding: const EdgeInsets.symmetric(
-  //         horizontal: 16,
-  //         vertical: 14,
-  //       ),
-  //       border: OutlineInputBorder(
-  //         borderRadius: BorderRadius.circular(12),
-  //         borderSide: const BorderSide(color: _borderLight, width: 2),
-  //       ),
-  //       enabledBorder: OutlineInputBorder(
-  //         borderRadius: BorderRadius.circular(12),
-  //         borderSide: const BorderSide(color: _borderLight, width: 2),
-  //       ),
-  //       focusedBorder: OutlineInputBorder(
-  //         borderRadius: BorderRadius.circular(12),
-  //         borderSide: const BorderSide(color: _orange, width: 2),
-  //       ),
-  //       suffixIcon: IconButton(
-  //         tooltip: 'Refresh captcha',
-  //         onPressed: _captchaLoading ? null : _loadCaptcha,
-  //         icon: _captchaLoading
-  //             ? const SizedBox(
-  //                 width: 18,
-  //                 height: 18,
-  //                 child: CircularProgressIndicator(strokeWidth: 2),
-  //               )
-  //             : const Icon(Icons.refresh_rounded),
-  //         color: _brown400,
-  //       ),
-  //     ),
-  //   );
-  // }
-
   Widget _buildSignInButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [_orange, _orangeDark],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: _orange.withValues(alpha: 0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ElevatedButton(
-          onPressed: _loading ? null : _handleLogin,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-          child: _loading
-              ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: Colors.white,
-                  ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const _AnimatedLoginIcon(),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Sign In',
-                      style: _iosStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                  ],
-                ),
-        ),
-      ),
+    return _HoverSignInButton(
+      loading: _loading,
+      onPressed: _loading ? null : _handleLogin,
     );
   }
 
@@ -1056,6 +1159,110 @@ class _LoginScreenState extends State<LoginScreen>
         fontWeight: FontWeight.w500,
         color: _brown400,
         letterSpacing: 0,
+      ),
+    );
+  }
+}
+
+// ── Hover Sign-In Button ──────────────────────────────────────────────────────
+
+class _HoverSignInButton extends StatefulWidget {
+  final bool loading;
+  final VoidCallback? onPressed;
+
+  const _HoverSignInButton({required this.loading, required this.onPressed});
+
+  @override
+  State<_HoverSignInButton> createState() => _HoverSignInButtonState();
+}
+
+class _HoverSignInButtonState extends State<_HoverSignInButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: widget.onPressed != null
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
+      child: AnimatedScale(
+        scale: _hovered && !widget.loading ? 1.015 : 1.0,
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOutBack,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: 52,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: widget.loading
+                  ? [Colors.white.withValues(alpha: 0.1), Colors.white.withValues(alpha: 0.05)]
+                  : [
+                      _hovered ? const Color(0xFFD09BFF) : _orange,
+                      _hovered ? const Color(0xFFFF85F0) : _orangeDark,
+                    ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: widget.loading
+                ? []
+                : [
+                    BoxShadow(
+                      color: _orange
+                          .withValues(alpha: _hovered ? 0.6 : 0.4),
+                      blurRadius: _hovered ? 32 : 20,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: widget.onPressed,
+              borderRadius: BorderRadius.circular(14),
+              splashColor: Colors.white.withValues(alpha: 0.15),
+              highlightColor: Colors.transparent,
+              child: Center(
+                child: widget.loading
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Masuk ke Panel',
+                            style: _iosStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          AnimatedSlide(
+                            offset: _hovered
+                                ? const Offset(0.2, 0)
+                                : Offset.zero,
+                            duration: const Duration(milliseconds: 180),
+                            curve: Curves.easeOut,
+                            child: const Icon(Icons.arrow_forward_rounded,
+                                color: Colors.white, size: 18),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1248,11 +1455,11 @@ class _DemoRoleButtonState extends State<_DemoRoleButton> {
           curve: Curves.easeOut,
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
           decoration: BoxDecoration(
-            color: _hovered ? demo.hoverBg : Colors.white,
+            color: _hovered ? Colors.white.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: _hovered ? demo.hoverBorder : const Color(0x33FFB570),
-              width: 2,
+              color: _hovered ? _orange : Colors.white.withValues(alpha: 0.15),
+              width: 1.5,
             ),
             boxShadow: _hovered
                 ? [
@@ -1288,9 +1495,9 @@ class _DemoRoleButtonState extends State<_DemoRoleButton> {
                 Text(
                   demo.label,
                   style: _iosStyle(
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: _brown700,
+                    color: Colors.white,
                     letterSpacing: -0.1,
                   ),
                 ),

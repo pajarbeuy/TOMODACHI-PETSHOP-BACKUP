@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../dashboard_service.dart';
+import '../../widgets/glass_container.dart';
 
 class SalesData {
   final String day;
@@ -105,18 +106,17 @@ class DashboardTab extends StatefulWidget {
 }
 
 class _DashboardTabState extends State<DashboardTab> {
-  static const _brown900 = Color(0xFF3D2314);
-  static const _brown700 = Color(0xFF6B4F3E);
-  static const _brown400 = Color(0xFF9B7B6B);
-  static const _orange = Color(0xFFFFB570);
-  static const _orangeDark = Color(0xFFFF9A4D);
-  static const _pink = Color(0xFFE07B9E);
-  static const _green = Color(0xFF1B9E85);
-  static const _blue = Color(0xFF4A9FD4);
-  static const _successBg = Color(0xFFB8F2E6);
-  static const _dangerBg = Color(0xFFFFD4D4);
-  static const _pageBg = Color(0xFFFDFBF7);
-
+  static const _brown900 = Colors.white;
+  static const _brown700 = Colors.white70;
+  static const _brown400 = Colors.white54;
+  static const _orange = Color(0xFFB570FF); // Neon Purple
+  static const _orangeDark = Color(0xFFFF5EEA); // Neon Pink
+  static const _pink = Color(0xFFFF5EEA);
+  static const _green = Color(0xFF00F0FF); // Neon Cyan
+  static const _blue = Color(0xFF00F0FF);
+  static const _successBg = Color(0x3300F0FF);
+  static const _dangerBg = Color(0x33FF5EEA);
+  static const _pageBg = Colors.transparent;
 
 
   final NumberFormat _currency = NumberFormat.currency(
@@ -541,10 +541,10 @@ class _DashboardTabState extends State<DashboardTab> {
               value: _analyticsLoading ? 'Memuat...' : formatRp(todaySales),
               sub: 'From $todayTransactions transactions',
               icon: Icons.attach_money,
-              iconColor: _orangeDark,
+              iconColor: _orange,
               trend: todaySalesTrend.round(),
-              gradient: const [Color(0xFFFFF6E9), Color(0xFFFFE8CC)],
-              iconBg: const Color(0x33FFB570),
+              gradient: [Colors.white.withValues(alpha: 0.1), Colors.white.withValues(alpha: 0.02)],
+              iconBg: _orange.withValues(alpha: 0.2),
             ),
             _buildStatCard(
               width: cardWidth,
@@ -556,8 +556,8 @@ class _DashboardTabState extends State<DashboardTab> {
               icon: Icons.shopping_bag_outlined,
               iconColor: _pink,
               trend: transactionsChange,
-              gradient: const [Color(0xFFFFF0F5), Color(0xFFFFE0EC)],
-              iconBg: const Color(0x4DFFC7D1),
+              gradient: [Colors.white.withValues(alpha: 0.1), Colors.white.withValues(alpha: 0.02)],
+              iconBg: _pink.withValues(alpha: 0.2),
             ),
             _buildStatCard(
               width: cardWidth,
@@ -567,8 +567,8 @@ class _DashboardTabState extends State<DashboardTab> {
               icon: Icons.trending_up,
               iconColor: _green,
               trend: monthlyRevenueTrend.round(),
-              gradient: const [Color(0xFFF0FDF9), Color(0xFFD4F5EE)],
-              iconBg: const Color(0x80B8F2E6),
+              gradient: [Colors.white.withValues(alpha: 0.1), Colors.white.withValues(alpha: 0.02)],
+              iconBg: _green.withValues(alpha: 0.2),
             ),
             _buildStatCard(
               width: cardWidth,
@@ -578,8 +578,8 @@ class _DashboardTabState extends State<DashboardTab> {
               icon: Icons.inventory_2_outlined,
               iconColor: _blue,
               trend: -lowStockProducts,
-              gradient: const [Color(0xFFF0FAFE), Color(0xFFD4EFFD)],
-              iconBg: const Color(0x66A0E7E5),
+              gradient: [Colors.white.withValues(alpha: 0.1), Colors.white.withValues(alpha: 0.02)],
+              iconBg: _blue.withValues(alpha: 0.2),
             ),
           ],
         );
@@ -600,27 +600,12 @@ class _DashboardTabState extends State<DashboardTab> {
   }) {
     final positive = trend >= 0;
 
-    return Container(
+    return GlassContainer(
       width: width,
-      constraints: const BoxConstraints(minHeight: 150),
+      glowColor: iconColor,
+      glowIntensity: 0.08,
       padding: const EdgeInsets.all(20),
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.6)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      borderRadius: BorderRadius.circular(16),
       child: Stack(
         children: [
           Positioned(
@@ -706,8 +691,8 @@ class _DashboardTabState extends State<DashboardTab> {
                             size: 11,
                             weight: FontWeight.w900,
                             color: positive
-                                ? const Color(0xFF1B7A65)
-                                : const Color(0xFFC0392B),
+                                ? const Color(0xFF00F0FF) // Cyan
+                                : const Color(0xFFFF5EEA), // Pink
                           ),
                         ),
                       ],
@@ -762,10 +747,9 @@ class _DashboardTabState extends State<DashboardTab> {
       return FlSpot(entry.key.toDouble(), entry.value.sales);
     }).toList();
 
-    return Container(
+    return GlassContainer(
       height: 300,
       padding: const EdgeInsets.all(20),
-      decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -874,7 +858,7 @@ class _DashboardTabState extends State<DashboardTab> {
                 ),
                 lineTouchData: LineTouchData(
                   touchTooltipData: LineTouchTooltipData(
-                    tooltipBgColor: Colors.white,
+                    tooltipBgColor: const Color(0xFF1E1A38),
                     tooltipRoundedRadius: 12,
                     getTooltipItems: (items) => items.map((item) {
                       final data = trendPoints[item.x.toInt()];
@@ -930,9 +914,8 @@ class _DashboardTabState extends State<DashboardTab> {
 
   Widget _buildBestSellersCard() {
     final products = _bestSellerItems();
-    return Container(
+    return GlassContainer(
       padding: const EdgeInsets.all(20),
-      decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1011,8 +994,8 @@ class _DashboardTabState extends State<DashboardTab> {
                       size: 11,
                       weight: FontWeight.w900,
                       color: product.trend >= 0
-                          ? const Color(0xFF1B7A65)
-                          : const Color(0xFFC0392B),
+                          ? const Color(0xFF00F0FF) // Cyan
+                          : const Color(0xFFFF5EEA), // Pink
                     ),
                   ),
                 ],
@@ -1027,8 +1010,8 @@ class _DashboardTabState extends State<DashboardTab> {
   Widget _buildRecentTransactionsCard() {
     final transactions = _liveRecentTransactions;
 
-    return Container(
-      decoration: _cardDecoration(),
+    return GlassContainer(
+      padding: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1141,8 +1124,8 @@ class _DashboardTabState extends State<DashboardTab> {
 
   Widget _buildLowStockCard() {
     final items = _lowStockItems();
-    return Container(
-      decoration: _cardDecoration(),
+    return GlassContainer(
+      padding: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1278,10 +1261,9 @@ class _DashboardTabState extends State<DashboardTab> {
     final interval = (maxY / 5).ceilToDouble();
     final currentYear = DateTime.now().year;
 
-    return Container(
+    return GlassContainer(
       height: 300,
       padding: const EdgeInsets.all(20),
-      decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1323,7 +1305,7 @@ class _DashboardTabState extends State<DashboardTab> {
                     barTouchData: BarTouchData(
                       enabled: true,
                       touchTooltipData: BarTouchTooltipData(
-                        tooltipBgColor: Colors.white,
+                        tooltipBgColor: const Color(0xFF1E1A38),
                         tooltipRoundedRadius: 12,
                         getTooltipItem: (group, groupIndex, rod, rodIndex) {
                           if (group.x.toInt() >= chartData.length) return null;
@@ -1443,8 +1425,9 @@ class _DashboardTabState extends State<DashboardTab> {
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: selected ? _orange : const Color(0xFFFFF0E0),
+            color: selected ? _orange.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: selected ? _orange : Colors.transparent),
           ),
           child: Text(
             label,
@@ -1459,20 +1442,7 @@ class _DashboardTabState extends State<DashboardTab> {
     );
   }
 
-  BoxDecoration _cardDecoration() {
-    return BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: _orange.withValues(alpha: 0.12)),
-      boxShadow: [
-        BoxShadow(
-          color: _orangeDark.withValues(alpha: 0.08),
-          blurRadius: 16,
-          offset: const Offset(0, 2),
-        ),
-      ],
-    );
-  }
+  // _cardDecoration() removed since we use GlassContainer now
 
   static TextStyle _text({
     required double size,

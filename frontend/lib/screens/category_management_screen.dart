@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../category_service.dart';
 import '../utils/error_message.dart';
+import '../widgets/glass_container.dart';
 
 class CategoryManagementScreen extends StatefulWidget {
   final CategoryService categoryService;
@@ -146,15 +147,21 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus kategori'),
-        content: Text('Hapus kategori "${category['name']}"?'),
+        backgroundColor: const Color(0xFF1E1A38),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        title: const Text('Hapus kategori', style: TextStyle(color: Colors.white)),
+        content: Text('Hapus kategori "${category['name']}"?', style: const TextStyle(color: Colors.white70)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
+            child: const Text('Batal', style: TextStyle(color: Colors.white70)),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Hapus'),
           ),
         ],
@@ -178,9 +185,16 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     return TextField(
       controller: controller,
       maxLines: maxLines,
+      style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        labelStyle: const TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.05),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
       ),
     );
   }
@@ -188,7 +202,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFDF9),
+      backgroundColor: Colors.transparent,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
         icon: const Icon(Icons.add),
@@ -204,12 +218,14 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                 separatorBuilder: (_, __) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final category = _categories[index];
-                  return Card(
+                  return GlassContainer(
+                    padding: EdgeInsets.zero,
                     child: ListTile(
-                      leading: const Icon(Icons.category_outlined),
-                      title: Text(category['name']?.toString() ?? '-'),
+                      leading: const Icon(Icons.category_outlined, color: Color(0xFFB570FF)),
+                      title: Text(category['name']?.toString() ?? '-', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       subtitle: Text(
                         '${category['animal_type']} / ${category['sub_category']}',
+                        style: const TextStyle(color: Colors.white70),
                       ),
                       trailing: Wrap(
                         spacing: 4,
@@ -217,12 +233,12 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                           IconButton(
                             tooltip: 'Edit',
                             onPressed: () => _openForm(category),
-                            icon: const Icon(Icons.edit_outlined),
+                            icon: const Icon(Icons.edit_outlined, color: Colors.white),
                           ),
                           IconButton(
                             tooltip: 'Hapus',
                             onPressed: () => _delete(category),
-                            icon: const Icon(Icons.delete_outline),
+                            icon: const Icon(Icons.delete_outline, color: Colors.red),
                           ),
                         ],
                       ),

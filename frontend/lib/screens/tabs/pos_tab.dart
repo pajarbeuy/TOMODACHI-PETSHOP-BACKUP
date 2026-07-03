@@ -9,6 +9,7 @@ import '../../product_service.dart';
 import '../../transaction_service.dart';
 import '../../utils/currency_formatter.dart';
 import '../../utils/error_message.dart';
+import '../../widgets/glass_container.dart';
 
 class PosTab extends StatefulWidget {
   final ProductService productService;
@@ -29,7 +30,7 @@ class _PosTabState extends State<PosTab> {
   TextStyle _plusJakarta({
     double fontSize = 14,
     FontWeight fontWeight = FontWeight.w500,
-    Color color = const Color(0xFF3D2314),
+    Color color = Colors.white,
     double letterSpacing = -0.3,
   }) => GoogleFonts.plusJakartaSans(
     fontSize: fontSize,
@@ -903,12 +904,10 @@ class _PosTabState extends State<PosTab> {
 
         // Right Column: Shopping Cart (Only in wide layouts, otherwise drawer/overlay can be used)
         if (isWide)
-          Container(
-            width: screenWidth * 0.32,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(left: BorderSide(color: Colors.grey.shade200)),
-            ),
+          GlassContainer(
+            width: 320,
+            glowColor: const Color(0xFFB570FF),
+            glowIntensity: 0.05,
             child: _buildCartPanel(),
           ),
       ],
@@ -920,7 +919,7 @@ class _PosTabState extends State<PosTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -940,7 +939,7 @@ class _PosTabState extends State<PosTab> {
                 bottom: keyboardHeight,
               ),
               child: SafeArea(
-                child: SizedBox(
+                child: GlassContainer(
                   height: sheetHeight.toDouble(),
                   child: _buildCartPanel(),
                 ),
@@ -978,14 +977,14 @@ class _PosTabState extends State<PosTab> {
                     onPressed: _searchCtrl.clear,
                   ),
             filled: true,
-            fillColor: const Color(0xFFFFF9F2),
+            fillColor: Colors.white.withValues(alpha: 0.05),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 14,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
             ),
           ),
         ),
@@ -995,8 +994,8 @@ class _PosTabState extends State<PosTab> {
             borderRadius: BorderRadius.circular(999),
             child: const LinearProgressIndicator(
               minHeight: 3,
-              backgroundColor: Color(0xFFFFF3E6),
-              color: Color(0xFFFFB570),
+              backgroundColor: Colors.transparent,
+              color: Color(0xFFB570FF), // Neon Purple
             ),
           ),
         ],
@@ -1035,18 +1034,18 @@ class _PosTabState extends State<PosTab> {
           style: _plusJakarta(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? Colors.white : const Color(0xFF3D2314),
+            color: isSelected ? Colors.white : Colors.white70,
           ),
         ),
         selected: isSelected,
-        selectedColor: const Color(0xFFFFB570),
-        backgroundColor: const Color(0xFFFFFDFB),
+        selectedColor: const Color(0xFFB570FF), // Neon Purple
+        backgroundColor: Colors.white.withValues(alpha: 0.05),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(999),
           side: BorderSide(
             color: isSelected
-                ? const Color(0xFFFFB570)
-                : const Color(0x33FFB570),
+                ? const Color(0xFFB570FF)
+                : Colors.white.withValues(alpha: 0.1),
           ),
         ),
         onSelected: (selected) {
@@ -1109,13 +1108,9 @@ class _PosTabState extends State<PosTab> {
                 ? widget.productService.resolveImageUrl(img)
                 : null;
 
-            return Card(
-              color: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: Colors.grey.shade100),
-              ),
+            return GlassContainer(
+              padding: EdgeInsets.zero,
+              borderRadius: BorderRadius.circular(16),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
                 onTap: () => _addToCart(prod),
@@ -1126,7 +1121,7 @@ class _PosTabState extends State<PosTab> {
                       aspectRatio: 1.22,
                       child: Container(
                         width: double.infinity,
-                        color: const Color(0xFFFFFDF9),
+                        color: Colors.transparent,
                         child: imageUrl != null
                             ? CachedNetworkImage(
                                 imageUrl: imageUrl,
@@ -1240,6 +1235,7 @@ class _PosTabState extends State<PosTab> {
                     style: _plusJakarta(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
                 ],
@@ -1250,7 +1246,7 @@ class _PosTabState extends State<PosTab> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3E6),
+                  color: Colors.white.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -1304,9 +1300,9 @@ class _PosTabState extends State<PosTab> {
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFFDFB),
+                        color: Colors.white.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFFFF3E5)),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                       ),
                       child: Row(
                         children: [
@@ -1422,10 +1418,10 @@ class _PosTabState extends State<PosTab> {
                     labelStyle: _plusJakarta(fontSize: 12, color: Colors.grey),
                     prefixText: 'Rp ',
                     filled: true,
-                    fillColor: const Color(0xFFFFFDF9),
+                    fillColor: Colors.white.withValues(alpha: 0.05),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFFB570)),
+                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
                     ),
                   ),
                 ),

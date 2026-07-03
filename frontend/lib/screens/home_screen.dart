@@ -15,6 +15,7 @@ import '../ai_chat_service.dart';
 import 'owner_accounts_screen.dart';
 import 'category_management_screen.dart';
 import '../widgets/app_logo.dart';
+import '../widgets/glass_container.dart';
 
 class HomeScreen extends StatefulWidget {
   final AuthService authService;
@@ -188,35 +189,40 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFDF9),
+      backgroundColor: const Color(0xFF0F0C29), // Dark background
       appBar: _buildAppBar(user?.name ?? 'Pengguna', role),
       body: isWide
           ? Row(
               children: [
                 // Premium Sidebar
                 _buildSidebar(items),
-                const VerticalDivider(width: 1, thickness: 1),
                 // Core screen content
                 Expanded(child: tabBody),
               ],
             )
           : tabBody,
       bottomNavigationBar: !isWide
-          ? BottomNavigationBar(
-              currentIndex: _currentIndex,
-              selectedItemColor: const Color(0xFFFFB570),
-              unselectedItemColor: const Color(0xFF9E8F85),
-              showUnselectedLabels: true,
-              type: BottomNavigationBarType.fixed,
-              selectedLabelStyle: _styleNav11,
-              unselectedLabelStyle: _styleNavUnsel11,
-              onTap: (index) => setState(() => _currentIndex = index),
-              items: items.map((item) {
-                return BottomNavigationBarItem(
-                  icon: Icon(item.icon),
-                  label: _compactNavLabel(item.label),
-                );
-              }).toList(),
+          ? Container(
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+              ),
+              child: BottomNavigationBar(
+                backgroundColor: const Color(0xFF1E1A38),
+                currentIndex: _currentIndex,
+                selectedItemColor: const Color(0xFFB570FF), // Neon Purple
+                unselectedItemColor: Colors.white54,
+                showUnselectedLabels: true,
+                type: BottomNavigationBarType.fixed,
+                selectedLabelStyle: _styleNav11,
+                unselectedLabelStyle: _styleNavUnsel11,
+                onTap: (index) => setState(() => _currentIndex = index),
+                items: items.map((item) {
+                  return BottomNavigationBarItem(
+                    icon: Icon(item.icon),
+                    label: _compactNavLabel(item.label),
+                  );
+                }).toList(),
+              ),
             )
           : null,
     );
@@ -263,8 +269,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0.5,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       titleSpacing: isCompact ? 12 : 16,
       title: Row(
         children: [
@@ -278,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: _plusJakarta(
                 fontSize: isCompact ? 15 : 16,
                 fontWeight: FontWeight.w900,
-                color: const Color(0xFF3D2314),
+                color: Colors.white,
               ),
             ),
           ),
@@ -302,6 +308,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: _plusJakarta(
                       fontSize: isCompact ? 12 : 13,
                       fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -356,56 +363,69 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSidebar(List<_NavigationItem> items) {
     return Container(
       width: 250,
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
-      child: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                final isSelected = _currentIndex == index;
+      margin: const EdgeInsets.only(right: 16),
+      child: GlassContainer(
+        borderRadius: const BorderRadius.only(
+          topRight: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+        glowColor: const Color(0xFFB570FF),
+        glowIntensity: 0.05,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    final isSelected = _currentIndex == index;
 
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: ListTile(
-                    selected: isSelected,
-                    selectedTileColor: const Color(0xFFFFF2E6),
-                    iconColor: const Color(0xFF9E8F85),
-                    selectedColor: const Color(0xFFFF9A4D),
-                    leading: Icon(item.icon),
-                    title: Text(
-                      item.label,
-                      style: _plusJakarta(
-                        fontSize: 13,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.w500,
-                        color: isSelected
-                            ? const Color(0xFFFF9A4D)
-                            : const Color(0xFF3D2314),
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: ListTile(
+                        selected: isSelected,
+                        selectedTileColor: const Color(0xFFB570FF).withValues(alpha: 0.15),
+                        iconColor: Colors.white54,
+                        selectedColor: const Color(0xFFB570FF),
+                        leading: Icon(item.icon),
+                        title: Text(
+                          item.label,
+                          style: _plusJakarta(
+                            fontSize: 13,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? const Color(0xFFB570FF)
+                                : Colors.white70,
+                          ),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: isSelected
+                              ? BorderSide(color: const Color(0xFFB570FF).withValues(alpha: 0.3))
+                              : BorderSide.none,
+                        ),
+                        onTap: () => setState(() => _currentIndex = index),
                       ),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    onTap: () => setState(() => _currentIndex = index),
-                  ),
-                );
-              },
-            ),
+                    );
+                  },
+                ),
+              ),
+              // Footer
+              Divider(color: Colors.white.withValues(alpha: 0.1)),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  'Tomodachi POS v1.0',
+                  style: _plusJakarta(fontSize: 11, color: Colors.white38),
+                ),
+              ),
+            ],
           ),
-          // Footer
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              'Tomodachi POS v1.0',
-              style: _plusJakarta(fontSize: 11, color: Colors.grey.shade400),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

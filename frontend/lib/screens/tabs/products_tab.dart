@@ -8,6 +8,7 @@ import '../../product_image_picker.dart';
 import '../../product_service.dart';
 import '../../utils/currency_formatter.dart';
 import '../../utils/error_message.dart';
+import '../../widgets/glass_container.dart';
 
 class ProductsTab extends StatefulWidget {
   final ProductService productService;
@@ -28,7 +29,7 @@ class _ProductsTabState extends State<ProductsTab> {
   TextStyle _plusJakarta({
     double fontSize = 14,
     FontWeight fontWeight = FontWeight.w500,
-    Color color = const Color(0xFF3D2314),
+    Color color = Colors.white,
     double letterSpacing = 0,
   }) => GoogleFonts.plusJakartaSans(
     fontSize: fontSize,
@@ -821,10 +822,10 @@ class _ProductsTabState extends State<ProductsTab> {
         hintText: 'Cari nama atau SKU...',
         prefixIcon: const Icon(Icons.search, color: Color(0xFFFFB570)),
         filled: true,
-        fillColor: const Color(0xFFFFF9F2),
+        fillColor: Colors.white.withValues(alpha: 0.05),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
         ),
       ),
     );
@@ -835,8 +836,9 @@ class _ProductsTabState extends State<ProductsTab> {
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF9F2),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -898,8 +900,9 @@ class _ProductsTabState extends State<ProductsTab> {
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF9F2),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -961,8 +964,8 @@ class _ProductsTabState extends State<ProductsTab> {
           return ChoiceChip(
             showCheckmark: false,
             selected: selected,
-            selectedColor: const Color(0xFFFFB570),
-            backgroundColor: const Color(0xFFFFFDFB),
+            selectedColor: const Color(0xFFB570FF),
+            backgroundColor: Colors.white.withValues(alpha: 0.05),
             labelPadding: const EdgeInsets.symmetric(horizontal: 10),
             label: Text(
               label,
@@ -972,15 +975,15 @@ class _ProductsTabState extends State<ProductsTab> {
               style: _plusJakarta(
                 fontSize: 13,
                 fontWeight: selected ? FontWeight.bold : FontWeight.w500,
-                color: selected ? Colors.white : const Color(0xFF3D2314),
+                color: selected ? Colors.white : Colors.white70,
               ),
             ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(999),
               side: BorderSide(
                 color: selected
-                    ? const Color(0xFFFFB570)
-                    : const Color(0x33FFB570),
+                    ? const Color(0xFFB570FF)
+                    : Colors.white.withValues(alpha: 0.1),
               ),
             ),
             onSelected: (_) {
@@ -1039,13 +1042,9 @@ class _ProductsTabState extends State<ProductsTab> {
             : null;
         final buyPrice = isOwner ? parseCurrency(prod['buy_price']) : null;
 
-        return Card(
-          color: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.grey.shade100),
-          ),
+        return GlassContainer(
+          padding: EdgeInsets.zero,
+          borderRadius: BorderRadius.circular(16),
           margin: const EdgeInsets.only(bottom: 10),
           child: Padding(
             padding: const EdgeInsets.all(12),
@@ -1056,7 +1055,7 @@ class _ProductsTabState extends State<ProductsTab> {
                   width: isCompact ? 54 : 58,
                   height: isCompact ? 54 : 58,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFFDF9),
+                    color: Colors.transparent,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: imageUrl != null
@@ -1132,8 +1131,8 @@ class _ProductsTabState extends State<ProductsTab> {
                       ),
                       decoration: BoxDecoration(
                         color: isLowStock
-                            ? const Color(0xFFFFF0F1)
-                            : const Color(0xFFF0FDF4),
+                            ? const Color(0x33FF6B6B)
+                            : const Color(0x331B9E85),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(

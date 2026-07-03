@@ -42,18 +42,18 @@ class _AiChatScreenState extends State<AiChatScreen>
   ];
 
   // Color palette
-  static const _bg = Color(0xFF0F1117);
-  static const _surface = Color(0xFF1A1D27);
-  static const _chatSection = Color(0xFF1E2230);
-  static const _restockSection = Color(0xFF151922);
-  static const _card = Color(0xFF212435);
-  static const _accent = Color(0xFFFFB570);
-  static const _accentDark = Color(0xFFFF9A4D);
-  static const _userBubble = Color(0xFFFF9A4D);
-  static const _aiBubble = Color(0xFF2A2D3E);
-  static const _textPrimary = Color(0xFFF0EEF5);
-  static const _textSecondary = Color(0xFF9896A4);
-  static const _divider = Color(0xFF2E3145);
+  static const _bg = Colors.transparent;
+  static const _surface = Color(0x1AFFFFFF); // Light transparent surface
+  static const _chatSection = Colors.transparent;
+  static const _restockSection = Color(0x331E1A38);
+  static const _card = Color(0x1AFFFFFF);
+  static const _accent = Color(0xFFB570FF);
+  static const _accentDark = Color(0xFF9050FF);
+  static const _userBubble = Color(0xFFB570FF);
+  static const _aiBubble = Color(0x1AFFFFFF);
+  static const _textPrimary = Colors.white;
+  static const _textSecondary = Colors.white70;
+  static const _divider = Color(0x33FFFFFF);
 
   TextStyle _font({
     double size = 14,
@@ -84,12 +84,12 @@ class _AiChatScreenState extends State<AiChatScreen>
     return ChatMessage(
       role: 'assistant',
       content:
-          'Halo! Saya **Tommi** 🐾, asisten AI Tomodachi Pet Shop.\n\n'
+          'Halo! Saya **Tommi**, asisten AI Tomodachi Pet Shop.\n\n'
           'Saya siap membantu kamu menganalisis:\n'
-          '• 📦 Status stok & rekomendasi restock\n'
-          '• 💰 Laporan penjualan & pendapatan\n'
-          '• 🏆 Performa produk terlaris\n'
-          '• 📊 Insight bisnis petshop\n\n'
+          '• Status stok & rekomendasi restock\n'
+          '• Laporan penjualan & pendapatan\n'
+          '• Performa produk terlaris\n'
+          '• Insight bisnis petshop\n\n'
           'Ada yang bisa saya bantu?',
       timestamp: DateTime.now(),
     );
@@ -231,11 +231,11 @@ class _AiChatScreenState extends State<AiChatScreen>
         message.contains('API key tidak dikonfigurasi');
 
     if (needsConfigHint) {
-      return '⚠️ Terjadi kesalahan: $message\n\n'
+      return 'Terjadi kesalahan: $message\n\n'
           'Pastikan OPENROUTER_API_KEY sudah dikonfigurasi di backend.';
     }
 
-    return '⚠️ Terjadi kesalahan: $message';
+    return 'Terjadi kesalahan: $message';
   }
 
   Future<void> _loadRestockData() async {
@@ -377,14 +377,14 @@ class _AiChatScreenState extends State<AiChatScreen>
                 height: isCompact ? 40 : 42,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFFFB570), Color(0xFFFF6B35)],
+                    colors: [Color(0xFFB570FF), Color(0xFFFF5EEA)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Center(
-                  child: Text('🐾', style: TextStyle(fontSize: 20)),
+                  child: Icon(Icons.auto_awesome, color: Colors.white, size: 20),
                 ),
               ),
               const SizedBox(width: 12),
@@ -535,12 +535,12 @@ class _AiChatScreenState extends State<AiChatScreen>
               height: 32,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFFB570), Color(0xFFFF6B35)],
+                  colors: [Color(0xFFB570FF), Color(0xFFFF5EEA)],
                 ),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Center(
-                child: Text('🐾', style: TextStyle(fontSize: 14)),
+                child: Icon(Icons.auto_awesome, color: Colors.white, size: 16),
               ),
             ),
             const SizedBox(width: 8),
@@ -657,12 +657,12 @@ class _AiChatScreenState extends State<AiChatScreen>
             height: 32,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFFFB570), Color(0xFFFF6B35)],
+                colors: [Color(0xFFB570FF), Color(0xFFFF5EEA)],
               ),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Center(
-              child: Text('🐾', style: TextStyle(fontSize: 14)),
+              child: Icon(Icons.auto_awesome, color: Colors.white, size: 16),
             ),
           ),
           const SizedBox(width: 8),

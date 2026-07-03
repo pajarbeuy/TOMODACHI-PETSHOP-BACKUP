@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../auth_service.dart';
+import '../widgets/glass_container.dart';
 
 // ── Colors ───────────────────────────────────────────────────────────────────
 const _brown900 = Color(0xFF3D2314);
@@ -16,11 +16,10 @@ const _borderLight = Color(0x4DFFB570);
 const _success = Color(0xFF4CAF50);
 const _error = Color(0xFFE53935);
 
-// ── TextStyle helpers ────────────────────────────────────────────────────────
 TextStyle _iosStyle({
   double fontSize = 14,
   FontWeight fontWeight = FontWeight.w500,
-  Color color = _brown900,
+  Color color = Colors.white,
   double letterSpacing = -0.3,
   double height = 1.4,
 }) =>
@@ -138,12 +137,9 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          child: Container(
-            decoration: const BoxDecoration(
-              color: _bgPage,
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
+          child: GlassContainer(
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(24),
             ),
             padding: const EdgeInsets.all(24),
             child: SingleChildScrollView(
@@ -160,7 +156,7 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
                           style: _iosStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
-                            color: _brown900,
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -374,15 +370,21 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus akun'),
-        content: Text('Hapus ${account.name}?'),
+        backgroundColor: const Color(0xFF1E1A38),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        title: const Text('Hapus akun', style: TextStyle(color: Colors.white)),
+        content: Text('Hapus ${account.name}?', style: const TextStyle(color: Colors.white70)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
+            child: const Text('Batal', style: TextStyle(color: Colors.white70)),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Hapus'),
           ),
         ],
@@ -396,7 +398,7 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bgPage,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _load,
@@ -405,7 +407,7 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
             slivers: [
               // Header
               SliverAppBar(
-                backgroundColor: _bgPage,
+                backgroundColor: Colors.transparent,
                 elevation: 0,
                 pinned: true,
                 expandedHeight: 120,
@@ -421,7 +423,7 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
                           style: _iosStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
-                            color: _brown900,
+                            color: Colors.white,
                           ),
                         ),
                         Text(
@@ -429,7 +431,7 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
                           style: _iosStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
-                            color: _brown400,
+                            color: Colors.white70,
                           ),
                         ),
                       ],
@@ -584,21 +586,21 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
         hintStyle: _iosStyle(
           fontSize: 14,
           fontWeight: FontWeight.w400,
-          color: _brown200,
+          color: Colors.white54,
         ),
         filled: true,
-        fillColor: _bgInput,
+        fillColor: Colors.white.withValues(alpha: 0.05),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _borderLight, width: 2),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _borderLight, width: 2),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -623,21 +625,21 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
         hintStyle: _iosStyle(
           fontSize: 14,
           fontWeight: FontWeight.w400,
-          color: _brown200,
+          color: Colors.white54,
         ),
         filled: true,
-        fillColor: _bgInput,
+        fillColor: Colors.white.withValues(alpha: 0.05),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _borderLight, width: 2),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _borderLight, width: 2),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -660,9 +662,9 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: _borderLight, width: 2),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
         borderRadius: BorderRadius.circular(12),
-        color: _bgInput,
+        color: Colors.white.withValues(alpha: 0.05),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -686,7 +688,8 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
           isDense: true,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           style: _iosStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          icon: const Icon(Icons.keyboard_arrow_down, color: _brown400),
+          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
+          dropdownColor: const Color(0xFF1E1A38),
         ),
       ),
     );
@@ -701,22 +704,22 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
         hintStyle: _iosStyle(
           fontSize: 14,
           fontWeight: FontWeight.w400,
-          color: _brown200,
+          color: Colors.white54,
         ),
-        prefixIcon: const Icon(Icons.search, color: _brown400),
+        prefixIcon: const Icon(Icons.search, color: Colors.white54),
         filled: true,
-        fillColor: _bgInput,
+        fillColor: Colors.white.withValues(alpha: 0.05),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _borderLight, width: 2),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _borderLight, width: 2),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -727,45 +730,35 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
   }
 
   Widget _buildAccountCard(AccountModel account) {
-    final roleEmoji = {
-      'owner': '👑',
-      'admin': '🔑',
-      'kasir': '💳',
+    final roleIcon = {
+      'owner': Icons.admin_panel_settings,
+      'admin': Icons.vpn_key,
+      'kasir': Icons.point_of_sale,
     };
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _borderLight, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+      child: GlassContainer(
+        padding: const EdgeInsets.all(16),
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
                 children: [
                   Container(
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: _bgPage,
+                      color: Colors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                     ),
                     child: Center(
-                      child: Text(
-                        roleEmoji[account.roleName] ?? '👤',
-                        style: const TextStyle(fontSize: 24),
+                      child: Icon(
+                        roleIcon[account.roleName] ?? Icons.person,
+                        size: 24,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -779,7 +772,7 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
                           style: _iosStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: _brown900,
+                            color: Colors.white,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -850,7 +843,8 @@ class _OwnerAccountsScreenState extends State<OwnerAccountsScreen> {
                           ),
                         ),
                       ],
-                      icon: const Icon(Icons.more_vert, color: _brown400),
+                      icon: const Icon(Icons.more_vert, color: Colors.white70),
+                      color: const Color(0xFF1E1A38),
                     ),
                 ],
               ),
