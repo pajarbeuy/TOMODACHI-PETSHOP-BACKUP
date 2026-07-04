@@ -4,6 +4,13 @@ import 'dart:typed_data';
 
 import 'package:web/web.dart' as web;
 
+class ReportExportResult {
+  final bool success;
+  final String message;
+
+  const ReportExportResult({required this.success, required this.message});
+}
+
 web.Blob _textBlob(String content, String mimeType) {
   final bytes = Uint8List.fromList(utf8.encode(content));
   return web.Blob(
@@ -12,11 +19,11 @@ web.Blob _textBlob(String content, String mimeType) {
   );
 }
 
-bool downloadReportFile({
+Future<ReportExportResult> downloadReportFile({
   required String fileName,
   required String mimeType,
   required String content,
-}) {
+}) async {
   final blob = _textBlob(content, mimeType);
   final url = web.URL.createObjectURL(blob);
   final anchor = web.document.createElement('a') as web.HTMLAnchorElement;
@@ -30,12 +37,21 @@ bool downloadReportFile({
   anchor.click();
   anchor.remove();
   web.URL.revokeObjectURL(url);
-  return true;
+  return ReportExportResult(
+    success: true,
+    message: 'File $fileName berhasil dibuat.',
+  );
 }
 
-bool openPrintableReport({required String title, required String htmlContent}) {
+Future<ReportExportResult> openPrintableReport({
+  required String title,
+  required String htmlContent,
+}) async {
   final blob = _textBlob(htmlContent, 'text/html;charset=utf-8');
   final url = web.URL.createObjectURL(blob);
   web.window.open(url, '_blank');
-  return true;
+  return const ReportExportResult(
+    success: true,
+    message: 'Laporan PDF dibuka. Pilih "Save as PDF" di dialog print.',
+  );
 }

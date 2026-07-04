@@ -418,33 +418,25 @@ class _DashboardTabState extends State<DashboardTab> {
     await _refreshReportDataForExport();
     if (!mounted) return;
 
-    final opened = openPrintableReport(
+    final result = await openPrintableReport(
       title: 'Laporan Penjualan Tomodachi',
       htmlContent: _buildPrintableReportHtml(),
     );
 
-    _showExportSnack(
-      opened
-          ? 'Laporan PDF dibuka. Pilih "Save as PDF" di dialog print.'
-          : 'Export PDF hanya tersedia di Flutter Web untuk saat ini.',
-    );
+    _showExportSnack(result.message);
   }
 
   Future<void> _exportSalesReportExcel() async {
     await _refreshReportDataForExport();
     if (!mounted) return;
 
-    final downloaded = downloadReportFile(
+    final result = await downloadReportFile(
       fileName: 'laporan-penjualan-tomodachi-$_exportDateStamp.xls',
       mimeType: 'application/vnd.ms-excel;charset=utf-8',
       content: _buildExcelReportHtml(),
     );
 
-    _showExportSnack(
-      downloaded
-          ? 'File Excel laporan penjualan berhasil dibuat.'
-          : 'Export Excel hanya tersedia di Flutter Web untuk saat ini.',
-    );
+    _showExportSnack(result.message);
   }
 
   void _showExportSnack(String message) {
@@ -1158,9 +1150,12 @@ class _DashboardTabState extends State<DashboardTab> {
 
   Widget _buildSalesTrendCard() {
     final trendPoints = _buildSalesTrendPoints();
-    final maxSales = trendPoints
-        .map((item) => item.sales)
-        .reduce((value, item) => value > item ? value : item);
+    final hasTrendData = trendPoints.isNotEmpty;
+    final maxSales = hasTrendData
+        ? trendPoints
+              .map((item) => item.sales)
+              .reduce((value, item) => value > item ? value : item)
+        : 0.0;
     final maxY = (maxSales * 1.2).clamp(1000000.0, double.infinity);
     final leftInterval = maxY / 4;
     final spots = trendPoints.asMap().entries.map((entry) {
@@ -1226,119 +1221,135 @@ class _DashboardTabState extends State<DashboardTab> {
           ),
           const SizedBox(height: 16),
           Expanded(
-            child: LineChart(
-              LineChartData(
-                minX: 0,
-                maxX: (trendPoints.length - 1).toDouble(),
-                minY: 0,
-                maxY: maxY,
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  getDrawingHorizontalLine: (_) => FlLine(
-                    color: _orange.withValues(alpha: 0.15),
-                    strokeWidth: 1,
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 28,
-                      interval: 1,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index < 0 ||
-                            index >= trendPoints.length ||
-                            !_showTrendDateLabel(index, trendPoints.length)) {
-                          return const SizedBox.shrink();
-                        }
-                        return SideTitleWidget(
-                          axisSide: meta.axisSide,
-                          space: 8,
-                          child: SizedBox(
-                            width: 44,
-                            child: Text(
-                              _formatTrendDate(trendPoints[index].date),
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.visible,
+            child: hasTrendData
+                ? LineChart(
+                    LineChartData(
+                      minX: 0,
+                      maxX: (trendPoints.length - 1).toDouble(),
+                      minY: 0,
+                      maxY: maxY,
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        getDrawingHorizontalLine: (_) => FlLine(
+                          color: _orange.withValues(alpha: 0.15),
+                          strokeWidth: 1,
+                        ),
+                      ),
+                      borderData: FlBorderData(show: false),
+                      titlesData: FlTitlesData(
+                        topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 28,
+                            interval: 1,
+                            getTitlesWidget: (value, meta) {
+                              final index = value.toInt();
+                              if (index < 0 ||
+                                  index >= trendPoints.length ||
+                                  !_showTrendDateLabel(
+                                    index,
+                                    trendPoints.length,
+                                  )) {
+                                return const SizedBox.shrink();
+                              }
+                              return SideTitleWidget(
+                                axisSide: meta.axisSide,
+                                space: 8,
+                                child: SizedBox(
+                                  width: 44,
+                                  child: Text(
+                                    _formatTrendDate(trendPoints[index].date),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.visible,
+                                    style: _text(size: 10, color: _brown400),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 46,
+                            interval: leftInterval,
+                            getTitlesWidget: (value, meta) => Text(
+                              '${(value / 1000000).toStringAsFixed(1)}jt',
                               style: _text(size: 10, color: _brown400),
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 46,
-                      interval: leftInterval,
-                      getTitlesWidget: (value, meta) => Text(
-                        '${(value / 1000000).toStringAsFixed(1)}jt',
-                        style: _text(size: 10, color: _brown400),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
-                lineTouchData: LineTouchData(
-                  touchTooltipData: LineTouchTooltipData(
-                    tooltipBgColor: Colors.white,
-                    tooltipRoundedRadius: 12,
-                    getTooltipItems: (items) => items.map((item) {
-                      final data = trendPoints[item.x.toInt()];
-                      return LineTooltipItem(
-                        '${_formatTrendDate(data.date)}\n${formatRpFull(data.sales)}\n${data.transactions} transactions',
-                        _text(size: 11, weight: FontWeight.w800),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: spots,
-                    isCurved: true,
-                    barWidth: 2.5,
-                    color: _orange,
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          _orange.withValues(alpha: 0.30),
-                          _orange.withValues(alpha: 0.02),
-                        ],
+                      lineTouchData: LineTouchData(
+                        touchTooltipData: LineTouchTooltipData(
+                          tooltipBgColor: Colors.white,
+                          tooltipRoundedRadius: 12,
+                          getTooltipItems: (items) => items.map((item) {
+                            final data = trendPoints[item.x.toInt()];
+                            return LineTooltipItem(
+                              '${_formatTrendDate(data.date)}\n${formatRpFull(data.sales)}\n${data.transactions} transactions',
+                              _text(size: 11, weight: FontWeight.w800),
+                            );
+                          }).toList(),
+                        ),
                       ),
-                    ),
-                    dotData: FlDotData(
-                      show: true,
-                      checkToShowDot: (spot, barData) {
-                        final index = spot.x.toInt();
-                        return trendPoints.length <= 30 ||
-                            _showTrendDateLabel(index, trendPoints.length);
-                      },
-                      getDotPainter: (spot, percent, bar, index) {
-                        return FlDotCirclePainter(
-                          radius: 4,
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: spots,
+                          isCurved: true,
+                          barWidth: 2.5,
                           color: _orange,
-                          strokeWidth: 2,
-                          strokeColor: Colors.white,
-                        );
-                      },
+                          belowBarData: BarAreaData(
+                            show: true,
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                _orange.withValues(alpha: 0.30),
+                                _orange.withValues(alpha: 0.02),
+                              ],
+                            ),
+                          ),
+                          dotData: FlDotData(
+                            show: true,
+                            checkToShowDot: (spot, barData) {
+                              final index = spot.x.toInt();
+                              return trendPoints.length <= 30 ||
+                                  _showTrendDateLabel(
+                                    index,
+                                    trendPoints.length,
+                                  );
+                            },
+                            getDotPainter: (spot, percent, bar, index) {
+                              return FlDotCirclePainter(
+                                radius: 4,
+                                color: _orange,
+                                strokeWidth: 2,
+                                strokeColor: Colors.white,
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Center(
+                    child: Text(
+                      _analyticsLoading
+                          ? 'Memuat tren penjualan...'
+                          : 'Belum ada data tren penjualan.',
+                      textAlign: TextAlign.center,
+                      style: _text(size: 12, color: _brown400),
                     ),
                   ),
-                ],
-              ),
-            ),
           ),
         ],
       ),
