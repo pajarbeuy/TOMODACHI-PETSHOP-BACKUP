@@ -2,22 +2,29 @@ package com.example.frontendd
 
 import android.content.ContentValues
 import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import android.text.Html
+import android.view.View
+import android.view.ViewGroup
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.math.ceil
+import kotlin.math.max
 
 class MainActivity : FlutterActivity() {
     private val exportChannel = "tomodachi/report_exporter"
+    private val pdfPageWidth = 595
+    private val pdfPageHeight = 842
+    private val pdfPageMargin = 51
+    private val pdfRenderWidth = 794
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -43,7 +50,6 @@ class MainActivity : FlutterActivity() {
                 }
                 "savePdfToDownloads" -> {
                     val fileName = call.argument<String>("fileName")
-                    val title = call.argument<String>("title") ?: "Laporan Penjualan Tomodachi"
                     val htmlContent = call.argument<String>("htmlContent")
 
                     if (fileName.isNullOrBlank() || htmlContent == null) {
@@ -51,13 +57,7 @@ class MainActivity : FlutterActivity() {
                         return@setMethodCallHandler
                     }
 
-                    try {
-                        val pdfBytes = createPdfBytes(title, htmlContent)
-                        val savedPath = saveBytesToDownloads(fileName, "application/pdf", pdfBytes)
-                        result.success(savedPath)
-                    } catch (e: Exception) {
-                        result.error("PDF_SAVE_FAILED", e.message ?: "Gagal menyimpan PDF.", null)
-                    }
+                    saveHtmlPdfToDownloads(fileName, htmlContent, result)
                 }
                 else -> result.notImplemented()
             }
@@ -107,103 +107,156 @@ class MainActivity : FlutterActivity() {
         return file.absolutePath
     }
 
-    private fun createPdfBytes(title: String, htmlContent: String): ByteArray {
-        val document = PdfDocument()
-        val pageWidth = 595
-        val pageHeight = 842
-        val margin = 36f
-        val contentWidth = pageWidth - (margin * 2)
-        val lineHeight = 15f
-        val titleHeight = 28f
+    private fun saveHtmlPdfToDownloads(
+        fileName: String,
+        htmlContent: String,
+        result: MethodChannel.Result
+    ) {
+        runOnUiThread {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                WebView.enableSlowWholeDocumentDraw()
+            }
+            val webView = WebView(this)
+            var completed = false
 
-        val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.rgb(61, 35, 20)
-            textSize = 18f
-            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        }
-        val bodyPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.rgb(61, 35, 20)
-            textSize = 10.5f
-        }
-
-        val plainText = htmlToPlainText(htmlContent)
-        val lines = plainText
-            .lineSequence()
-            .flatMap { wrapLine(it, bodyPaint, contentWidth).asSequence() }
-            .toList()
-
-        var pageNumber = 1
-        var page = document.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
-        var canvas = page.canvas
-        canvas.drawColor(Color.WHITE)
-        canvas.drawText(title, margin, margin + 4f, titlePaint)
-        var y = margin + titleHeight
-
-        for (line in lines) {
-            if (y > pageHeight - margin) {
-                document.finishPage(page)
-                pageNumber += 1
-                page = document.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
-                canvas = page.canvas
-                canvas.drawColor(Color.WHITE)
-                y = margin
+            fun cleanup() {
+                (webView.parent as? ViewGroup)?.removeView(webView)
+                webView.destroy()
             }
 
-            canvas.drawText(line, margin, y, bodyPaint)
-            y += lineHeight
-        }
+            fun finishWithError(code: String, message: String, details: Throwable? = null) {
+                if (completed) return
+                completed = true
+                cleanup()
+                result.error(code, message, details?.message)
+            }
 
-        document.finishPage(page)
+            fun finishWithSuccess(path: String) {
+                if (completed) return
+                completed = true
+                cleanup()
+                result.success(path)
+            }
 
-        val output = ByteArrayOutputStream()
-        document.writeTo(output)
-        document.close()
-        return output.toByteArray()
-    }
+            webView.settings.javaScriptEnabled = false
+            webView.settings.loadWithOverviewMode = false
+            webView.settings.useWideViewPort = true
+            webView.setBackgroundColor(Color.WHITE)
+            webView.isVerticalScrollBarEnabled = false
+            webView.isHorizontalScrollBarEnabled = false
+            webView.setInitialScale(100)
+            webView.webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView, url: String?) {
+                    fun writePdf() {
+                        view.postDelayed({
+                            try {
+                                writeWebViewPdf(view, fileName, ::finishWithSuccess, ::finishWithError)
+                            } catch (e: Exception) {
+                                finishWithError("PDF_SAVE_FAILED", e.message ?: "Gagal menyimpan PDF.", e)
+                            }
+                        }, 500)
+                    }
 
-    private fun htmlToPlainText(htmlContent: String): String {
-        val withBreaks = htmlContent
-            .replace(Regex("(?i)<br\\s*/?>"), "\n")
-            .replace(Regex("(?i)</(p|div|h1|h2|tr|table)>"), "\n")
-            .replace(Regex("(?i)</t[dh]>"), "    ")
-
-        val spanned = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            Html.fromHtml(withBreaks, Html.FROM_HTML_MODE_LEGACY)
-        } else {
-            @Suppress("DEPRECATION")
-            Html.fromHtml(withBreaks)
-        }
-
-        return spanned
-            .toString()
-            .lines()
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .joinToString("\n")
-    }
-
-    private fun wrapLine(line: String, paint: Paint, maxWidth: Float): List<String> {
-        if (line.isBlank()) return listOf("")
-
-        val result = mutableListOf<String>()
-        var current = ""
-
-        for (word in line.split(Regex("\\s+"))) {
-            val candidate = if (current.isEmpty()) word else "$current $word"
-            if (paint.measureText(candidate) <= maxWidth) {
-                current = candidate
-            } else {
-                if (current.isNotEmpty()) {
-                    result.add(current)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        view.postVisualStateCallback(
+                            0,
+                            object : WebView.VisualStateCallback() {
+                                override fun onComplete(requestId: Long) {
+                                    writePdf()
+                                }
+                            }
+                        )
+                    } else {
+                        writePdf()
+                    }
                 }
-                current = word
+            }
+
+            try {
+                val layoutParams = ViewGroup.LayoutParams(pdfRenderWidth, 1)
+                addContentView(webView, layoutParams)
+                webView.measure(
+                    View.MeasureSpec.makeMeasureSpec(pdfRenderWidth, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(1, View.MeasureSpec.EXACTLY)
+                )
+                webView.layout(0, 0, pdfRenderWidth, 1)
+                webView.postDelayed({
+                    finishWithError(
+                        "PDF_RENDER_TIMEOUT",
+                        "Render PDF terlalu lama. Coba export ulang."
+                    )
+                }, 15000)
+                webView.loadDataWithBaseURL(null, desktopHtml(htmlContent), "text/html", "UTF-8", null)
+            } catch (e: Exception) {
+                finishWithError("PDF_RENDER_FAILED", e.message ?: "Gagal merender laporan PDF.", e)
             }
         }
+    }
 
-        if (current.isNotEmpty()) {
-            result.add(current)
+    private fun desktopHtml(htmlContent: String): String {
+        val viewport = "<meta name=\"viewport\" content=\"width=$pdfRenderWidth, initial-scale=1.0\">"
+        return if (htmlContent.contains("<head>", ignoreCase = true)) {
+            htmlContent.replace(Regex("(?i)<head>"), "<head>$viewport")
+        } else {
+            "$viewport$htmlContent"
         }
+    }
 
-        return result
+    private fun writeWebViewPdf(
+        webView: WebView,
+        fileName: String,
+        onSuccess: (String) -> Unit,
+        onError: (String, String, Throwable?) -> Unit
+    ) {
+        val pageWidth = pdfPageWidth
+        val pageHeight = pdfPageHeight
+        val margin = pdfPageMargin
+        val contentWidth = pageWidth - (margin * 2)
+        val contentHeightPerPage = pageHeight - (margin * 2)
+        val renderWidth = pdfRenderWidth
+        val scale = contentWidth.toFloat() / renderWidth.toFloat()
+        val contentHeightPerPageInWebView = contentHeightPerPage.toFloat() / scale
+        val exactWidth = View.MeasureSpec.makeMeasureSpec(renderWidth, View.MeasureSpec.EXACTLY)
+        val freeHeight = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+
+        webView.measure(exactWidth, freeHeight)
+        val measuredHeight = webView.measuredHeight
+        val contentHeight = max(
+            max(measuredHeight, webView.contentHeight),
+            ceil(contentHeightPerPageInWebView).toInt()
+        )
+        webView.layout(0, 0, renderWidth, contentHeight)
+
+        val document = PdfDocument()
+        try {
+            val pageCount = max(
+                1,
+                ceil(contentHeight.toDouble() / contentHeightPerPageInWebView.toDouble()).toInt()
+            )
+            for (pageIndex in 0 until pageCount) {
+                val page = document.startPage(
+                    PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageIndex + 1).create()
+                )
+                val canvas = page.canvas
+                canvas.drawColor(Color.WHITE)
+                canvas.save()
+                canvas.clipRect(margin, margin, pageWidth - margin, pageHeight - margin)
+                canvas.translate(margin.toFloat(), margin.toFloat())
+                canvas.scale(scale, scale)
+                canvas.translate(0f, -(pageIndex * contentHeightPerPageInWebView))
+                webView.draw(canvas)
+                canvas.restore()
+                document.finishPage(page)
+            }
+
+            val output = ByteArrayOutputStream()
+            document.writeTo(output)
+            val savedPath = saveBytesToDownloads(fileName, "application/pdf", output.toByteArray())
+            onSuccess(savedPath)
+        } catch (e: Exception) {
+            onError("PDF_SAVE_FAILED", e.message ?: "Gagal menyimpan PDF.", e)
+        } finally {
+            document.close()
+        }
     }
 }
