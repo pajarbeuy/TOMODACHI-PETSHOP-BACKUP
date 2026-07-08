@@ -15,6 +15,7 @@ import '../ai_chat_service.dart';
 import 'owner_accounts_screen.dart';
 import 'category_management_screen.dart';
 import '../widgets/app_logo.dart';
+import '../widgets/app_motion.dart';
 
 class HomeScreen extends StatefulWidget {
   final AuthService authService;
@@ -184,43 +185,32 @@ class _HomeScreenState extends State<HomeScreen> {
     final isWide = screenWidth >= 900;
 
     // OPT-01: IndexedStack keeps all tabs alive across switches
-    final tabBody = IndexedStack(
-      index: _currentIndex,
-      children: items.map((item) => item.widget).toList(),
+    final tabBody = AppPageTransition(
+      transitionKey: _currentIndex,
+      child: IndexedStack(
+        index: _currentIndex,
+        children: items.map((item) => item.widget).toList(),
+      ),
     );
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFDF9),
       appBar: _buildAppBar(user?.name ?? 'Pengguna', role),
-      body: isWide
-          ? Row(
-              children: [
-                // Premium Sidebar
-                _buildSidebar(items),
-                const VerticalDivider(width: 1, thickness: 1),
-                // Core screen content
-                Expanded(child: tabBody),
-              ],
-            )
-          : tabBody,
-      bottomNavigationBar: !isWide
-          ? BottomNavigationBar(
-              currentIndex: _currentIndex,
-              selectedItemColor: const Color(0xFFFFB570),
-              unselectedItemColor: const Color(0xFF9E8F85),
-              showUnselectedLabels: true,
-              type: BottomNavigationBarType.fixed,
-              selectedLabelStyle: _styleNav11,
-              unselectedLabelStyle: _styleNavUnsel11,
-              onTap: (index) => setState(() => _currentIndex = index),
-              items: items.map((item) {
-                return BottomNavigationBarItem(
-                  icon: Icon(item.icon),
-                  label: _compactNavLabel(item.label),
-                );
-              }).toList(),
-            )
-          : null,
+      body: ScrollConfiguration(
+        behavior: const AppScrollBehavior(),
+        child: isWide
+            ? Row(
+                children: [
+                  // Premium Sidebar
+                  _buildSidebar(items),
+                  const VerticalDivider(width: 1, thickness: 1),
+                  // Core screen content
+                  Expanded(child: tabBody),
+                ],
+              )
+            : tabBody,
+      ),
+      bottomNavigationBar: !isWide ? _buildBottomNav(items) : null,
     );
   }
 
@@ -338,20 +328,90 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         SizedBox(width: isCompact ? 4 : 12),
-        // Logout Icon
-        IconButton(
-          icon: _loadingLogout
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.logout, color: Color(0xFFC7153D)),
-          tooltip: 'Logout',
-          onPressed: _loadingLogout ? null : _handleLogout,
+        Tooltip(
+          message: 'Logout',
+          child: AppBounceTap(
+            onTap: _loadingLogout ? null : _handleLogout,
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: _loadingLogout
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.logout, color: Color(0xFFC7153D)),
+            ),
+          ),
         ),
         SizedBox(width: isCompact ? 4 : 12),
       ],
+    );
+  }
+
+  Widget _buildBottomNav(List<_NavigationItem> items) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF3D2314).withValues(alpha: 0.08),
+              blurRadius: 16,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: items.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+            final selected = _currentIndex == index;
+            final color = selected
+                ? const Color(0xFFFF9A4D)
+                : const Color(0xFF9E8F85);
+
+            return Expanded(
+              child: AppBounceTap(
+                onTap: () => setState(() => _currentIndex = index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? const Color(0xFFFFF2E6)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AnimatedScale(
+                        scale: selected ? 1.08 : 1,
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOutBack,
+                        child: Icon(item.icon, color: color),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _compactNavLabel(item.label),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: selected
+                            ? _styleNav11.copyWith(color: color)
+                            : _styleNavUnsel11.copyWith(color: color),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 
@@ -371,28 +431,54 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 6),
-                  child: ListTile(
-                    selected: isSelected,
-                    selectedTileColor: const Color(0xFFFFF2E6),
-                    iconColor: const Color(0xFF9E8F85),
-                    selectedColor: const Color(0xFFFF9A4D),
-                    leading: Icon(item.icon),
-                    title: Text(
-                      item.label,
-                      style: _plusJakarta(
-                        fontSize: 13,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.w500,
+                  child: AppBounceTap(
+                    onTap: () => setState(() => _currentIndex = index),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 13,
+                      ),
+                      decoration: BoxDecoration(
                         color: isSelected
-                            ? const Color(0xFFFF9A4D)
-                            : const Color(0xFF3D2314),
+                            ? const Color(0xFFFFF2E6)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          AnimatedScale(
+                            scale: isSelected ? 1.08 : 1,
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeOutBack,
+                            child: Icon(
+                              item.icon,
+                              color: isSelected
+                                  ? const Color(0xFFFF9A4D)
+                                  : const Color(0xFF9E8F85),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              item.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: _plusJakarta(
+                                fontSize: 13,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                                color: isSelected
+                                    ? const Color(0xFFFF9A4D)
+                                    : const Color(0xFF3D2314),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    onTap: () => setState(() => _currentIndex = index),
                   ),
                 );
               },
