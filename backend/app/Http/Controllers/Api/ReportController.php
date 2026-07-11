@@ -7,7 +7,6 @@ use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
@@ -222,17 +221,9 @@ class ReportController extends Controller
      */
     public function analytics(Request $request)
     {
-        // Cache key dibuat unik berdasarkan trend_days + tanggal hari ini
-        // dan fingerprint produk/stok agar alert stok berubah setelah produk diedit.
-        // agar setiap kombinasi parameter punya cache sendiri,
-        // dan otomatis tidak relevan keesokan harinya.
         $trendDays = min(90, max(7, intval($request->query('trend_days', 7))));
-        $stockFingerprint = DB::table('stocks')->max('updated_at') ?? DB::table('stocks')->max('last_updated') ?? 'none';
-        $productFingerprint = DB::table('products')->max('updated_at') ?? 'none';
-        $cacheKey  = 'dashboard_analytics_' . $trendDays . '_' . now()->toDateString() . '_' . md5($stockFingerprint . '|' . $productFingerprint);
-        $ttl       = 600; // 10 menit dalam detik
 
-        $data = Cache::remember($cacheKey, $ttl, function () use ($trendDays) {
+        $data = (function () use ($trendDays) {
             $todayStr = now()->toDateString();
             $yesterdayStr = now()->subDay()->toDateString();
             $currentMonthStart = now()->startOfMonth()->toDateString();
@@ -437,7 +428,7 @@ class ReportController extends Controller
                 'monthly_revenue'    => $monthlyRevenue,
                 'category_breakdown' => $catBreakdown,
             ];
-        });
+        })();
 
         return response()->json([
             'status'  => true,
