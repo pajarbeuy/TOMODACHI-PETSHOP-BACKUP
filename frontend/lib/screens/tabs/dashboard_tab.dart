@@ -22,8 +22,13 @@ class SalesData {
 class MonthlyData {
   final String month;
   final double revenue;
+  final int transactions;
 
-  const MonthlyData({required this.month, required this.revenue});
+  const MonthlyData({
+    required this.month,
+    required this.revenue,
+    required this.transactions,
+  });
 }
 
 class ProductRank {
@@ -148,9 +153,9 @@ class _DashboardTabState extends State<DashboardTab> {
     super.dispose();
   }
 
-  Future<void> _fetchRecentTransactions({bool silent = false}) async {
+  Future<bool> _fetchRecentTransactions({bool silent = false}) async {
     final service = widget.dashboardService;
-    if (service == null) return;
+    if (service == null) return false;
 
     if (!silent && mounted) {
       setState(() => _recentTransactionsLoading = true);
@@ -170,27 +175,27 @@ class _DashboardTabState extends State<DashboardTab> {
           .map((row) => _recentTransactionFromJson(row))
           .toList();
 
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() {
-        if (transactions.isNotEmpty) {
-          _liveRecentTransactions = transactions;
-        }
+        _liveRecentTransactions = transactions;
         _recentTransactionsLoading = false;
       });
+      return true;
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() => _recentTransactionsLoading = false);
       if (!silent) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Gagal memuat transaksi terbaru')),
         );
       }
+      return false;
     }
   }
 
-  Future<void> _fetchAnalytics({bool silent = false, int? trendDays}) async {
+  Future<bool> _fetchAnalytics({bool silent = false, int? trendDays}) async {
     final service = widget.dashboardService;
-    if (service == null) return;
+    if (service == null) return false;
 
     final days = trendDays ?? _selectedSalesTrendDays;
 
@@ -202,7 +207,7 @@ class _DashboardTabState extends State<DashboardTab> {
       final res = await service.getAnalytics(trendDays: days);
       final data = res['data'];
 
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() {
         if (data is Map<String, dynamic>) {
           _analyticsData = data;
@@ -211,14 +216,16 @@ class _DashboardTabState extends State<DashboardTab> {
         }
         _analyticsLoading = false;
       });
+      return _analyticsData != null;
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() => _analyticsLoading = false);
       if (!silent) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Gagal memuat data dashboard')),
         );
       }
+      return false;
     }
   }
 
@@ -292,6 +299,20 @@ class _DashboardTabState extends State<DashboardTab> {
   String formatRp(double n) => _currency.format(n);
 
   String formatRpFull(double n) => _currency.format(n);
+
+  String _rawNumber(double value) => value.round().toString();
+
+  String _titleCase(String value) {
+    if (value.isEmpty) return '-';
+    return value
+        .split(RegExp(r'[\s_-]+'))
+        .where((part) => part.isNotEmpty)
+        .map((part) {
+          final lower = part.toLowerCase();
+          return '${lower[0].toUpperCase()}${lower.substring(1)}';
+        })
+        .join(' ');
+  }
 
   String get _exportDateStamp {
     final now = DateTime.now();
@@ -409,42 +430,50 @@ class _DashboardTabState extends State<DashboardTab> {
     );
   }
 
-  Future<void> _refreshReportDataForExport() async {
-    await _fetchAnalytics(silent: true, trendDays: _selectedSalesTrendDays);
-    await _fetchRecentTransactions(silent: true);
+  Future<bool> _refreshReportDataForExport() async {
+    final results = await Future.wait([
+      _fetchAnalytics(silent: true, trendDays: _selectedSalesTrendDays),
+      _fetchRecentTransactions(silent: true),
+    ]);
+    return results.every((success) => success);
   }
 
   Future<void> _exportSalesReportPdf() async {
-    await _refreshReportDataForExport();
+    _showExportSnack('Menyiapkan laporan PDF...');
+    final refreshed = await _refreshReportDataForExport();
     if (!mounted) return;
+    if (!refreshed) {
+      _showExportSnack(
+        'Gagal mengambil data terbaru. Coba refresh lalu export lagi.',
+      );
+      return;
+    }
 
-    final opened = openPrintableReport(
+    final result = await openPrintableReport(
       title: 'Laporan Penjualan Tomodachi',
       htmlContent: _buildPrintableReportHtml(),
     );
 
-    _showExportSnack(
-      opened
-          ? 'Laporan PDF dibuka. Pilih "Save as PDF" di dialog print.'
-          : 'Export PDF hanya tersedia di Flutter Web untuk saat ini.',
-    );
+    _showExportSnack(result.message);
   }
 
   Future<void> _exportSalesReportExcel() async {
-    await _refreshReportDataForExport();
+    final refreshed = await _refreshReportDataForExport();
     if (!mounted) return;
+    if (!refreshed) {
+      _showExportSnack(
+        'Gagal mengambil data terbaru. Coba refresh lalu export lagi.',
+      );
+      return;
+    }
 
-    final downloaded = downloadReportFile(
+    final result = await downloadReportFile(
       fileName: 'laporan-penjualan-tomodachi-$_exportDateStamp.xls',
       mimeType: 'application/vnd.ms-excel;charset=utf-8',
       content: _buildExcelReportHtml(),
     );
 
-    _showExportSnack(
-      downloaded
-          ? 'File Excel laporan penjualan berhasil dibuat.'
-          : 'Export Excel hanya tersedia di Flutter Web untuk saat ini.',
-    );
+    _showExportSnack(result.message);
   }
 
   void _showExportSnack(String message) {
@@ -468,25 +497,29 @@ class _DashboardTabState extends State<DashboardTab> {
   <title>Laporan Penjualan Tomodachi</title>
   <style>
     @page { size: A4; margin: 18mm; }
-    body { font-family: Arial, sans-serif; color: #3D2314; margin: 0; }
-    h1 { margin: 0 0 4px; font-size: 24px; }
-    h2 { margin: 22px 0 8px; font-size: 15px; color: #5A3D2B; }
-    .meta { color: #9B7B6B; font-size: 12px; margin-bottom: 18px; }
-    .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 18px 0; }
-    .card { border: 1px solid #FFD4A8; border-radius: 10px; padding: 12px; background: #FFF8F2; }
-    .label { color: #9B7B6B; font-size: 11px; }
-    .value { font-weight: 800; font-size: 16px; margin-top: 4px; }
-    table { width: 100%; border-collapse: collapse; font-size: 11px; }
-    th { background: #3D2314; color: white; text-align: left; padding: 8px; }
-    td { border-bottom: 1px solid #F3DEC8; padding: 7px 8px; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; color: #3D2314; margin: 0; font-size: 11px; }
+    .doc-title { text-align: center; font-size: 8px; font-weight: 700; margin-bottom: 28px; }
+    h1 { margin: 0 0 4px; font-size: 21px; line-height: 1.2; }
+    h2 { margin: 20px 0 8px; font-size: 14px; color: #7A3E1D; }
+    .meta { color: #7A5A46; font-size: 11px; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; page-break-inside: auto; }
+    th { background: #3D2314; color: #FFFFFF; font-weight: 700; text-align: left; padding: 7px 8px; border: 1px solid #3D2314; }
+    td { border: 1px solid #E9C7AB; padding: 6px 8px; vertical-align: top; background: #FFFFFF; }
     tr:nth-child(even) td { background: #FFF8F2; }
+    .summary { margin: 18px 0 20px; }
+    .summary th { background: #FFF2E6; color: #7A5A46; border-color: #FFB570; font-size: 10px; }
+    .summary td { border-color: #FFB570; font-size: 14px; font-weight: 800; color: #1F130C; height: 42px; }
+    .right { text-align: right; }
+    .center { text-align: center; }
+    .product { width: 28%; }
   </style>
 </head>
 <body>
+  <div class="doc-title">Laporan Penjualan Tomodachi</div>
   <h1>Laporan Penjualan Tomodachi Pet Shop</h1>
-  <div class="meta">Sumber: Dashboard Analitik real-time - Dibuat: ${_escapeHtml(DateFormat('d MMM yyyy HH:mm').format(DateTime.now()))}</div>
+  <div class="meta">Periode: This Week - Dibuat: ${_escapeHtml(DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now()))}</div>
   $body
-  <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 300); };</script>
 </body>
 </html>
 ''';
@@ -514,56 +547,97 @@ class _DashboardTabState extends State<DashboardTab> {
 ''';
   }
 
+  String _reportCategoryRows(double totalRevenue) {
+    final breakdown = _mapValue(_analyticsData?['category_breakdown']);
+    if (breakdown.isEmpty) {
+      return '<tr><td colspan="4">Belum ada data kategori</td></tr>';
+    }
+
+    final rows = breakdown.entries.map((entry) {
+      final contribution = _doubleValue(entry.value, 0);
+      final revenue = totalRevenue * contribution / 100;
+      return (
+        category: _titleCase(entry.key.toString()),
+        contribution: contribution,
+        revenue: revenue,
+      );
+    }).toList()..sort((a, b) => b.revenue.compareTo(a.revenue));
+
+    String percent(double value) {
+      final fixed = value.toStringAsFixed(
+        value.truncateToDouble() == value ? 0 : 1,
+      );
+      return '$fixed%';
+    }
+
+    return rows.map((item) {
+      return '<tr><td>${_escapeHtml(item.category)}</td><td class="center">${_escapeHtml(percent(item.contribution))}</td><td class="right">${_rawNumber(item.revenue)}</td><td class="right">${_escapeHtml(formatRpFull(item.revenue))}</td></tr>';
+    }).join();
+  }
+
   String _buildReportTablesHtml() {
-    final kpi = _mapValue(_analyticsData?['kpi']);
-    final todaySales = _doubleValue(kpi['today_sales'], 0);
-    final todayTransactions = _intValue(kpi['total_transactions_today'], 0);
-    final monthlyRevenue = _doubleValue(kpi['monthly_revenue'], 0);
-    final avgTransaction = _doubleValue(kpi['average_transaction_value'], 0);
-    final trendRows = _buildSalesTrendPoints().map((item) {
-      return '<tr><td>${_escapeHtml(DateFormat('yyyy-MM-dd').format(item.date))}</td><td>${item.transactions}</td><td>${item.sales}</td><td>${_escapeHtml(formatRpFull(item.sales))}</td></tr>';
+    final monthlyItems = _monthlyRevenueItems();
+    final totalRevenue = monthlyItems.fold<double>(
+      0,
+      (sum, item) => sum + item.revenue,
+    );
+    final totalTransactions = monthlyItems.fold<int>(
+      0,
+      (sum, item) => sum + item.transactions,
+    );
+    final avgTransaction = totalTransactions > 0
+        ? totalRevenue / totalTransactions
+        : 0.0;
+    final bestMonth = monthlyItems.isEmpty
+        ? const MonthlyData(month: '-', revenue: 0, transactions: 0)
+        : monthlyItems.reduce(
+            (best, item) => item.revenue > best.revenue ? item : best,
+          );
+    final monthlyRows = monthlyItems.map((item) {
+      return '<tr><td>${_escapeHtml(item.month)}</td><td class="center">${item.transactions}</td><td class="right">${_rawNumber(item.revenue)}</td><td class="right">${_escapeHtml(formatRpFull(item.revenue))}</td></tr>';
     }).join();
-    final monthlyRows = _monthlyRevenueItems().map((item) {
-      return '<tr><td>${_escapeHtml(item.month)}</td><td>${item.revenue}</td><td>${_escapeHtml(formatRpFull(item.revenue))}</td></tr>';
-    }).join();
+    final categoryRows = _reportCategoryRows(totalRevenue);
     final productRows = _bestSellerItems().asMap().entries.map((entry) {
       final item = entry.value;
-      return '<tr><td>${entry.key + 1}</td><td>${_escapeHtml(item.name)}</td><td>${_escapeHtml(item.category)}</td><td>${item.sales}</td><td>${item.revenue}</td><td>${_escapeHtml(formatRpFull(item.revenue))}</td></tr>';
-    }).join();
-    final transactionRows = _liveRecentTransactions.map((item) {
-      return '<tr><td>${_escapeHtml(item.id)}</td><td>${_escapeHtml(item.customer)}</td><td>${item.items}</td><td>${_escapeHtml(item.method)}</td><td>${item.total}</td><td>${_escapeHtml(formatRpFull(item.total))}</td><td>${_escapeHtml(item.time)}</td></tr>';
+      return '<tr><td>${entry.key + 1}</td><td class="product">${_escapeHtml(item.name)}</td><td>${_escapeHtml(item.category)}</td><td class="center">${item.sales}</td><td class="right">${_rawNumber(item.revenue)}</td><td class="right">${_escapeHtml(formatRpFull(item.revenue))}</td><td class="center">${item.trend}%</td></tr>';
     }).join();
 
     return '''
-  <div class="summary">
-    <div class="card"><div class="label">Penjualan Hari Ini</div><div class="value">${_escapeHtml(formatRpFull(todaySales))}</div></div>
-    <div class="card"><div class="label">Transaksi Hari Ini</div><div class="value">${_escapeHtml(todayTransactions)}</div></div>
-    <div class="card"><div class="label">Pendapatan Bulan Ini</div><div class="value">${_escapeHtml(formatRpFull(monthlyRevenue))}</div></div>
-    <div class="card"><div class="label">Rata-rata Transaksi</div><div class="value">${_escapeHtml(formatRpFull(avgTransaction))}</div></div>
-  </div>
-
-  <h2>Tren Penjualan</h2>
-  <table>
-    <thead><tr><th>Tanggal</th><th>Transaksi</th><th>Revenue Raw</th><th>Revenue</th></tr></thead>
-    <tbody>$trendRows</tbody>
+  <table class="summary">
+    <thead>
+      <tr>
+        <th>Total Revenue</th>
+        <th>Total Transactions</th>
+        <th>Avg. Transaction</th>
+        <th>Best Month</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${_escapeHtml(formatRpFull(totalRevenue))}</td>
+        <td>${_escapeHtml(totalTransactions)}</td>
+        <td>${_escapeHtml(formatRpFull(avgTransaction))}</td>
+        <td>${_escapeHtml(bestMonth.month)} (${_escapeHtml(formatRpFull(bestMonth.revenue))})</td>
+      </tr>
+    </tbody>
   </table>
 
   <h2>Pendapatan Bulanan</h2>
   <table>
-    <thead><tr><th>Bulan</th><th>Revenue Raw</th><th>Revenue</th></tr></thead>
+    <thead><tr><th>Bulan</th><th class="center">Transaksi</th><th class="right">Revenue Raw</th><th class="right">Revenue</th></tr></thead>
     <tbody>$monthlyRows</tbody>
+  </table>
+
+  <h2>Penjualan per Kategori</h2>
+  <table>
+    <thead><tr><th>Kategori</th><th class="center">Kontribusi</th><th class="right">Revenue Raw</th><th class="right">Revenue</th></tr></thead>
+    <tbody>$categoryRows</tbody>
   </table>
 
   <h2>Produk Terlaris</h2>
   <table>
-    <thead><tr><th>Rank</th><th>Produk</th><th>Kategori</th><th>Unit Terjual</th><th>Revenue Raw</th><th>Revenue</th></tr></thead>
+    <thead><tr><th>Rank</th><th class="product">Produk</th><th>Kategori</th><th class="center">Unit Terjual</th><th class="right">Revenue Raw</th><th class="right">Revenue</th><th class="center">Trend</th></tr></thead>
     <tbody>$productRows</tbody>
-  </table>
-
-  <h2>Transaksi Terbaru</h2>
-  <table>
-    <thead><tr><th>ID</th><th>Kasir</th><th>Item</th><th>Metode</th><th>Total Raw</th><th>Total</th><th>Waktu</th></tr></thead>
-    <tbody>$transactionRows</tbody>
   </table>
 ''';
   }
@@ -659,6 +733,7 @@ class _DashboardTabState extends State<DashboardTab> {
       return MonthlyData(
         month: (row['month'] ?? '-').toString(),
         revenue: _doubleValue(row['total_revenue'], 0),
+        transactions: _intValue(row['transaction_count'], 0),
       );
     }).toList();
   }
@@ -1158,9 +1233,12 @@ class _DashboardTabState extends State<DashboardTab> {
 
   Widget _buildSalesTrendCard() {
     final trendPoints = _buildSalesTrendPoints();
-    final maxSales = trendPoints
-        .map((item) => item.sales)
-        .reduce((value, item) => value > item ? value : item);
+    final hasTrendData = trendPoints.isNotEmpty;
+    final maxSales = hasTrendData
+        ? trendPoints
+              .map((item) => item.sales)
+              .reduce((value, item) => value > item ? value : item)
+        : 0.0;
     final maxY = (maxSales * 1.2).clamp(1000000.0, double.infinity);
     final leftInterval = maxY / 4;
     final spots = trendPoints.asMap().entries.map((entry) {
@@ -1226,119 +1304,135 @@ class _DashboardTabState extends State<DashboardTab> {
           ),
           const SizedBox(height: 16),
           Expanded(
-            child: LineChart(
-              LineChartData(
-                minX: 0,
-                maxX: (trendPoints.length - 1).toDouble(),
-                minY: 0,
-                maxY: maxY,
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  getDrawingHorizontalLine: (_) => FlLine(
-                    color: _orange.withValues(alpha: 0.15),
-                    strokeWidth: 1,
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 28,
-                      interval: 1,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index < 0 ||
-                            index >= trendPoints.length ||
-                            !_showTrendDateLabel(index, trendPoints.length)) {
-                          return const SizedBox.shrink();
-                        }
-                        return SideTitleWidget(
-                          axisSide: meta.axisSide,
-                          space: 8,
-                          child: SizedBox(
-                            width: 44,
-                            child: Text(
-                              _formatTrendDate(trendPoints[index].date),
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.visible,
+            child: hasTrendData
+                ? LineChart(
+                    LineChartData(
+                      minX: 0,
+                      maxX: (trendPoints.length - 1).toDouble(),
+                      minY: 0,
+                      maxY: maxY,
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        getDrawingHorizontalLine: (_) => FlLine(
+                          color: _orange.withValues(alpha: 0.15),
+                          strokeWidth: 1,
+                        ),
+                      ),
+                      borderData: FlBorderData(show: false),
+                      titlesData: FlTitlesData(
+                        topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 28,
+                            interval: 1,
+                            getTitlesWidget: (value, meta) {
+                              final index = value.toInt();
+                              if (index < 0 ||
+                                  index >= trendPoints.length ||
+                                  !_showTrendDateLabel(
+                                    index,
+                                    trendPoints.length,
+                                  )) {
+                                return const SizedBox.shrink();
+                              }
+                              return SideTitleWidget(
+                                axisSide: meta.axisSide,
+                                space: 8,
+                                child: SizedBox(
+                                  width: 44,
+                                  child: Text(
+                                    _formatTrendDate(trendPoints[index].date),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.visible,
+                                    style: _text(size: 10, color: _brown400),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 46,
+                            interval: leftInterval,
+                            getTitlesWidget: (value, meta) => Text(
+                              '${(value / 1000000).toStringAsFixed(1)}jt',
                               style: _text(size: 10, color: _brown400),
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 46,
-                      interval: leftInterval,
-                      getTitlesWidget: (value, meta) => Text(
-                        '${(value / 1000000).toStringAsFixed(1)}jt',
-                        style: _text(size: 10, color: _brown400),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
-                lineTouchData: LineTouchData(
-                  touchTooltipData: LineTouchTooltipData(
-                    tooltipBgColor: Colors.white,
-                    tooltipRoundedRadius: 12,
-                    getTooltipItems: (items) => items.map((item) {
-                      final data = trendPoints[item.x.toInt()];
-                      return LineTooltipItem(
-                        '${_formatTrendDate(data.date)}\n${formatRpFull(data.sales)}\n${data.transactions} transactions',
-                        _text(size: 11, weight: FontWeight.w800),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: spots,
-                    isCurved: true,
-                    barWidth: 2.5,
-                    color: _orange,
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          _orange.withValues(alpha: 0.30),
-                          _orange.withValues(alpha: 0.02),
-                        ],
+                      lineTouchData: LineTouchData(
+                        touchTooltipData: LineTouchTooltipData(
+                          tooltipBgColor: Colors.white,
+                          tooltipRoundedRadius: 12,
+                          getTooltipItems: (items) => items.map((item) {
+                            final data = trendPoints[item.x.toInt()];
+                            return LineTooltipItem(
+                              '${_formatTrendDate(data.date)}\n${formatRpFull(data.sales)}\n${data.transactions} transactions',
+                              _text(size: 11, weight: FontWeight.w800),
+                            );
+                          }).toList(),
+                        ),
                       ),
-                    ),
-                    dotData: FlDotData(
-                      show: true,
-                      checkToShowDot: (spot, barData) {
-                        final index = spot.x.toInt();
-                        return trendPoints.length <= 30 ||
-                            _showTrendDateLabel(index, trendPoints.length);
-                      },
-                      getDotPainter: (spot, percent, bar, index) {
-                        return FlDotCirclePainter(
-                          radius: 4,
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: spots,
+                          isCurved: true,
+                          barWidth: 2.5,
                           color: _orange,
-                          strokeWidth: 2,
-                          strokeColor: Colors.white,
-                        );
-                      },
+                          belowBarData: BarAreaData(
+                            show: true,
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                _orange.withValues(alpha: 0.30),
+                                _orange.withValues(alpha: 0.02),
+                              ],
+                            ),
+                          ),
+                          dotData: FlDotData(
+                            show: true,
+                            checkToShowDot: (spot, barData) {
+                              final index = spot.x.toInt();
+                              return trendPoints.length <= 30 ||
+                                  _showTrendDateLabel(
+                                    index,
+                                    trendPoints.length,
+                                  );
+                            },
+                            getDotPainter: (spot, percent, bar, index) {
+                              return FlDotCirclePainter(
+                                radius: 4,
+                                color: _orange,
+                                strokeWidth: 2,
+                                strokeColor: Colors.white,
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Center(
+                    child: Text(
+                      _analyticsLoading
+                          ? 'Memuat tren penjualan...'
+                          : 'Belum ada data tren penjualan.',
+                      textAlign: TextAlign.center,
+                      style: _text(size: 12, color: _brown400),
                     ),
                   ),
-                ],
-              ),
-            ),
           ),
         ],
       ),
