@@ -3,1096 +3,2499 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Tomodachi Pet Shop POS — Sistem manajemen toko hewan peliharaan modern berbasis Laravel & Flutter dengan AI Assistant.">
-    <title>Tomodachi Pet Shop POS - Sistem Manajemen Cerdas</title>
+<meta name="description" content="Tomodachi Pet Shop POS - Sistem manajemen toko hewan peliharaan modern berbasis Laravel & Flutter dengan tema alam yang segar.">
+<title>Tomodachi Pet Shop POS - Smart Pet Shop Management</title>
 
-    <!-- Canonical URL -->
-    <link rel="canonical" href="{{ url('/') }}">
+<link rel="canonical" href="{{ url('/') }}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ url('/') }}">
+<meta property="og:title" content="Tomodachi Pet Shop POS">
+<meta property="og:description" content="Kelola produk, stok, transaksi, laporan bisnis, dan AI assistant dalam satu platform modern.">
+<meta property="og:image" content="{{ asset('images/cat.png') }}">
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:url" content="{{ url('/') }}">
+<meta property="twitter:title" content="Tomodachi Pet Shop POS">
+<meta property="twitter:description" content="Sistem manajemen toko hewan peliharaan modern berbasis Laravel & Flutter.">
+<meta property="twitter:image" content="{{ asset('images/cat.png') }}">
 
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ url('/') }}">
-    <meta property="og:title" content="Tomodachi Pet Shop POS - Sistem Manajemen Cerdas">
-    <meta property="og:description" content="Sistem manajemen toko hewan peliharaan modern berbasis Laravel & Flutter. Mengelola produk, stok, transaksi, dan analytics secara terpusat dengan dukungan AI.">
-    <meta property="og:image" content="{{ asset('images/cat.png') }}">
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="{{ url('/') }}">
-    <meta property="twitter:title" content="Tomodachi Pet Shop POS">
-    <meta property="twitter:description" content="Sistem manajemen toko hewan peliharaan modern berbasis Laravel & Flutter.">
-    <meta property="twitter:image" content="{{ asset('images/cat.png') }}">
-
-    <!-- Schema.org JSON-LD -->
-    <script type="application/ld+json">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
     {
-      "@context": "https://schema.org",
-      "@graph": [
-        {
-          "@type": "Organization",
-          "@id": "{{ url('/') }}#organization",
-          "name": "Tomodachi Pet Shop",
-          "url": "{{ url('/') }}",
-          "logo": {
-            "@type": "ImageObject",
-            "url": "{{ asset('images/logo.png') }}"
-          },
-          "contactPoint": {
-            "@type": "ContactPoint",
-            "telephone": "+62-123-4567-8910",
-            "contactType": "customer service",
-            "areaServed": "ID",
-            "availableLanguage": "Indonesian"
-          }
-        },
-        {
-          "@type": "WebSite",
-          "@id": "{{ url('/') }}#website",
-          "url": "{{ url('/') }}",
-          "name": "Tomodachi Pet Shop POS",
-          "description": "Sistem manajemen toko hewan peliharaan modern.",
-          "publisher": {
-            "@id": "{{ url('/') }}#organization"
-          }
-        }
-      ]
+      "@type": "Organization",
+      "@id": "{{ url('/') }}#organization",
+      "name": "Tomodachi Pet Shop",
+      "url": "{{ url('/') }}",
+      "logo": { "@type": "ImageObject", "url": "{{ asset('images/logo.png') }}" },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+62-123-4567-8910",
+        "contactType": "customer service",
+        "areaServed": "ID",
+        "availableLanguage": "Indonesian"
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "{{ url('/') }}#website",
+      "url": "{{ url('/') }}",
+      "name": "Tomodachi Pet Shop POS",
+      "description": "Sistem manajemen toko hewan peliharaan modern.",
+      "publisher": { "@id": "{{ url('/') }}#organization" }
     }
-    </script>
+  ]
+}
+</script>
+
 <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-/* ── Reset & Base ─────────────────────────────────────────────────────────── */
-*, *::before, *::after {
-    margin: 0; padding: 0;
-    box-sizing: border-box;
-    scroll-behavior: smooth;
-}
-
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-    --orange:       #FF8A00;
-    --orange-deep:  #E06500;
-    --orange-light: #FFB347;
-    --bg:           #0B0C10;
-    --bg2:          #111318;
-    --bg3:          #181B22;
-    --glass:        rgba(255,255,255,0.04);
-    --glass-border: rgba(255,255,255,0.08);
-    --text:         #F0ECE4;
-    --muted:        #9A9080;
-    --radius:       18px;
-    --transition:   0.3s cubic-bezier(.4,0,.2,1);
+    --bg: #1d1b18;
+    --panel: rgba(40, 37, 32, 0.84);
+    --panel-strong: rgba(50, 45, 38, 0.94);
+    --line: rgba(255, 231, 205, 0.28);
+    --line-hot: rgba(255, 143, 22, 0.68);
+    --orange: #ff8a00;
+    --orange-soft: #ffe4bd;
+    --cyan: #fff6eb;
+    --green: #ffad32;
+    --leaf: #ffc266;
+    --moss: #d75f00;
+    --text: #fffaf3;
+    --muted: #ead6c2;
+    --dark: #171512;
+    --radius: 8px;
+    --ease: cubic-bezier(.2,.8,.2,1);
 }
 
-html { font-family: 'Plus Jakarta Sans', sans-serif; }
-
+html { scroll-behavior: smooth; }
 body {
-    background: var(--bg);
-    color: var(--text);
+    min-height: 100vh;
     overflow-x: hidden;
+    background:
+        radial-gradient(circle at 78% 12%, rgba(255, 255, 255, 0.09), transparent 26%),
+        radial-gradient(circle at 14% 6%, rgba(255, 138, 0, 0.16), transparent 28%),
+        linear-gradient(135deg, rgba(255, 138, 0, .12), transparent 35%),
+        linear-gradient(180deg, #2a2722 0%, #1d1b18 48%, #171512 100%);
+    color: var(--text);
+    font-family: Inter, system-ui, sans-serif;
 }
 
-/* ── Scrollbar ────────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--orange); border-radius: 99px; }
-
-/* ── Paw Decorations ─────────────────────────────────────────────────────── */
-.paw-bg {
-    position: fixed; inset: 0; pointer-events: none;
-    overflow: hidden; z-index: 0;
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -2;
+    background-image:
+        radial-gradient(ellipse at 12% 0%, rgba(255, 138, 0, .18), transparent 30%),
+        radial-gradient(ellipse at 86% 0%, rgba(255, 255, 255, .09), transparent 34%),
+        linear-gradient(120deg, transparent 0 34%, rgba(255, 255, 255, .06) 35%, transparent 36% 100%);
+    mask-image: linear-gradient(to bottom, #000 0 72%, transparent 100%);
+    animation: forestLight 9s ease-in-out infinite;
 }
-.paw {
+
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background:
+        radial-gradient(circle at 20% calc(14% + var(--scroll-shift, 0%)), rgba(255, 255, 255, .12), transparent 24%),
+        linear-gradient(115deg, transparent 0 38%, rgba(255,255,255,0.075) 39%, transparent 40% 100%);
+    animation: sunbeamDrift 11s ease-in-out infinite;
+}
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--dark); }
+::-webkit-scrollbar-thumb { background: linear-gradient(var(--orange), #fff7ed); border-radius: 99px; }
+
+.shell-lines {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+}
+.shell-lines::before,
+.shell-lines::after {
+    content: "";
     position: absolute;
-    font-size: clamp(40px, 5vw, 80px);
-    opacity: 0.03;
-    animation: floatPaw 12s ease-in-out infinite;
-    user-select: none;
+    pointer-events: none;
+    opacity: .62;
 }
-.paw:nth-child(1) { top: 8%;  left: 5%;   animation-delay: 0s;   animation-duration: 14s; }
-.paw:nth-child(2) { top: 30%; right: 4%;  animation-delay: 2s;   animation-duration: 11s; }
-.paw:nth-child(3) { top: 65%; left: 2%;   animation-delay: 5s;   animation-duration: 16s; }
-.paw:nth-child(4) { top: 80%; right: 10%; animation-delay: 1s;   animation-duration: 13s; }
-.paw:nth-child(5) { top: 50%; left: 50%;  animation-delay: 3.5s; animation-duration: 18s; }
-
-@keyframes floatPaw {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50%       { transform: translateY(-20px) rotate(8deg); }
+.shell-lines::before {
+    width: 34vw;
+    height: 34vw;
+    right: -9vw;
+    top: 16vh;
+    border: 1px solid rgba(255, 226, 189, .22);
+    border-radius: 50%;
+    box-shadow: inset 0 0 56px rgba(255, 180, 92, .1), 0 0 70px rgba(255, 255, 255, .08);
+    animation: canopySway 18s ease-in-out infinite;
 }
+.shell-lines::after {
+    left: -12vw;
+    bottom: 8vh;
+    width: 42vw;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 123, 32, .72), rgba(255, 255, 255, .62), transparent);
+    filter: drop-shadow(0 0 14px rgba(255, 164, 72, .42));
+    transform: rotate(-24deg);
+    animation: grassGlimmer 5.4s ease-in-out infinite;
+}
+.spark {
+    position: absolute;
+    width: 18px;
+    height: 10px;
+    border-radius: 90% 0 90% 0;
+    background: linear-gradient(135deg, rgba(255, 246, 235, .95), rgba(255, 132, 36, .82));
+    box-shadow: 0 0 18px rgba(255, 164, 72, .24);
+    transform-origin: 50% 50%;
+    animation: leafFall 12s linear infinite;
+}
+.spark:nth-child(1) { left: 9%; animation-delay: -1s; }
+.spark:nth-child(2) { left: 24%; animation-delay: -5s; }
+.spark:nth-child(3) { left: 52%; animation-delay: -3s; }
+.spark:nth-child(4) { left: 70%; animation-delay: -7s; }
+.spark:nth-child(5) { left: 88%; animation-delay: -2s; }
+.spark:nth-child(6) { left: 16%; animation-delay: -8s; animation-duration: 9.4s; background: linear-gradient(135deg, #fff7ed, #ff9a3c); }
+.spark:nth-child(7) { left: 37%; animation-delay: -4.2s; animation-duration: 13.2s; }
+.spark:nth-child(8) { left: 61%; animation-delay: -6.8s; animation-duration: 10.4s; background: linear-gradient(135deg, #ffe2bd, #f47c20); }
+.spark:nth-child(9) { left: 79%; animation-delay: -9.1s; animation-duration: 14s; }
+.energy-streak {
+    position: absolute;
+    width: min(360px, 34vw);
+    height: 70px;
+    border-radius: 999px;
+    background:
+        radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.2), transparent 52%),
+        linear-gradient(90deg, transparent, rgba(255, 164, 72, .3), rgba(255, 255, 255, .22), transparent);
+    filter: blur(.2px);
+    opacity: 0;
+    transform: rotate(-22deg);
+    animation: sunRaySweep 7.8s ease-in-out infinite;
+}
+.energy-streak.one { left: 4%; top: 24%; animation-delay: -1.2s; }
+.energy-streak.two { right: 8%; top: 64%; animation-delay: -3.7s; --streak-rotate: -33deg; }
+.energy-streak.three { left: 32%; bottom: 18%; animation-delay: -5.1s; --streak-rotate: 18deg; }
+.circuit-node {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: rgba(255, 209, 138, .85);
+    box-shadow: 0 0 22px rgba(255, 209, 138, .35);
+    clip-path: polygon(50% 0, 62% 34%, 98% 36%, 68% 57%, 79% 92%, 50% 70%, 21% 92%, 32% 57%, 2% 36%, 38% 34%);
+    animation: fireflyPulse 2.8s ease-in-out infinite;
+}
+.circuit-node.one { left: 11%; top: 34%; }
+.circuit-node.two { right: 18%; top: 22%; animation-delay: -.9s; background: rgba(255, 246, 235, .86); box-shadow: 0 0 20px rgba(255, 255, 255, .34); }
+.circuit-node.three { right: 9%; bottom: 18%; animation-delay: -1.7s; }
 
-/* ── Header ──────────────────────────────────────────────────────────────── */
+.nature-vines {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1;
+}
+.nature-vines span {
+    position: absolute;
+    top: -80px;
+    width: 26px;
+    height: 14px;
+    border-radius: 90% 0 90% 0;
+    background: linear-gradient(135deg, rgba(255, 247, 237, .96), rgba(244, 124, 32, .84));
+    box-shadow: 0 0 20px rgba(255, 164, 72, .18);
+    opacity: .7;
+    animation: leafFallSoft 15s linear infinite;
+}
+.nature-vines span:nth-child(1) { left: 6%; animation-delay: -2s; }
+.nature-vines span:nth-child(2) { left: 18%; animation-delay: -9s; animation-duration: 18s; transform: scale(.74); }
+.nature-vines span:nth-child(3) { left: 31%; animation-delay: -5s; background: linear-gradient(135deg, #fff7ed, #ff9a3c); }
+.nature-vines span:nth-child(4) { left: 47%; animation-delay: -13s; animation-duration: 20s; transform: scale(1.18); }
+.nature-vines span:nth-child(5) { left: 63%; animation-delay: -7s; animation-duration: 16s; }
+.nature-vines span:nth-child(6) { left: 78%; animation-delay: -11s; background: linear-gradient(135deg, #ffe2bd, #f47c20); }
+.nature-vines span:nth-child(7) { left: 91%; animation-delay: -4s; animation-duration: 19s; transform: scale(.82); }
+
+.sky-birds {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+}
+.sky-birds .guide-bird {
+    top: var(--bird-top, 18vh);
+    width: var(--bird-size, 54px);
+    color: rgba(255, 248, 238, .78);
+    animation-duration: var(--bird-speed, 18s);
+    animation-delay: var(--bird-delay, 0s);
+}
+.sky-birds .guide-bird:nth-child(1) { --bird-top: 14vh; --bird-size: 58px; --bird-speed: 17s; --bird-delay: -2s; }
+.sky-birds .guide-bird:nth-child(2) { --bird-top: 29vh; --bird-size: 42px; --bird-speed: 21s; --bird-delay: -9s; opacity: .64; }
+.sky-birds .guide-bird:nth-child(3) { --bird-top: 47vh; --bird-size: 50px; --bird-speed: 24s; --bird-delay: -15s; opacity: .58; }
+.sky-birds .guide-bird:nth-child(4) { --bird-top: 66vh; --bird-size: 46px; --bird-speed: 19s; --bird-delay: -6s; opacity: .54; }
+.sky-birds .guide-bird:nth-child(5) { --bird-top: 82vh; --bird-size: 38px; --bird-speed: 26s; --bird-delay: -18s; opacity: .46; }
+.sky-birds .guide-bird:nth-child(6) { --bird-top: 20vh; --bird-size: 36px; --bird-speed: 14s; --bird-delay: -11s; opacity: .6; }
+.sky-birds .guide-bird:nth-child(7) { --bird-top: 38vh; --bird-size: 64px; --bird-speed: 23s; --bird-delay: -4s; opacity: .7; }
+.sky-birds .guide-bird:nth-child(8) { --bird-top: 56vh; --bird-size: 34px; --bird-speed: 18s; --bird-delay: -13s; opacity: .5; }
+.sky-birds .guide-bird:nth-child(9) { --bird-top: 73vh; --bird-size: 58px; --bird-speed: 28s; --bird-delay: -21s; opacity: .42; }
+
 header {
-    position: fixed; top: 0; left: 0; right: 0;
-    z-index: 1000;
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 16px 7%;
-    background: rgba(11,12,16,0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--glass-border);
-    transition: var(--transition);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 14px clamp(18px, 5vw, 78px);
+    background: rgba(29, 27, 24, 0.68);
+    border-bottom: 1px solid rgba(255, 226, 189, 0.18);
+    backdrop-filter: blur(18px);
+    transition: background .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
 }
-
-.logo {
-    display: flex; align-items: center; gap: 12px;
+header.scrolled {
+    background: rgba(23, 21, 18, 0.95);
+    border-color: var(--line);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.32);
+}
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text);
     text-decoration: none;
+    min-width: max-content;
 }
-.logo img {
-    width: 42px; height: 42px;
-    border-radius: 12px; object-fit: cover;
-    box-shadow: 0 0 0 2px rgba(255,138,0,0.4);
+.brand-mark {
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    color: #eaffc8;
+    border: 1px solid rgba(255, 226, 189, .56);
+    background:
+        radial-gradient(circle at 34% 24%, rgba(255,255,255,.42), transparent 26%),
+        linear-gradient(145deg, rgba(255, 180, 92, .96), rgba(168, 78, 20, .94));
+    border-radius: 50%;
+    box-shadow: 0 0 24px rgba(255, 164, 72, 0.28), inset 0 -10px 24px rgba(72, 26, 4, .22);
+    animation: insigniaCharge 3.2s ease-in-out infinite;
 }
-.logo-text {
-    font-size: 18px; font-weight: 800;
-    background: linear-gradient(90deg, var(--orange), var(--orange-light));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+.brand-text {
+    font-family: "Barlow Condensed", Inter, sans-serif;
+    font-size: 30px;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: .02em;
+    color: var(--orange-soft);
+    text-shadow: 0 0 20px rgba(255, 138, 31, 0.38);
 }
 
-nav { display: flex; align-items: center; gap: 6px; }
-nav a {
-    text-decoration: none; color: var(--muted);
-    padding: 8px 16px; border-radius: 10px;
-    font-size: 14px; font-weight: 500;
-    transition: var(--transition);
+nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
-nav a:hover { color: var(--text); background: var(--glass); }
-
-.nav-cta {
-    background: linear-gradient(135deg, var(--orange), var(--orange-deep)) !important;
-    color: white !important;
-    font-weight: 700 !important;
-    padding: 10px 22px !important;
+nav a, .mobile-nav a {
+    position: relative;
+    overflow: hidden;
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    transition: color .2s var(--ease), border-color .2s var(--ease), background .2s var(--ease);
 }
-.nav-cta:hover { opacity: 0.88; transform: translateY(-1px); }
-
-/* Hamburger */
+nav a::before, .mobile-nav a::before,
+.btn-primary::before, .btn-ghost::before, .btn-whatsapp::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(110deg, transparent, rgba(255,255,255,.24), transparent);
+    transform: translateX(-125%);
+    transition: transform .55s var(--ease);
+}
+nav a:hover, .mobile-nav a:hover {
+    color: var(--orange-soft);
+    border-color: rgba(255, 138, 31, 0.28);
+    background: rgba(255, 138, 31, 0.08);
+}
+nav a:hover::before, .mobile-nav a:hover::before,
+.btn-primary:hover::before, .btn-ghost:hover::before, .btn-whatsapp:hover::before {
+    transform: translateX(125%);
+}
+.nav-cta, .btn-primary {
+    position: relative;
+    overflow: hidden;
+    color: #fff !important;
+    background: linear-gradient(180deg, #fff4e4, #ff9a3c 46%, #d95f12);
+    border: 1px solid rgba(255, 247, 237, 0.86) !important;
+    border-radius: 999px;
+    box-shadow: 0 0 0 4px rgba(255, 164, 72, 0.14), 0 0 28px rgba(255, 164, 72, 0.3);
+}
 .hamburger {
     display: none;
-    flex-direction: column; gap: 5px;
-    cursor: pointer; padding: 4px;
-    background: none; border: none;
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.03);
+    color: var(--text);
+    cursor: pointer;
 }
 .hamburger span {
-    display: block; width: 24px; height: 2px;
-    background: var(--text); border-radius: 2px;
-    transition: var(--transition);
+    display: block;
+    width: 20px;
+    height: 2px;
+    margin: 5px auto;
+    background: currentColor;
+    transition: transform .2s var(--ease), opacity .2s var(--ease);
 }
-.hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
 .hamburger.open span:nth-child(2) { opacity: 0; }
-.hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
-
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 .mobile-nav {
     display: none;
-    position: fixed; top: 73px; left: 0; right: 0;
-    background: rgba(11,12,16,0.97);
-    backdrop-filter: blur(20px);
-    padding: 20px 7%;
-    border-bottom: 1px solid var(--glass-border);
-    z-index: 999;
-    flex-direction: column; gap: 4px;
+    position: fixed;
+    top: 75px;
+    left: 0;
+    right: 0;
+    z-index: 90;
+    padding: 16px 22px 22px;
+    background: rgba(2, 7, 13, .96);
+    border-bottom: 1px solid var(--line);
 }
-.mobile-nav.open { display: flex; }
-.mobile-nav a {
-    text-decoration: none; color: var(--muted);
-    padding: 12px 16px; border-radius: 10px;
-    font-size: 16px; font-weight: 500;
-    transition: var(--transition);
-}
-.mobile-nav a:hover { color: var(--text); background: var(--glass); }
+.mobile-nav.open { display: grid; }
 
-/* ── Hero ────────────────────────────────────────────────────────────────── */
 .hero {
     min-height: 100vh;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 120px 7% 80px;
-    position: relative; overflow: hidden;
+    position: relative;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background:
+        radial-gradient(circle at 18% 12%, rgba(255, 138, 0, .28), transparent 28%),
+        radial-gradient(circle at 82% 36%, rgba(255, 194, 102, .16), transparent 32%),
+        linear-gradient(180deg, #302d28 0%, #1d1b18 58%, #171512 100%);
+    overflow: hidden;
 }
-
 .hero::before {
-    content: '';
-    position: absolute; top: -40%; left: -10%;
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(255,138,0,0.12) 0%, transparent 70%);
-    pointer-events: none;
+    content: none;
 }
 .hero::after {
-    content: '';
-    position: absolute; bottom: -20%; right: -5%;
-    width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(255,183,71,0.07) 0%, transparent 70%);
+    content: none;
+}
+.hero-showcase {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 32px);
+    min-height: 520px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 247, 237, .34);
+    background:
+        radial-gradient(circle at 16% 18%, rgba(255, 138, 0, .24), transparent 20%),
+        radial-gradient(circle at 76% 28%, rgba(255, 255, 255, .08), transparent 26%),
+        linear-gradient(180deg, #34302a 0%, #211f1b 54%, #171512 100%);
+    border-radius: 18px;
+    box-shadow: 0 22px 70px rgba(0, 0, 0, .28);
+}
+.hero-showcase::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        linear-gradient(90deg, rgba(35, 16, 4, .58) 0%, rgba(35, 16, 4, .18) 48%, transparent 72%),
+        radial-gradient(circle at 12% 22%, rgba(255, 255, 255, .34), transparent 12%),
+        radial-gradient(circle at 73% 32%, rgba(255, 164, 72, .18), transparent 22%);
+}
+.hero-showcase::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(110deg, transparent 0 45%, rgba(255, 241, 191, .18) 46%, transparent 47% 100%);
+    mix-blend-mode: screen;
+    animation: heroSunSweep 8s linear infinite;
+}
+.hero-showcase img {
+    display: none;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    opacity: .32;
+    filter: saturate(.9) contrast(.82) sepia(.18);
+    animation: heroBreath 8s ease-in-out infinite;
+}
+.hero-nature {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 16% 16%, rgba(255, 255, 255, .62), transparent 11%),
+        linear-gradient(180deg, rgba(255, 247, 237, .2), transparent 42%);
+}
+.hero-nature::before {
+    content: "";
+    position: absolute;
+    left: -8%;
+    right: -8%;
+    bottom: -12%;
+    height: 54%;
+    background:
+        radial-gradient(ellipse at 15% 88%, #f47c20 0 34%, transparent 35%),
+        radial-gradient(ellipse at 42% 86%, #bd6423 0 38%, transparent 39%),
+        radial-gradient(ellipse at 75% 88%, #9c4b16 0 42%, transparent 43%),
+        linear-gradient(180deg, transparent 0 38%, rgba(94, 36, 7, .96) 39% 100%);
+    filter: drop-shadow(0 -16px 28px rgba(94, 36, 7, .26));
+}
+.hero-nature::after {
+    content: "";
+    position: absolute;
+    inset: -8% -6% auto -6%;
+    height: 42%;
+    background:
+        radial-gradient(ellipse at 12% 0%, rgba(255, 170, 83, .76) 0 26%, transparent 27%),
+        radial-gradient(ellipse at 38% -8%, rgba(255, 246, 235, .64) 0 30%, transparent 31%),
+        radial-gradient(ellipse at 72% 0%, rgba(218, 95, 18, .7) 0 28%, transparent 29%),
+        radial-gradient(ellipse at 94% -4%, rgba(255, 190, 118, .66) 0 22%, transparent 23%);
+    animation: canopySway 15s ease-in-out infinite;
+}
+.hero-energy {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    overflow: hidden;
+}
+.hero-energy .ember {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #fff7ed;
+    box-shadow: 0 0 18px #ff9a3c, 0 0 34px rgba(255, 164, 72, .35);
+    opacity: 0;
+    animation: emberRise 4.8s linear infinite;
+}
+.hero-energy .ember:nth-child(1) { left: 42%; bottom: 8%; animation-delay: -.4s; }
+.hero-energy .ember:nth-child(2) { left: 50%; bottom: 3%; animation-delay: -1.6s; animation-duration: 5.8s; }
+.hero-energy .ember:nth-child(3) { left: 62%; bottom: 9%; animation-delay: -2.7s; animation-duration: 4.2s; }
+.hero-energy .ember:nth-child(4) { left: 78%; bottom: 12%; animation-delay: -1s; animation-duration: 6.2s; }
+.hero-energy .ember:nth-child(5) { left: 86%; bottom: 22%; animation-delay: -3.5s; }
+.hero-energy .bolt {
+    position: absolute;
+    width: 110px;
+    height: 44px;
+    border-radius: 100% 0 100% 0;
+    background: linear-gradient(135deg, rgba(255, 247, 237, .9), rgba(255, 132, 36, .7));
+    filter: drop-shadow(0 0 10px rgba(255, 164, 72, .34));
+    transform: rotate(-28deg);
+    opacity: 0;
+    animation: boltFlash 3.6s ease-in-out infinite;
+}
+.hero-energy .bolt.one { right: 18%; top: 30%; }
+.hero-energy .bolt.two { right: 8%; top: 58%; animation-delay: -1.8s; transform: rotate(-38deg); }
+.hero-cat-stage {
+    position: absolute;
+    inset: 9% 6% 8% 48%;
+    z-index: 3;
+    display: grid;
+    place-items: center;
     pointer-events: none;
 }
-
-.hero-content { max-width: 580px; position: relative; z-index: 1; }
-
-.hero-badge {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: rgba(255,138,0,0.1);
-    border: 1px solid rgba(255,138,0,0.25);
-    color: var(--orange-light);
-    padding: 6px 14px; border-radius: 99px;
-    font-size: 13px; font-weight: 600;
-    margin-bottom: 24px;
+.hero-cat-stage::before,
+.hero-cat-stage::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
 }
-.badge-dot {
-    width: 7px; height: 7px;
-    background: #4ADE80; border-radius: 50%;
-    animation: pulse 2s infinite;
+.hero-cat-stage::before {
+    width: min(38vw, 520px);
+    aspect-ratio: 1;
+    background:
+        radial-gradient(circle at 48% 42%, rgba(255, 247, 237, .46), transparent 26%),
+        radial-gradient(circle at 50% 50%, rgba(255, 138, 0, .22), transparent 54%),
+        conic-gradient(from 45deg, rgba(255, 138, 0, .08), rgba(255, 246, 235, .62), rgba(255, 173, 50, .18), rgba(255, 246, 235, .48), rgba(255, 138, 0, .08));
+    border: 1px solid rgba(255, 247, 237, .32);
+    filter: drop-shadow(0 0 46px rgba(255, 164, 72, .3));
+    opacity: .9;
+    animation: catAuraSpin 16s linear infinite;
 }
-@keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.6); }
-    50%       { box-shadow: 0 0 0 6px rgba(74,222,128,0); }
+.hero-cat-stage::after {
+    width: min(30vw, 405px);
+    aspect-ratio: 1;
+    border: 1px solid rgba(255, 247, 237, .5);
+    box-shadow:
+        inset 0 0 44px rgba(255, 164, 72, .18),
+        0 0 40px rgba(255, 164, 72, .22);
+    animation: catRingPulse 3.8s ease-in-out infinite;
 }
-
-.hero-content h1 {
-    font-size: clamp(38px, 5.5vw, 68px);
-    font-weight: 900;
-    line-height: 1.1;
-    margin-bottom: 20px;
-    letter-spacing: -2px;
+.hero-cat-card {
+    position: relative;
+    width: min(30vw, 410px);
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    isolation: isolate;
+    transform-style: preserve-3d;
+    animation: catFloat 5.6s ease-in-out infinite;
 }
-.hero-content h1 .grad {
-    background: linear-gradient(90deg, var(--orange), var(--orange-light), #FFD580);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+.hero-cat-card::before {
+    content: "";
+    position: absolute;
+    inset: -8%;
+    z-index: -2;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 36% 25%, rgba(255, 255, 255, .58), transparent 20%),
+        radial-gradient(circle at 50% 56%, rgba(255, 138, 0, .34), rgba(255, 194, 102, .17) 50%, transparent 72%);
+    box-shadow:
+        inset 0 0 70px rgba(255, 247, 237, .16),
+        0 32px 80px rgba(0, 0, 0, .28),
+        0 0 42px rgba(255, 164, 72, .26);
+    transform: translateY(12px) scale(1.02);
+    animation: catShadowPulse 5.6s ease-in-out infinite;
 }
-
-.hero-content p {
-    font-size: 17px; color: var(--muted);
-    line-height: 1.8; margin-bottom: 36px;
-    max-width: 500px;
+.hero-cat-card::after {
+    content: "";
+    position: absolute;
+    inset: -10%;
+    z-index: 2;
+    border-radius: 50%;
+    background: linear-gradient(115deg, transparent 0 34%, rgba(255,255,255,.72) 40%, transparent 48% 100%);
+    mix-blend-mode: screen;
+    opacity: 0;
+    transform: translateX(-42%) rotate(-14deg);
+    animation: catShine 4.4s ease-in-out infinite;
 }
-
-.hero-actions { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
-
-.btn-primary {
-    display: inline-flex; align-items: center; gap: 10px;
-    padding: 15px 30px;
-    background: linear-gradient(135deg, var(--orange), var(--orange-deep));
-    color: white; text-decoration: none;
-    border-radius: var(--radius); font-weight: 700; font-size: 15px;
-    box-shadow: 0 8px 32px rgba(255,138,0,0.35);
-    transition: var(--transition);
-    position: relative; overflow: hidden;
+.hero-cat-card img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    opacity: 1;
+    filter:
+        drop-shadow(0 24px 24px rgba(0, 0, 0, .34))
+        drop-shadow(0 0 34px rgba(255, 164, 72, .42));
+    animation: catPop 3.6s ease-in-out infinite;
 }
-.btn-primary::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-    transform: translateX(-100%);
-    animation: shimmer 2.5s infinite;
+.cat-sparkle {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: #fff7ed;
+    clip-path: polygon(50% 0, 62% 36%, 100% 50%, 62% 64%, 50% 100%, 38% 64%, 0 50%, 38% 36%);
+    filter: drop-shadow(0 0 12px rgba(255, 247, 237, .72));
+    opacity: 0;
+    animation: catSparkle 2.8s ease-in-out infinite;
 }
-@keyframes shimmer {
-    100% { transform: translateX(100%); }
+.cat-sparkle.one { left: 8%; top: 19%; animation-delay: -.4s; }
+.cat-sparkle.two { right: 10%; top: 28%; animation-delay: -1.2s; transform: scale(.78); }
+.cat-sparkle.three { left: 18%; bottom: 22%; animation-delay: -2s; transform: scale(.64); }
+.cat-sparkle.four { right: 22%; bottom: 12%; animation-delay: -2.4s; transform: scale(.9); }
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    padding: clamp(112px, 12vw, 154px) 6.4% 6.3%;
+    pointer-events: none;
 }
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(255,138,0,0.5);
+.hero-copy {
+    position: relative;
+    z-index: 2;
+    max-width: min(620px, 44vw);
+    pointer-events: auto;
 }
-
-.btn-download {
-    display: inline-flex; align-items: center; gap: 10px;
-    padding: 14px 28px;
-    background: var(--glass);
-    color: var(--text); text-decoration: none;
-    border-radius: var(--radius); font-weight: 600; font-size: 15px;
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(10px);
-    transition: var(--transition);
+.hero-copy .status {
+    margin-bottom: 28px;
 }
-.btn-download:hover {
-    border-color: rgba(255,138,0,0.4);
-    background: rgba(255,138,0,0.08);
-    transform: translateY(-2px);
+.hero-copy h1 {
+    max-width: 620px;
+    font-size: clamp(58px, 6.1vw, 106px);
+    line-height: .9;
+    font-weight: 800;
+    text-transform: none;
+    text-shadow: 0 8px 0 rgba(0,0,0,.38), 0 0 24px rgba(102, 215, 255, .12);
 }
-
-.hero-visual {
-    position: relative; z-index: 1;
-    display: flex; justify-content: center; align-items: center;
-    flex-shrink: 0;
-}
-.hero-img-wrap {
-    position: relative; width: 340px; height: 340px;
-}
-.hero-img-wrap::before {
-    content: '';
-    position: absolute; inset: -3px;
-    background: linear-gradient(135deg, var(--orange), transparent, var(--orange-light));
-    border-radius: 50%; animation: spin 8s linear infinite; opacity: 0.5;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.hero-img-wrap img {
-    position: relative; width: 100%; height: 100%;
-    object-fit: contain; border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,138,0,0.08), transparent);
-    z-index: 1;
-    filter: drop-shadow(0 20px 40px rgba(255,138,0,0.3));
-    animation: float 6s ease-in-out infinite;
-}
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(-16px); }
-}
-
-.hero-stats {
-    display: flex; gap: 32px;
-    margin-top: 40px;
-}
-.hero-stat { text-align: left; }
-.hero-stat .num {
-    font-size: 28px; font-weight: 900;
-    background: linear-gradient(90deg, var(--orange), var(--orange-light));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
-.hero-stat .lbl { font-size: 12px; color: var(--muted); font-weight: 500; }
-
-/* ── Section Base ────────────────────────────────────────────────────────── */
-section { padding: 100px 7%; position: relative; z-index: 1; }
-
-.section-label {
-    display: inline-block;
-    background: rgba(255,138,0,0.1);
-    border: 1px solid rgba(255,138,0,0.2);
+.hero-copy h1 .hot {
     color: var(--orange);
-    padding: 4px 14px; border-radius: 99px;
-    font-size: 12px; font-weight: 700; letter-spacing: 1px;
-    text-transform: uppercase; margin-bottom: 16px;
+    text-shadow: 0 0 30px rgba(255, 138, 31, .8), 0 8px 0 rgba(0,0,0,.35);
+}
+.hero-copy p {
+    max-width: 585px;
+    margin-top: 26px;
+    color: rgba(237, 246, 255, .74);
+    font-size: clamp(17px, 1.45vw, 22px);
+    line-height: 1.68;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, .72);
+}
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 38px;
+}
+.hero-actions .btn-primary,
+.hero-actions .btn-ghost {
+    min-width: 200px;
+}
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+.status {
+    width: max-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+    padding: 11px 16px;
+    color: #c9ff9c;
+    border: 1px solid rgba(168, 224, 99, .38);
+    background: rgba(32, 96, 53, .22);
+    box-shadow: 0 0 30px rgba(168, 224, 99, .18);
+    font-weight: 700;
+    border-radius: var(--radius);
+}
+.status-gem {
+    width: 20px;
+    height: 26px;
+    background: linear-gradient(135deg, #e9ffc8, #58b862 56%, #a8e063);
+    border-radius: 90% 0 90% 0;
+    box-shadow: 0 0 18px rgba(168, 224, 99, .62);
+    animation: pulseGem 2s ease-in-out infinite;
+}
+h1, h2, h3 {
+    font-family: "Barlow Condensed", Inter, sans-serif;
+    letter-spacing: .01em;
+}
+.hero h1 {
+    max-width: 720px;
+    font-size: clamp(56px, 8vw, 118px);
+    line-height: .88;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-shadow: 0 8px 0 rgba(0,0,0,.24), 0 0 28px rgba(168, 224, 99, .14);
+}
+.hero h1 .hot {
+    display: inline-block;
+    color: var(--orange);
+    text-shadow: 0 0 32px rgba(168, 224, 99, .48), 0 8px 0 rgba(0,0,0,.25);
+}
+.hero p {
+    max-width: 600px;
+    margin-top: 28px;
+    color: var(--muted);
+    font-size: clamp(17px, 1.55vw, 23px);
+    line-height: 1.7;
+}
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin-top: 36px;
+}
+.hero .hero-copy h1 {
+    max-width: 620px;
+    font-size: clamp(58px, 6.1vw, 106px);
+    line-height: .9;
+    text-transform: none;
+}
+.hero .hero-copy p {
+    max-width: 610px;
+    margin-top: 26px;
+    color: rgba(237, 246, 255, .74);
+    font-size: clamp(17px, 1.45vw, 22px);
+    line-height: 1.68;
+}
+.hero .hero-actions {
+    margin-top: 38px;
+}
+.btn-primary, .btn-ghost, .btn-whatsapp {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 54px;
+    padding: 15px 25px;
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform .2s var(--ease), box-shadow .2s var(--ease), border-color .2s var(--ease);
+}
+.btn-primary:hover, .btn-ghost:hover, .btn-whatsapp:hover { transform: translateY(-3px); }
+.btn-ghost {
+    color: var(--text);
+    border: 1px solid rgba(214, 255, 153, .34);
+    background: rgba(14, 58, 32, .38);
+    border-radius: 999px;
+}
+.hero-unit {
+    position: relative;
+    z-index: 2;
+    min-height: 520px;
+}
+.robot-pet {
+    position: absolute;
+    right: 1%;
+    bottom: 2%;
+    width: min(44vw, 590px);
+    max-width: 100%;
+    border-radius: 14px;
+    opacity: .01;
+}
+.pet-orbit {
+    position: absolute;
+    right: 8%;
+    bottom: 10%;
+    width: min(31vw, 430px);
+    aspect-ratio: 1;
+    border: 1px solid rgba(102, 215, 255, .22);
+    border-radius: 50%;
+    box-shadow: inset 0 0 40px rgba(102, 215, 255, .08), 0 0 44px rgba(255, 138, 31, .14);
+    animation: spin 18s linear infinite;
+}
+.pet-orbit::before, .pet-orbit::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--orange);
+    box-shadow: 0 0 24px var(--orange);
+}
+.pet-orbit::before { top: 10%; left: 18%; }
+.pet-orbit::after { right: 8%; bottom: 22%; background: var(--cyan); box-shadow: 0 0 24px var(--cyan); }
+.mini-bot {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 86px;
+    height: 86px;
+    color: var(--orange-soft);
+    background: linear-gradient(145deg, rgba(14, 28, 42, .94), rgba(45, 22, 16, .88));
+    border: 1px solid var(--line-hot);
+    clip-path: polygon(13% 0, 87% 0, 100% 16%, 100% 84%, 87% 100%, 13% 100%, 0 84%, 0 16%);
+    box-shadow: 0 18px 40px rgba(0,0,0,.32), 0 0 26px rgba(255, 138, 31, .24);
+    animation: botFloat 4.5s ease-in-out infinite;
+}
+.mini-bot svg { width: 48px; height: 48px; }
+.mini-bot.one { right: 3%; top: 20%; }
+.mini-bot.two { left: 8%; bottom: 18%; animation-delay: -1.7s; color: var(--cyan); border-color: rgba(102, 215, 255, .52); }
+
+section {
+    position: relative;
+    z-index: 2;
+    padding: 96px clamp(18px, 7vw, 100px);
+}
+section::before {
+    content: "";
+    position: absolute;
+    inset: 26px clamp(10px, 4vw, 54px);
+    z-index: -1;
+    pointer-events: none;
+    opacity: .46;
+    background:
+        radial-gradient(ellipse at 8% 18%, rgba(168, 224, 99, .14), transparent 20%),
+        radial-gradient(ellipse at 92% 82%, rgba(255, 209, 138, .11), transparent 18%),
+        linear-gradient(115deg, transparent 0 70%, rgba(121, 223, 130, .08) 71%, transparent 74% 100%);
+    border-radius: 26px;
+}
+.section-head {
+    display: grid;
+    gap: 13px;
+    max-width: 740px;
+    margin-bottom: 42px;
+}
+.eyebrow {
+    position: relative;
+    width: max-content;
+    color: var(--orange-soft);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line-hot);
+}
+.eyebrow::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 42px;
+    height: 2px;
+    background: var(--leaf);
+    box-shadow: 0 0 16px rgba(168, 224, 99, .54);
+    animation: eyebrowSpark 2.6s ease-in-out infinite;
 }
 .section-title {
-    font-size: clamp(28px, 4vw, 44px);
-    font-weight: 800; letter-spacing: -1px;
-    margin-bottom: 12px;
+    font-size: clamp(38px, 5vw, 70px);
+    line-height: .95;
+    text-transform: uppercase;
+    text-shadow: 0 0 22px rgba(168, 224, 99, .12), 0 0 30px rgba(255, 209, 138, .08);
 }
-.section-sub { color: var(--muted); font-size: 16px; max-width: 520px; }
-.section-head { margin-bottom: 56px; }
+.section-sub {
+    color: var(--muted);
+    line-height: 1.7;
+    font-size: 17px;
+}
 
-/* ── Features ────────────────────────────────────────────────────────────── */
-#features { background: var(--bg2); }
+.about {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, .9fr);
+    gap: 30px;
+    align-items: center;
+}
+.command-panel, .feature-card, .role-card, .guide-card, .tech-pill, .download-box, .stat-card {
+    position: relative;
+    background:
+        linear-gradient(145deg, rgba(42, 39, 34, .9), rgba(24, 22, 19, .78)),
+        radial-gradient(circle at 12% 0%, rgba(255, 138, 0, .12), transparent 26%);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: 0 22px 70px rgba(0,0,0,.25);
+    overflow: hidden;
+    isolation: isolate;
+}
+.command-panel > *, .feature-card > *, .role-card > *, .guide-card > *, .tech-pill > *, .download-box > *, .stat-card > * {
+    position: relative;
+    z-index: 2;
+}
+.command-panel::before, .feature-card::before, .role-card::before, .guide-card::before, .download-box::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(90deg, transparent, rgba(255, 247, 237, .28), transparent) top left / 100% 1px no-repeat,
+        linear-gradient(180deg, rgba(255,255,255,.055), transparent 35%);
+}
+.command-panel::after, .feature-card::after, .role-card::after, .guide-card::after, .tech-pill::after, .download-box::after, .stat-card::after {
+    content: "";
+    position: absolute;
+    inset: -45% -70%;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .13), transparent 48%),
+        linear-gradient(72deg, transparent 44%, rgba(255, 164, 72, .18), transparent 57%);
+    transform: translateX(-42%) rotate(8deg);
+    opacity: .7;
+    animation: cardEnergySweep 8s ease-in-out infinite;
+}
+.feature-card:nth-child(2n)::after,
+.role-card:nth-child(2n)::after,
+.guide-card:nth-child(2n)::after,
+.tech-pill:nth-child(2n)::after {
+    animation-delay: -2.7s;
+}
+.command-panel {
+    min-height: 360px;
+    padding: 18px;
+    border-color: rgba(255, 226, 189, .32);
+}
+.mecha-pet-frame {
+    position: relative;
+    width: 100%;
+    min-height: 360px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    isolation: isolate;
+    border-radius: 8px;
+    background:
+        radial-gradient(circle at 50% 52%, rgba(255, 255, 255, .16), transparent 30%),
+        radial-gradient(circle at 72% 32%, rgba(255, 164, 72, .2), transparent 28%),
+        linear-gradient(145deg, rgba(47, 43, 37, .9), rgba(23, 21, 18, .94));
+}
+.mecha-pet-frame::before,
+.mecha-pet-frame::after {
+    content: "";
+    position: absolute;
+    inset: 12px;
+    pointer-events: none;
+    border-radius: 8px;
+    z-index: 2;
+}
+.mecha-pet-frame::before {
+    border: 1px solid rgba(255, 226, 189, .3);
+    box-shadow:
+        inset 0 0 26px rgba(255, 247, 237, .12),
+        0 0 24px rgba(255, 164, 72, .12);
+}
+.mecha-pet-frame::after {
+    background:
+        linear-gradient(90deg, transparent, rgba(255, 247, 237, .42), transparent) 0 20% / 100% 2px no-repeat,
+        linear-gradient(180deg, rgba(255,255,255,.1), transparent 36%, rgba(255, 164, 72, .1));
+    mix-blend-mode: screen;
+    animation: scannerSweep 4.6s ease-in-out infinite;
+}
+.mecha-pet-frame img {
+    width: 100%;
+    min-height: 320px;
+    object-fit: cover;
+    border-radius: 8px;
+    filter: saturate(1.08) contrast(1.04) drop-shadow(0 0 18px rgba(168, 224, 99, .2));
+    animation: mechaPetMove 5.2s ease-in-out infinite;
+}
+.mecha-pet-frame.about-mecha img {
+    min-height: 360px;
+    object-position: 72% center;
+}
+.mecha-pet-frame.guide-mecha img {
+    min-height: 430px;
+    object-position: 78% center;
+    animation-duration: 5.8s;
+}
+.mecha-pet-frame.sent-mecha img {
+    width: min(88%, 560px);
+    height: auto;
+    min-height: 0;
+    object-fit: contain;
+    object-position: center;
+}
+.mecha-pet-frame.sent-mecha .core-glow {
+    left: 50%;
+    top: 53%;
+}
+.mecha-pet-frame .core-glow {
+    position: absolute;
+    left: 70%;
+    top: 52%;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 3;
+    background: radial-gradient(circle, rgba(255, 255, 255, .84), rgba(255, 164, 72, .38) 34%, transparent 70%);
+    filter: blur(.5px);
+    animation: corePulse 1.55s ease-in-out infinite;
+}
+.mecha-pet-frame .spark-bit {
+    position: absolute;
+    width: 4px;
+    height: 22px;
+    border-radius: 999px;
+    pointer-events: none;
+    z-index: 4;
+    background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255, 132, 36, .86), transparent);
+    box-shadow: 0 0 14px rgba(255, 164, 72, .56);
+    animation: mechaSpark 2.35s linear infinite;
+}
+.spark-bit:nth-child(3) { left: 18%; top: 82%; animation-delay: -.3s; }
+.spark-bit:nth-child(4) { left: 42%; top: 76%; animation-delay: -1.1s; animation-duration: 2.8s; }
+.spark-bit:nth-child(5) { left: 78%; top: 70%; animation-delay: -.7s; animation-duration: 2.15s; }
+.spark-bit:nth-child(6) { left: 88%; top: 46%; animation-delay: -1.6s; animation-duration: 2.65s; }
+.spark-bit:nth-child(7) { left: 64%; top: 26%; animation-delay: -2s; animation-duration: 3s; }
+.guide-visual .mecha-pet-frame {
+    min-height: 430px;
+    border: 1px solid var(--line);
+}
+.about-copy {
+    display: grid;
+    gap: 20px;
+}
+.about-copy p {
+    color: var(--muted);
+    line-height: 1.8;
+}
+.spec-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+.spec {
+    padding: 14px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.035);
+    border-radius: var(--radius);
+}
+.spec strong {
+    display: block;
+    font-family: "Barlow Condensed", Inter, sans-serif;
+    color: var(--orange-soft);
+    font-size: 28px;
+    line-height: 1;
+}
+.spec span { color: var(--muted); font-size: 12px; }
 
 .features-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
 }
-
 .feature-card {
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius);
-    padding: 28px;
-    transition: var(--transition);
-    backdrop-filter: blur(10px);
-    position: relative; overflow: hidden;
+    min-height: 210px;
+    padding: 26px;
+    transition: transform .25s var(--ease), border-color .25s var(--ease), box-shadow .25s var(--ease);
 }
-.feature-card::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, var(--orange), transparent);
-    opacity: 0; transition: var(--transition);
+.feature-card.feature-burst {
+    animation: featureClickBloom .54s cubic-bezier(.16, 1, .3, 1);
 }
-.feature-card:hover {
-    border-color: rgba(255,138,0,0.25);
-    transform: translateY(-6px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+.feature-card:hover, .role-card:hover, .tech-pill:hover, .guide-card:hover, .stat-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--line-hot);
+    box-shadow: 0 24px 76px rgba(0,0,0,.34), 0 0 34px rgba(255, 164, 72, .18);
 }
-.feature-card:hover::before { opacity: 1; }
-
 .feature-icon {
-    font-size: 36px; margin-bottom: 16px;
-    display: block;
+    width: 54px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 20px;
+    color: var(--orange-soft);
+    border: 1px solid var(--line-hot);
+    background: rgba(255, 247, 237, .12);
+    border-radius: var(--radius);
+    box-shadow: inset 0 0 18px rgba(255, 247, 237, .1), 0 0 16px rgba(255, 164, 72, .12);
+    animation: iconCharge 3.8s ease-in-out infinite;
 }
-.feature-card h3 {
-    font-size: 17px; font-weight: 700; margin-bottom: 8px; color: var(--text);
+.feature-card h3, .role-card h3, .guide-card h3 {
+    font-size: 28px;
+    line-height: 1;
+    margin-bottom: 10px;
 }
-.feature-card p { font-size: 14px; color: var(--muted); line-height: 1.7; }
-
-/* ── Roles ───────────────────────────────────────────────────────────────── */
-#roles { background: var(--bg3); }
+.feature-card p, .role-card p, .guide-card p, .guide-card li {
+    color: var(--muted);
+    line-height: 1.65;
+}
 
 .roles-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
 }
-
 .role-card {
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius);
-    padding: 36px 28px; text-align: center;
-    transition: var(--transition);
-    position: relative; overflow: hidden;
+    min-height: 340px;
+    padding: 20px;
+    transition: transform .25s var(--ease), border-color .25s var(--ease);
 }
-.role-card::after {
-    content: '';
-    position: absolute; bottom: -40px; left: 50%;
-    transform: translateX(-50%);
-    width: 120px; height: 120px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,138,0,0.15), transparent);
-    transition: var(--transition);
-}
-.role-card:hover { border-color: rgba(255,138,0,0.3); transform: translateY(-6px); }
-.role-card:hover::after { opacity: 0; }
-
-.role-emoji { font-size: 48px; display: block; margin-bottom: 16px; }
-.role-card h3 { font-size: 20px; font-weight: 800; margin-bottom: 10px; }
-.role-card p { color: var(--muted); font-size: 14px; line-height: 1.7; }
-.role-tag {
-    display: inline-block; margin-top: 16px;
-    padding: 4px 12px; border-radius: 99px;
-    font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
-    background: rgba(255,138,0,0.12); color: var(--orange);
-    border: 1px solid rgba(255,138,0,0.2);
-}
-
-/* ── Guide ───────────────────────────────────────────────────────────────── */
-#guide { background: var(--bg2); }
-
-.guide-grid {
-    display: flex;
-    flex-direction: column;
-    max-width: 720px;
-    margin: 0 auto;
-}
-
-.guide-item {
-    display: flex;
-    gap: 24px;
-    align-items: stretch;
-}
-
-.guide-marker {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex-shrink: 0;
-}
-.guide-marker-line {
-    flex: 1;
-    width: 2px;
-    min-height: 24px;
-    margin-top: 8px;
-    background: linear-gradient(var(--orange), transparent);
-}
-.guide-item:last-child .guide-marker-line { display: none; }
-
-.guide-card {
-    flex: 1;
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius);
-    padding: 28px;
-    margin-bottom: 24px;
-    transition: var(--transition);
-    backdrop-filter: blur(10px);
-    position: relative; overflow: hidden;
-}
-.guide-card:hover {
-    border-color: rgba(255,138,0,0.25);
-    transform: translateX(4px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-}
-
-.guide-step-num {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--orange), var(--orange-deep));
-    color: #0B0C10;
-    font-size: 15px; font-weight: 800;
-    flex-shrink: 0;
-}
-.guide-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
-.guide-card p { font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 14px; }
-
-.guide-steps {
-    list-style: none;
-    display: flex; flex-direction: column; gap: 10px;
-    padding-top: 4px;
-    border-top: 1px solid var(--glass-border);
-}
-.guide-steps li {
+.role-avatar {
     position: relative;
-    padding-left: 20px;
-    font-size: 13px; color: var(--muted); line-height: 1.6;
+    overflow: hidden;
+    height: 170px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 18px;
+    background:
+        radial-gradient(circle at 50% 40%, rgba(255, 255, 255, .22), transparent 34%),
+        radial-gradient(ellipse at 50% 100%, rgba(255, 132, 36, .34), transparent 52%),
+        linear-gradient(145deg, rgba(255, 154, 60, .18), rgba(255, 255, 255, .08));
+    border: 1px solid rgba(255, 247, 237, .16);
+    border-radius: 18px;
 }
-.guide-steps li::before {
-    content: '';
-    position: absolute; left: 0; top: 7px;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--orange);
+.role-avatar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent, rgba(255, 232, 172, .14), transparent);
+    transform: translateY(-110%);
+    animation: scannerSweepVertical 4.2s ease-in-out infinite;
 }
-.guide-steps li strong { color: var(--text); font-weight: 600; }
-.guide-steps li code {
-    background: rgba(255,138,0,0.1);
-    color: var(--orange-light);
-    padding: 1px 6px; border-radius: 4px;
+.role-avatar svg {
+    width: 106px;
+    height: 106px;
+    filter: drop-shadow(0 0 16px rgba(255, 164, 72, .34));
+    animation: characterMove 3.8s ease-in-out infinite;
+}
+.role-card:nth-child(2) .role-avatar svg { color: var(--orange-soft); animation-delay: -.8s; }
+.role-card:nth-child(3) .role-avatar svg { color: #ffe8ac; animation-delay: -1.4s; }
+.role-tag {
+    display: inline-flex;
+    margin-top: 16px;
+    padding: 8px 12px;
+    color: var(--orange-soft);
+    border: 1px solid rgba(255, 138, 31, .28);
+    border-radius: 999px;
     font-size: 12px;
+    font-weight: 800;
 }
 
-/* ── Stats ───────────────────────────────────────────────────────────────── */
-#stats { background: var(--bg2); }
+.guide-layout {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(300px, .78fr) minmax(0, 1fr);
+    gap: 38px;
+    align-items: start;
+}
+.guide-layout::before {
+    content: "";
+    position: absolute;
+    inset: -40px -4vw auto -4vw;
+    height: 220px;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse at 18% 20%, rgba(168, 224, 99, .14), transparent 34%),
+        linear-gradient(180deg, rgba(168, 224, 99, .08), transparent);
+    opacity: .8;
+    transform: translateY(var(--scroll-lift, 0px));
+}
+.guide-visual {
+    position: sticky;
+    top: 100px;
+}
+.guide-birds {
+    position: absolute;
+    inset: -42px -6vw auto -6vw;
+    height: 210px;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 4;
+}
+.guide-bird {
+    position: absolute;
+    left: -90px;
+    top: var(--bird-top, 40px);
+    width: var(--bird-size, 68px);
+    height: 38px;
+    color: rgba(255, 241, 198, .9);
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,.22));
+    animation: birdFly var(--bird-speed, 11s) linear infinite;
+    animation-delay: var(--bird-delay, 0s);
+}
+.guide-bird::before,
+.guide-bird::after {
+    content: "";
+    position: absolute;
+    top: 12px;
+    width: 34px;
+    height: 18px;
+    border-top: 3px solid currentColor;
+    border-radius: 50% 50% 0 0;
+    transform-origin: right center;
+    animation: wingBeat .56s ease-in-out infinite;
+}
+.guide-bird::before {
+    left: 4px;
+    --wing-open: 18deg;
+    --wing-closed: -12deg;
+    transform: rotate(var(--wing-open));
+}
+.guide-bird::after {
+    right: 4px;
+    transform-origin: left center;
+    --wing-open: -18deg;
+    --wing-closed: 12deg;
+    transform: rotate(var(--wing-open));
+}
+.guide-bird i {
+    position: absolute;
+    left: 30px;
+    top: 14px;
+    width: 9px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+}
+.guide-bird:nth-child(2) {
+    --bird-top: 82px;
+    --bird-size: 48px;
+    --bird-speed: 14s;
+    --bird-delay: -5s;
+    opacity: .78;
+}
+.guide-bird:nth-child(3) {
+    --bird-top: 28px;
+    --bird-size: 56px;
+    --bird-speed: 16s;
+    --bird-delay: -9s;
+    opacity: .64;
+}
+.guide-bird:nth-child(4) {
+    --bird-top: 122px;
+    --bird-size: 44px;
+    --bird-speed: 12s;
+    --bird-delay: -3.2s;
+    opacity: .74;
+}
+.guide-bird:nth-child(5) {
+    --bird-top: 56px;
+    --bird-size: 38px;
+    --bird-speed: 13.5s;
+    --bird-delay: -7.4s;
+    opacity: .68;
+}
+.guide-bird:nth-child(6) {
+    --bird-top: 156px;
+    --bird-size: 60px;
+    --bird-speed: 18s;
+    --bird-delay: -12s;
+    opacity: .52;
+}
+.bird-stage {
+    position: relative;
+    z-index: 4;
+    width: min(94%, 560px);
+    min-height: 330px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 22px;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,.36), transparent 16%),
+        radial-gradient(ellipse at 50% 100%, rgba(255, 132, 36, .26), transparent 46%);
+}
+.bird-stage::before {
+    content: "";
+    position: absolute;
+    inset: auto -10% -12% -10%;
+    height: 38%;
+    background:
+        radial-gradient(ellipse at 18% 100%, rgba(255, 247, 237, .72) 0 24%, transparent 25%),
+        radial-gradient(ellipse at 48% 100%, rgba(255, 154, 60, .72) 0 34%, transparent 35%),
+        radial-gradient(ellipse at 80% 100%, rgba(217, 95, 18, .6) 0 28%, transparent 29%);
+}
+.perch-bird {
+    position: absolute;
+    left: var(--bird-left, 50%);
+    top: var(--bird-top, 44%);
+    width: var(--bird-size, 96px);
+    height: calc(var(--bird-size, 96px) * .56);
+    color: rgba(255, 248, 238, .96);
+    filter: drop-shadow(0 16px 18px rgba(60, 24, 5, .28));
+    transform: translate(-50%, -50%) scale(var(--bird-scale, 1));
+    animation: hoverBird var(--hover-speed, 3.4s) ease-in-out infinite;
+    animation-delay: var(--bird-delay, 0s);
+}
+.perch-bird::before,
+.perch-bird::after {
+    content: "";
+    position: absolute;
+    top: 35%;
+    width: 48%;
+    height: 34%;
+    border-top: 5px solid currentColor;
+    border-radius: 50% 50% 0 0;
+    animation: stationaryWing .64s ease-in-out infinite;
+    animation-delay: var(--bird-delay, 0s);
+}
+.perch-bird::before {
+    left: 4%;
+    transform-origin: right center;
+    --wing-open: 20deg;
+    --wing-closed: -20deg;
+}
+.perch-bird::after {
+    right: 4%;
+    transform-origin: left center;
+    --wing-open: -20deg;
+    --wing-closed: 20deg;
+}
+.perch-bird i {
+    position: absolute;
+    left: 44%;
+    top: 40%;
+    width: 13%;
+    height: 11%;
+    border-radius: 50%;
+    background: currentColor;
+}
+.perch-bird.one { --bird-left: 50%; --bird-top: 42%; --bird-size: 120px; }
+.perch-bird.two { --bird-left: 29%; --bird-top: 34%; --bird-size: 78px; --bird-scale: .9; --bird-delay: -.8s; opacity: .84; }
+.perch-bird.three { --bird-left: 72%; --bird-top: 58%; --bird-size: 88px; --bird-scale: .94; --bird-delay: -1.5s; opacity: .78; }
+.hero-bird-stage .perch-bird:nth-child(4) { --bird-left: 40%; --bird-top: 66%; --bird-size: 62px; --bird-scale: .82; --bird-delay: -2.1s; opacity: .72; }
+.hero-bird-stage .perch-bird:nth-child(5) { --bird-left: 84%; --bird-top: 36%; --bird-size: 68px; --bird-scale: .86; --bird-delay: -2.8s; opacity: .66; }
+.hero-bird-stage {
+    position: absolute;
+    inset: 10% 7% 12% 44%;
+    z-index: 3;
+    min-height: 360px;
+}
+.hero-bird-stage .bird-stage {
+    width: 100%;
+    height: 100%;
+    min-height: 360px;
+    background: transparent;
+}
+.pet-scene {
+    position: relative;
+    width: min(96%, 570px);
+    min-height: 350px;
+    display: grid;
+    place-items: end center;
+    overflow: hidden;
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at 18% 16%, rgba(255,255,255,.48), transparent 14%),
+        linear-gradient(180deg, rgba(255, 238, 210, .82) 0%, rgba(255, 154, 31, .42) 50%, rgba(108, 43, 0, .18) 100%);
+}
+.pet-scene::before {
+    content: "";
+    position: absolute;
+    left: -10%;
+    right: -10%;
+    bottom: -6%;
+    height: 34%;
+    background:
+        radial-gradient(ellipse at 18% 100%, rgba(255, 224, 156, .88) 0 28%, transparent 29%),
+        radial-gradient(ellipse at 48% 100%, rgba(255, 138, 0, .82) 0 36%, transparent 37%),
+        radial-gradient(ellipse at 82% 100%, rgba(205, 88, 0, .66) 0 32%, transparent 33%),
+        linear-gradient(180deg, #ffc56d, #d76000);
+}
+.pet-scene::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 20% 0;
+    height: 36px;
+    background:
+        linear-gradient(82deg, transparent 0 8%, #7cb840 9% 11%, transparent 12% 100%),
+        linear-gradient(96deg, transparent 0 18%, #95ca45 19% 21%, transparent 22% 100%),
+        linear-gradient(78deg, transparent 0 36%, #67a833 37% 39%, transparent 40% 100%),
+        linear-gradient(92deg, transparent 0 58%, #8ec33d 59% 61%, transparent 62% 100%),
+        linear-gradient(84deg, transparent 0 78%, #74b13b 79% 81%, transparent 82% 100%);
+    opacity: .9;
+    animation: grassNibble 1.4s ease-in-out infinite;
+}
+.animal {
+    position: relative;
+    z-index: 3;
+    width: 230px;
+    height: 160px;
+    margin-bottom: 74px;
+    transform-origin: 50% 100%;
+    animation: animalBreathe 2.6s ease-in-out infinite;
+}
+.animal .body,
+.animal .head,
+.animal .ear,
+.animal .tail,
+.animal .leg,
+.animal .muzzle,
+.animal .food,
+.animal .eye {
+    position: absolute;
+}
+.animal .body {
+    left: 42px;
+    bottom: 18px;
+    width: 150px;
+    height: 88px;
+    border-radius: 54% 46% 48% 52%;
+    background: linear-gradient(145deg, #fff0d3, #ffb45a);
+    box-shadow: inset -16px -16px 24px rgba(178, 79, 0, .16), 0 20px 28px rgba(76, 25, 0, .24);
+}
+.animal .head {
+    right: 18px;
+    bottom: 72px;
+    width: 82px;
+    height: 70px;
+    border-radius: 48% 52% 44% 56%;
+    background: linear-gradient(145deg, #fff3dc, #ffb861);
+    transform-origin: 42% 78%;
+    animation: munchHead 1.15s ease-in-out infinite;
+}
+.animal .eye {
+    right: 33px;
+    top: 26px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #3a1605;
+}
+.animal .muzzle {
+    right: -6px;
+    bottom: 16px;
+    width: 30px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff7ed;
+    animation: mouthNibble .58s ease-in-out infinite;
+}
+.animal .leg {
+    bottom: 0;
+    width: 32px;
+    height: 30px;
+    border-radius: 42% 42% 50% 50%;
+    background: #f59a37;
+}
+.animal .leg.front { right: 42px; }
+.animal .leg.back { left: 70px; }
+.animal .food {
+    right: -22px;
+    bottom: 48px;
+    width: 58px;
+    height: 32px;
+    background:
+        radial-gradient(circle at 50% 20%, #74b13b 0 10%, transparent 11%),
+        linear-gradient(90deg, transparent 0 12%, #69a936 13% 16%, transparent 17% 38%, #8fc642 39% 42%, transparent 43% 68%, #7cb840 69% 72%, transparent 73% 100%);
+    transform-origin: 50% 100%;
+    animation: foodShake .58s ease-in-out infinite;
+}
+.animal.rabbit .ear {
+    width: 22px;
+    height: 74px;
+    bottom: 124px;
+    border-radius: 50% 50% 42% 42%;
+    background: linear-gradient(180deg, #fff8ec, #ffb861);
+    transform-origin: 50% 100%;
+}
+.animal.rabbit .ear.one { right: 62px; transform: rotate(-10deg); animation: rabbitEarOne 2.1s ease-in-out infinite; }
+.animal.rabbit .ear.two { right: 35px; transform: rotate(12deg); animation: rabbitEarTwo 2.1s ease-in-out infinite; }
+.animal.rabbit .tail {
+    left: 20px;
+    bottom: 66px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #fff8ec;
+    box-shadow: 0 0 18px rgba(255, 247, 237, .5);
+}
+.animal.cat {
+    width: 245px;
+}
+.animal.cat .body {
+    background: linear-gradient(145deg, #ffcf85, #ff8a00);
+}
+.animal.cat .head {
+    border-radius: 48% 52% 48% 52%;
+    background: linear-gradient(145deg, #ffd79a, #ff9317);
+}
+.animal.cat .ear {
+    bottom: 128px;
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-bottom: 44px solid #ffb04d;
+    transform-origin: 50% 100%;
+}
+.animal.cat .ear.one { right: 66px; transform: rotate(-16deg); animation: catEarTwitch 2.4s ease-in-out infinite; }
+.animal.cat .ear.two { right: 26px; transform: rotate(18deg); animation: catEarTwitch 2.4s ease-in-out infinite reverse; }
+.animal.cat .tail {
+    left: 18px;
+    bottom: 72px;
+    width: 78px;
+    height: 54px;
+    border: 16px solid #ff9a24;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 60px 0 0 0;
+    transform-origin: 84% 88%;
+    animation: tailSway 1.8s ease-in-out infinite;
+}
+.animal.cat .food {
+    width: 64px;
+    height: 30px;
+    background:
+        radial-gradient(circle at 22% 68%, #8a4a1f 0 8%, transparent 9%),
+        radial-gradient(circle at 44% 58%, #b06024 0 8%, transparent 9%),
+        radial-gradient(circle at 64% 70%, #704015 0 7%, transparent 8%),
+        linear-gradient(180deg, transparent 0 44%, #fff5de 45% 100%);
+}
+@keyframes animalBreathe {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+@keyframes munchHead {
+    0%, 100% { transform: rotate(0deg) translateY(0); }
+    45%, 65% { transform: rotate(5deg) translateY(8px); }
+}
+@keyframes mouthNibble {
+    0%, 100% { transform: scaleX(1); }
+    50% { transform: scaleX(.82) translateX(2px); }
+}
+@keyframes foodShake {
+    0%, 100% { transform: rotate(0); }
+    50% { transform: rotate(-4deg); }
+}
+@keyframes rabbitEarOne {
+    0%, 100% { transform: rotate(-10deg); }
+    50% { transform: rotate(-18deg); }
+}
+@keyframes rabbitEarTwo {
+    0%, 100% { transform: rotate(12deg); }
+    50% { transform: rotate(20deg); }
+}
+@keyframes catEarTwitch {
+    0%, 80%, 100% { filter: brightness(1); }
+    88% { filter: brightness(1.18); transform: rotate(-8deg); }
+}
+@keyframes tailSway {
+    0%, 100% { transform: rotate(-4deg); }
+    50% { transform: rotate(9deg); }
+}
+@keyframes grassNibble {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(8px); }
+}
+.guide-list {
+    display: grid;
+    gap: 16px;
+}
+.guide-card {
+    padding: 24px 24px 24px 82px;
+    transition: transform .25s var(--ease), border-color .25s var(--ease), box-shadow .25s var(--ease);
+}
+.guide-card.visible {
+    animation: guideLift .9s var(--ease) both;
+}
+.guide-num {
+    position: absolute;
+    left: 24px;
+    top: 24px;
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    color: var(--dark);
+    background: linear-gradient(135deg, #fff7ed, var(--orange));
+    border-radius: 50%;
+    font-weight: 900;
+    box-shadow: 0 0 20px rgba(255, 138, 31, .42);
+    animation: guideBeacon 2.4s ease-in-out infinite;
+}
+.guide-card ol {
+    display: grid;
+    gap: 8px;
+    margin-top: 14px;
+    padding-left: 18px;
+}
+.guide-card strong { color: var(--text); }
+.guide-card code {
+    color: var(--cyan);
+    background: rgba(102, 215, 255, .08);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
 
 .stats-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
 }
 .stat-card {
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius);
-    padding: 32px 24px; text-align: center;
-    transition: var(--transition);
+    padding: 24px;
+    text-align: center;
+    transition: transform .25s var(--ease), border-color .25s var(--ease), box-shadow .25s var(--ease);
 }
-.stat-card:hover { border-color: rgba(255,138,0,0.3); transform: translateY(-4px); }
 .stat-card .num {
-    font-size: 48px; font-weight: 900; line-height: 1;
-    background: linear-gradient(135deg, var(--orange), var(--orange-light));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    margin-bottom: 8px;
+    font-family: "Barlow Condensed", Inter, sans-serif;
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--orange-soft);
+    text-shadow: 0 0 20px rgba(255, 138, 31, .44);
+    animation: numberGlow 2.8s ease-in-out infinite;
 }
-.stat-card p { color: var(--muted); font-size: 14px; font-weight: 500; }
-
-/* ── Tech Stack ──────────────────────────────────────────────────────────── */
-#technology { background: var(--bg3); }
+.stat-card p { color: var(--muted); font-weight: 700; }
 
 .tech-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 15px;
 }
 .tech-pill {
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: 14px; padding: 20px;
-    display: flex; align-items: center; gap: 14px;
-    transition: var(--transition);
+    min-height: 112px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px;
+    transition: transform .25s var(--ease), border-color .25s var(--ease), box-shadow .25s var(--ease);
 }
-.tech-pill:hover { border-color: rgba(255,138,0,0.3); transform: translateY(-3px); }
-.tech-pill .tech-icon { font-size: 28px; }
-.tech-pill .tech-info { }
-.tech-pill .tech-name { font-size: 14px; font-weight: 700; }
-.tech-pill .tech-desc { font-size: 12px; color: var(--muted); }
+.tech-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    color: var(--orange-soft);
+    background: rgba(255, 247, 237, .1);
+    border: 1px solid rgba(255, 226, 189, .24);
+    border-radius: 50%;
+    flex: 0 0 auto;
+    animation: techPulse 3.2s ease-in-out infinite;
+}
+.tech-name { font-weight: 900; color: var(--text); }
+.tech-desc { margin-top: 4px; color: var(--muted); font-size: 13px; }
 
-/* ── Download CTA ────────────────────────────────────────────────────────── */
-#download { background: var(--bg2); text-align: center; }
-
+#download, #contact { text-align: center; }
+#download::before,
+#contact::before {
+    opacity: .7;
+    background:
+        radial-gradient(ellipse at 18% 20%, rgba(255, 232, 172, .14), transparent 24%),
+        radial-gradient(ellipse at 82% 78%, rgba(255, 164, 72, .16), transparent 28%);
+}
 .download-box {
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: 28px; padding: 64px 48px;
-    max-width: 700px; margin: auto;
-    position: relative; overflow: hidden;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: clamp(30px, 5vw, 62px);
+    border-color: rgba(255, 226, 189, .38);
+    border-radius: 28px;
+    background:
+        radial-gradient(circle at 12% 16%, rgba(255, 232, 172, .18), transparent 24%),
+        radial-gradient(ellipse at 85% 98%, rgba(255, 132, 36, .26), transparent 32%),
+        linear-gradient(145deg, rgba(43, 39, 34, .94), rgba(23, 21, 18, .86)),
+        radial-gradient(circle at 50% 0, rgba(255, 247, 237, .2), transparent 35%);
 }
 .download-box::before {
-    content: '';
-    position: absolute; top: -50%; left: -50%;
-    width: 200%; height: 200%;
-    background: radial-gradient(circle at center, rgba(255,138,0,0.06), transparent 60%);
-    pointer-events: none;
+    background:
+        linear-gradient(90deg, transparent, rgba(255, 247, 237, .28), transparent) top left / 100% 1px no-repeat,
+        radial-gradient(ellipse at 8% 100%, rgba(255, 164, 72, .18), transparent 22%),
+        radial-gradient(ellipse at 94% 0%, rgba(255, 232, 172, .14), transparent 24%);
 }
-.download-box h2 { font-size: clamp(28px, 4vw, 42px); font-weight: 900; margin-bottom: 16px; }
-.download-box p { color: var(--muted); font-size: 16px; margin-bottom: 36px; }
-.download-box .btn-primary { font-size: 17px; padding: 18px 40px; margin: auto; }
-
+.download-box h2 {
+    font-size: clamp(38px, 6vw, 76px);
+    line-height: .95;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+}
+.download-box p {
+    max-width: 650px;
+    margin: 0 auto 28px;
+    color: var(--muted);
+    line-height: 1.7;
+}
 .btn-whatsapp {
-    display: inline-flex; align-items: center; gap: 10px;
-    padding: 15px 30px;
-    background: #25D366;
-    color: white; text-decoration: none;
-    border-radius: var(--radius); font-weight: 700; font-size: 15px;
-    box-shadow: 0 8px 32px rgba(37,211,102,0.3);
-    transition: var(--transition);
-}
-.btn-whatsapp:hover {
-    background: #128C7E;
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(37,211,102,0.4);
+    position: relative;
+    overflow: hidden;
+    color: #231004;
+    background: linear-gradient(180deg, #fff7ed, #ffad62 50%, #f47c20);
+    border: 1px solid rgba(255, 247, 237, .9);
+    border-radius: 999px;
+    box-shadow: 0 0 28px rgba(255, 164, 72, .28);
 }
 
-/* ── Footer ──────────────────────────────────────────────────────────────── */
 footer {
-    background: var(--bg);
-    border-top: 1px solid var(--glass-border);
-    padding: 48px 7%;
-    display: flex; justify-content: space-between; align-items: center;
-    flex-wrap: wrap; gap: 20px;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    padding: 30px clamp(18px, 7vw, 100px);
+    color: var(--muted);
+    border-top: 1px solid var(--line);
+    background:
+        linear-gradient(90deg, rgba(255, 247, 237, .1), transparent 22%, transparent 78%, rgba(255, 164, 72, .1)),
+        rgba(23, 21, 18, .94);
 }
+.footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+footer a { color: var(--muted); text-decoration: none; font-weight: 700; }
+footer a:hover { color: var(--orange-soft); }
 .footer-logo {
-    display: flex; align-items: center; gap: 10px; text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text);
 }
-.footer-logo img { width: 36px; height: 36px; border-radius: 9px; object-fit: cover; }
-.footer-logo span { font-size: 16px; font-weight: 700; color: var(--text); }
-footer p { color: var(--muted); font-size: 14px; }
-.footer-links { display: flex; gap: 20px; }
-.footer-links a { color: var(--muted); text-decoration: none; font-size: 14px; transition: var(--transition); }
-.footer-links a:hover { color: var(--orange); }
-
-/* ── Scroll Reveal ───────────────────────────────────────────────────────── */
-.reveal {
-    opacity: 0; transform: translateY(32px);
-    transition: opacity 0.7s ease, transform 0.7s ease;
+.footer-logo .brand-mark {
+    width: 46px;
+    height: 46px;
 }
-.reveal.visible { opacity: 1; transform: none; }
-.reveal-delay-1 { transition-delay: 0.1s; }
-.reveal-delay-2 { transition-delay: 0.2s; }
-.reveal-delay-3 { transition-delay: 0.3s; }
-.reveal-delay-4 { transition-delay: 0.4s; }
-.reveal-delay-5 { transition-delay: 0.5s; }
-
-/* ── Responsive ──────────────────────────────────────────────────────────── */
-@media (max-width: 1024px) {
-    .roles-grid { grid-template-columns: 1fr 1fr; }
-    .stats-grid { grid-template-columns: 1fr 1fr; }
+.footer-logo .brand-text {
+    font-size: 30px;
 }
 
-@media (max-width: 768px) {
-    nav { display: none; }
-    .hamburger { display: flex; }
+[data-animate] {
+    opacity: 0;
+    filter: blur(8px) saturate(.92);
+    transform: translate3d(0, 34px, 0) scale(.985);
+    transform-origin: 50% 65%;
+    transition:
+        opacity .72s cubic-bezier(.16, 1, .3, 1),
+        transform .72s cubic-bezier(.16, 1, .3, 1),
+        filter .72s cubic-bezier(.16, 1, .3, 1);
+    will-change: opacity, transform, filter;
+}
+[data-animate="left"] { transform: translate3d(-34px, 20px, 0) scale(.985); }
+[data-animate="right"] { transform: translate3d(34px, 20px, 0) scale(.985); }
+[data-animate].visible {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+}
+.delay-1 { transition-delay: .08s; }
+.delay-2 { transition-delay: .16s; }
+.delay-3 { transition-delay: .24s; }
+.delay-4 { transition-delay: .32s; }
+.delay-5 { transition-delay: .4s; }
 
-    .hero {
-        flex-direction: column-reverse; text-align: center;
-        padding-top: 120px; gap: 40px;
+.leaf-burst-particle {
+    position: fixed;
+    left: var(--burst-x);
+    top: var(--burst-y);
+    z-index: 9999;
+    width: var(--leaf-w, 18px);
+    height: var(--leaf-h, 10px);
+    pointer-events: none;
+    border-radius: 90% 0 90% 0;
+    background:
+        linear-gradient(135deg, rgba(255,255,255,.72), transparent 34%),
+        linear-gradient(135deg, var(--leaf-color-a, #fff1c4), var(--leaf-color-b, #ff8a00));
+    box-shadow: 0 0 16px rgba(255, 138, 0, .34);
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--leaf-rot, 0deg)) scale(.45);
+    animation: leafBurst var(--leaf-time, .92s) cubic-bezier(.15,.78,.24,1) forwards;
+    animation-delay: var(--leaf-delay, 0ms);
+}
+.leaf-burst-particle::after {
+    content: "";
+    position: absolute;
+    left: 18%;
+    right: 18%;
+    top: 50%;
+    height: 1px;
+    background: rgba(80, 36, 0, .28);
+    transform: rotate(-18deg);
+}
+
+@keyframes scanBeam {
+    from { transform: translateX(-80%); }
+    to { transform: translateX(80%); }
+}
+@keyframes forestLight {
+    0%, 100% { opacity: .68; transform: translate3d(0, 0, 0) scale(1); }
+    50% { opacity: .94; transform: translate3d(10px, -8px, 0) scale(1.02); }
+}
+@keyframes sunbeamDrift {
+    0%, 100% { opacity: .68; transform: translateX(-2%); }
+    50% { opacity: .95; transform: translateX(3%); }
+}
+@keyframes gridPulse {
+    0%, 100% { opacity: .64; transform: translate3d(0, 0, 0); }
+    50% { opacity: .92; transform: translate3d(8px, -8px, 0); }
+}
+@keyframes scanlineTwitch {
+    0%, 100% { opacity: .78; }
+    50% { opacity: .48; }
+}
+@keyframes reactorSpin {
+    to { transform: rotate(360deg); }
+}
+@keyframes canopySway {
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(-2deg); opacity: .5; }
+    50% { transform: translate3d(-18px, 12px, 0) rotate(5deg); opacity: .78; }
+}
+@keyframes grassGlimmer {
+    0%, 100% { opacity: .16; transform: translateX(-18px) rotate(-24deg) scaleX(.78); }
+    45%, 62% { opacity: .7; transform: translateX(36px) rotate(-24deg) scaleX(1.04); }
+}
+@keyframes energyRail {
+    0%, 100% { opacity: .18; transform: translateX(-18px) rotate(-24deg) scaleX(.78); }
+    45%, 62% { opacity: .85; transform: translateX(36px) rotate(-24deg) scaleX(1.04); }
+}
+@keyframes sparkDrift {
+    0% { top: 105%; transform: translateX(0) scale(.8); opacity: 0; }
+    10%, 82% { opacity: 1; }
+    100% { top: -10%; transform: translateX(42px) scale(1.4); opacity: 0; }
+}
+@keyframes leafFall {
+    0% { top: -12%; transform: translate3d(0, 0, 0) rotate(0deg) scale(.82); opacity: 0; }
+    8%, 82% { opacity: .88; }
+    100% { top: 112%; transform: translate3d(76px, 0, 0) rotate(420deg) scale(1.08); opacity: 0; }
+}
+@keyframes leafFallSoft {
+    0% { transform: translate3d(-20px, -20px, 0) rotate(0deg); opacity: 0; }
+    10%, 76% { opacity: .72; }
+    100% { transform: translate3d(90px, calc(100vh + 140px), 0) rotate(520deg); opacity: 0; }
+}
+@keyframes streakFly {
+    0%, 50%, 100% { opacity: 0; transform: translate3d(-80px, 24px, 0) rotate(var(--streak-rotate, -22deg)) scaleX(.35); }
+    12%, 24% { opacity: .9; transform: translate3d(80px, -24px, 0) rotate(var(--streak-rotate, -22deg)) scaleX(1); }
+}
+@keyframes sunRaySweep {
+    0%, 52%, 100% { opacity: 0; transform: translate3d(-90px, 26px, 0) rotate(var(--streak-rotate, -22deg)) scaleX(.35); }
+    14%, 28% { opacity: .72; transform: translate3d(90px, -24px, 0) rotate(var(--streak-rotate, -22deg)) scaleX(1); }
+}
+@keyframes nodePulse {
+    0%, 100% { transform: scale(.8) rotate(0deg); opacity: .48; }
+    50% { transform: scale(1.24) rotate(45deg); opacity: 1; }
+}
+@keyframes fireflyPulse {
+    0%, 100% { transform: translateY(0) scale(.76) rotate(0deg); opacity: .42; }
+    50% { transform: translateY(-12px) scale(1.18) rotate(18deg); opacity: 1; }
+}
+@keyframes heroBreath {
+    0%, 100% { transform: translate3d(0,0,0) scale(1); }
+    50% { transform: translate3d(10px,-8px,0) scale(1.018); }
+}
+@keyframes heroScan {
+    from { transform: translateX(-95%); opacity: 0; }
+    18%, 70% { opacity: 1; }
+    to { transform: translateX(95%); opacity: 0; }
+}
+@keyframes heroSunSweep {
+    from { transform: translateX(-95%); opacity: 0; }
+    18%, 70% { opacity: .74; }
+    to { transform: translateX(95%); opacity: 0; }
+}
+@keyframes emberRise {
+    0% { transform: translate3d(0, 0, 0) scale(.55); opacity: 0; }
+    14% { opacity: 1; }
+    100% { transform: translate3d(34px, -390px, 0) scale(1.35); opacity: 0; }
+}
+@keyframes boltFlash {
+    0%, 58%, 100% { opacity: 0; transform: translateX(-18px) rotate(-28deg) scaleX(.45); }
+    62%, 68% { opacity: .95; transform: translateX(0) rotate(-28deg) scaleX(1); }
+    72% { opacity: 0; transform: translateX(26px) rotate(-28deg) scaleX(.6); }
+}
+@keyframes catFloat {
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(-1deg); }
+    42% { transform: translate3d(0, -18px, 0) rotate(1.4deg); }
+    70% { transform: translate3d(8px, -6px, 0) rotate(-.55deg); }
+}
+@keyframes catPop {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 24px 24px rgba(0, 0, 0, .34)) drop-shadow(0 0 34px rgba(255, 164, 72, .42)); }
+    50% { transform: scale(1.025); filter: drop-shadow(0 30px 28px rgba(0, 0, 0, .38)) drop-shadow(0 0 48px rgba(255, 194, 102, .58)); }
+}
+@keyframes catAuraSpin {
+    to { transform: rotate(360deg); }
+}
+@keyframes catRingPulse {
+    0%, 100% { transform: scale(.94); opacity: .52; }
+    50% { transform: scale(1.04); opacity: .95; }
+}
+@keyframes catShadowPulse {
+    0%, 100% { opacity: .72; transform: translateY(12px) scale(.98); }
+    50% { opacity: 1; transform: translateY(18px) scale(1.06); }
+}
+@keyframes catShine {
+    0%, 46%, 100% { opacity: 0; transform: translateX(-42%) rotate(-14deg); }
+    58%, 66% { opacity: .55; }
+    78% { opacity: 0; transform: translateX(42%) rotate(-14deg); }
+}
+@keyframes catSparkle {
+    0%, 100% { opacity: 0; transform: translateY(12px) scale(.5) rotate(0deg); }
+    42% { opacity: .95; transform: translateY(-4px) scale(1) rotate(45deg); }
+    70% { opacity: .36; transform: translateY(-18px) scale(.78) rotate(90deg); }
+}
+@keyframes insigniaCharge {
+    0%, 100% { filter: brightness(1); transform: translateY(0); }
+    50% { filter: brightness(1.25); transform: translateY(-2px); }
+}
+@keyframes eyebrowSpark {
+    0%, 100% { transform: translateX(0); opacity: .45; }
+    48% { transform: translateX(72px); opacity: 1; }
+}
+@keyframes cardEnergySweep {
+    0%, 100% { transform: translateX(-48%) rotate(8deg); opacity: .18; }
+    46%, 58% { transform: translateX(48%) rotate(8deg); opacity: .82; }
+}
+@keyframes iconCharge {
+    0%, 100% { filter: brightness(1); transform: translateY(0); }
+    50% { filter: brightness(1.28); transform: translateY(-3px); }
+}
+@keyframes featureClickBloom {
+    0% { transform: translateY(-8px) scale(1); box-shadow: 0 24px 76px rgba(0,0,0,.34), 0 0 34px rgba(255, 164, 72, .18); }
+    42% { transform: translateY(-11px) scale(1.018); box-shadow: 0 28px 82px rgba(0,0,0,.38), 0 0 48px rgba(255, 138, 0, .36); }
+    100% { transform: translateY(-8px) scale(1); box-shadow: 0 24px 76px rgba(0,0,0,.34), 0 0 34px rgba(255, 164, 72, .18); }
+}
+@keyframes scannerSweepVertical {
+    0%, 100% { transform: translateY(-120%); opacity: 0; }
+    38%, 48% { opacity: .95; }
+    68% { transform: translateY(120%); opacity: 0; }
+}
+@keyframes guideBeacon {
+    0%, 100% { box-shadow: 0 0 20px rgba(168, 224, 99, .35); filter: brightness(1); }
+    50% { box-shadow: 0 0 34px rgba(168, 224, 99, .62), 0 0 18px rgba(255, 209, 138, .32); filter: brightness(1.18); }
+}
+@keyframes guideLift {
+    0% { box-shadow: 0 10px 34px rgba(0,0,0,.12); }
+    55% { box-shadow: 0 26px 74px rgba(0,0,0,.32), 0 0 36px rgba(168, 224, 99, .2); }
+    100% { box-shadow: 0 22px 70px rgba(0,0,0,.25); }
+}
+@keyframes birdFly {
+    0% { transform: translate3d(-8vw, 0, 0) scale(.86); opacity: 0; }
+    8%, 82% { opacity: 1; }
+    46% { transform: translate3d(54vw, -28px, 0) scale(1); }
+    100% { transform: translate3d(112vw, 10px, 0) scale(.92); opacity: 0; }
+}
+@keyframes wingBeat {
+    0%, 100% { transform: rotate(var(--wing-open)) translateY(0); }
+    50% { transform: rotate(var(--wing-closed)) translateY(3px); }
+}
+@keyframes hoverBird {
+    0%, 100% { transform: translate(-50%, -50%) scale(var(--bird-scale, 1)) translateY(0); }
+    50% { transform: translate(-50%, -50%) scale(var(--bird-scale, 1)) translateY(-16px); }
+}
+@keyframes stationaryWing {
+    0%, 100% { transform: rotate(var(--wing-open)) translateY(0); }
+    50% { transform: rotate(var(--wing-closed)) translateY(6px); }
+}
+@keyframes numberGlow {
+    0%, 100% { color: var(--orange-soft); transform: translateY(0); }
+    50% { color: #ffd089; transform: translateY(-2px); }
+}
+@keyframes techPulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(102, 215, 255, 0); }
+    50% { box-shadow: 0 0 24px rgba(102, 215, 255, .24); }
+}
+@keyframes pulseGem {
+    0%, 100% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.1); filter: brightness(1.35); }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes botFloat {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-18px) rotate(3deg); }
+}
+@keyframes characterMove {
+    0%, 100% { transform: translateY(0) rotate(-1deg); }
+    40% { transform: translateY(-10px) rotate(2deg); }
+    70% { transform: translateY(4px) rotate(-2deg); }
+}
+@keyframes panelHover {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-10px) scale(1.015); }
+}
+@keyframes mechaPetMove {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1.01) rotate(-.25deg); }
+    30% { transform: translate3d(0, -10px, 0) scale(1.025) rotate(.45deg); }
+    58% { transform: translate3d(5px, 2px, 0) scale(1.018) rotate(-.35deg); }
+    78% { transform: translate3d(-4px, -6px, 0) scale(1.028) rotate(.25deg); }
+}
+@keyframes corePulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(.9); opacity: .7; }
+    50% { transform: translate(-50%, -50%) scale(1.18); opacity: 1; }
+}
+@keyframes scannerSweep {
+    0%, 100% { background-position: 0 18%, 0 0; opacity: .55; }
+    48% { background-position: 0 78%, 0 0; opacity: .95; }
+    64% { background-position: 0 42%, 0 0; opacity: .45; }
+}
+@keyframes mechaSpark {
+    0% { transform: translate3d(0, 0, 0) rotate(24deg) scale(.45); opacity: 0; }
+    12% { opacity: 1; }
+    100% { transform: translate3d(42px, -180px, 0) rotate(24deg) scale(1.05); opacity: 0; }
+}
+@keyframes leafBurst {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(var(--leaf-rot, 0deg)) scale(.35);
     }
-    .hero-actions { justify-content: center; }
-    .hero-stats { justify-content: center; }
-    .hero-img-wrap { width: 240px; height: 240px; }
-
-    .roles-grid { grid-template-columns: 1fr; }
-    .stats-grid { grid-template-columns: 1fr 1fr; }
-
-    .download-box { padding: 40px 24px; }
-
-    footer { flex-direction: column; text-align: center; }
-    .footer-links { flex-wrap: wrap; justify-content: center; }
+    10% { opacity: 1; }
+    68% { opacity: .96; }
+    100% {
+        opacity: 0;
+        transform:
+            translate(calc(-50% + var(--leaf-tx)), calc(-50% + var(--leaf-ty)))
+            rotate(calc(var(--leaf-rot, 0deg) + var(--leaf-spin, 320deg)))
+            scale(var(--leaf-scale, 1));
+    }
 }
 
-@media (max-width: 480px) {
-    .stats-grid { grid-template-columns: 1fr; }
-    .hero-stats { flex-direction: column; align-items: center; gap: 16px; }
+@media (max-width: 1060px) {
+    nav { display: none; }
+    .hamburger { display: block; }
+    .hero {
+        padding: 12px;
+    }
+    .hero-showcase {
+        height: calc(100vh - 24px);
+        min-height: 500px;
+    }
+    .hero-showcase img {
+        object-position: 60% center;
+    }
+    .hero-cat-stage {
+        inset: 15% 3% 6% 52%;
+    }
+    .hero-cat-card {
+        width: min(39vw, 380px);
+    }
+    .hero-cat-stage::before {
+        width: min(45vw, 430px);
+    }
+    .hero-cat-stage::after {
+        width: min(36vw, 350px);
+    }
+    .hero-overlay {
+        padding: 104px 5.5% 42px;
+        align-items: flex-start;
+        background: linear-gradient(90deg, rgba(2, 7, 13, .54), rgba(2, 7, 13, .18) 58%, transparent);
+    }
+    .hero-copy {
+        max-width: 56vw;
+    }
+    .hero .hero-copy h1 {
+        font-size: clamp(48px, 8vw, 78px);
+    }
+    .hero .hero-copy p {
+        font-size: 16px;
+        max-width: 520px;
+    }
+    .about, .guide-layout { grid-template-columns: 1fr; }
+    .guide-visual { position: relative; top: 0; }
+    .features-grid, .roles-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tech-grid, .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 680px) {
+    header { padding: 12px 16px; }
+    .brand-text { font-size: 24px; }
+    .brand-mark { width: 40px; height: 40px; }
+    .hero { min-height: 92vh; padding: 8px; }
+    .hero-showcase {
+        height: calc(92vh - 16px);
+        min-height: 440px;
+    }
+    .hero-showcase img {
+        object-position: 67% center;
+    }
+    .hero-cat-stage {
+        inset: auto -8% 6% 34%;
+        place-items: end center;
+    }
+    .hero-cat-card {
+        width: min(70vw, 310px);
+    }
+    .hero-cat-stage::before {
+        width: min(76vw, 340px);
+    }
+    .hero-cat-stage::after {
+        width: min(60vw, 280px);
+    }
+    .cat-sparkle {
+        width: 10px;
+        height: 10px;
+    }
+    .hero-overlay {
+        padding: 92px 18px 26px;
+        align-items: flex-start;
+        background: linear-gradient(90deg, rgba(2, 7, 13, .88), rgba(2, 7, 13, .35) 70%, transparent);
+    }
+    .hero-copy {
+        max-width: 72vw;
+    }
+    .hero-copy .status {
+        margin-bottom: 20px;
+        padding: 9px 12px;
+        font-size: 13px;
+    }
+    .hero .hero-copy h1 { font-size: clamp(40px, 13vw, 64px); }
+    .hero .hero-copy p { font-size: 14px; line-height: 1.55; max-width: 300px; }
+    .hero-actions { align-items: stretch; }
+    .hero-actions .btn-primary,
+    .hero-actions .btn-ghost {
+        width: min(100%, 260px);
+        min-width: 0;
+        min-height: 48px;
+        padding: 12px 18px;
+    }
+    .btn-whatsapp { width: 100%; }
+    section { padding: 70px 18px; }
+    .features-grid, .roles-grid, .tech-grid, .stats-grid, .spec-grid { grid-template-columns: 1fr; }
+    .guide-card { padding: 74px 20px 22px; }
+    .guide-num { left: 20px; }
+    .command-panel .mecha-pet-frame,
+    .guide-visual .mecha-pet-frame,
+    .command-panel img,
+    .guide-visual img { min-height: 260px; }
+    .mecha-pet-frame .core-glow { left: 72%; top: 54%; width: 46px; height: 46px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .001ms !important;
+    }
 }
 </style>
 </head>
 <body>
-
-<!-- Floating paw prints (SVG) -->
-<div class="paw-bg" aria-hidden="true">
-    <svg class="paw" viewBox="0 0 64 64" fill="currentColor"><ellipse cx="12" cy="18" rx="7" ry="9"/><ellipse cx="32" cy="10" rx="7" ry="9"/><ellipse cx="52" cy="18" rx="7" ry="9"/><ellipse cx="22" cy="26" rx="7" ry="9"/><path d="M32 30c-10 0-18 6-18 16 0 7 4 12 10 13 3 1 5 3 8 3s5-2 8-3c6-1 10-6 10-13 0-10-8-16-18-16z"/></svg>
-    <svg class="paw" viewBox="0 0 64 64" fill="currentColor"><ellipse cx="12" cy="18" rx="7" ry="9"/><ellipse cx="32" cy="10" rx="7" ry="9"/><ellipse cx="52" cy="18" rx="7" ry="9"/><ellipse cx="22" cy="26" rx="7" ry="9"/><path d="M32 30c-10 0-18 6-18 16 0 7 4 12 10 13 3 1 5 3 8 3s5-2 8-3c6-1 10-6 10-13 0-10-8-16-18-16z"/></svg>
-    <svg class="paw" viewBox="0 0 64 64" fill="currentColor"><ellipse cx="12" cy="18" rx="7" ry="9"/><ellipse cx="32" cy="10" rx="7" ry="9"/><ellipse cx="52" cy="18" rx="7" ry="9"/><ellipse cx="22" cy="26" rx="7" ry="9"/><path d="M32 30c-10 0-18 6-18 16 0 7 4 12 10 13 3 1 5 3 8 3s5-2 8-3c6-1 10-6 10-13 0-10-8-16-18-16z"/></svg>
-    <svg class="paw" viewBox="0 0 64 64" fill="currentColor"><ellipse cx="12" cy="18" rx="7" ry="9"/><ellipse cx="32" cy="10" rx="7" ry="9"/><ellipse cx="52" cy="18" rx="7" ry="9"/><ellipse cx="22" cy="26" rx="7" ry="9"/><path d="M32 30c-10 0-18 6-18 16 0 7 4 12 10 13 3 1 5 3 8 3s5-2 8-3c6-1 10-6 10-13 0-10-8-16-18-16z"/></svg>
-    <svg class="paw" viewBox="0 0 64 64" fill="currentColor"><ellipse cx="12" cy="18" rx="7" ry="9"/><ellipse cx="32" cy="10" rx="7" ry="9"/><ellipse cx="52" cy="18" rx="7" ry="9"/><ellipse cx="22" cy="26" rx="7" ry="9"/><path d="M32 30c-10 0-18 6-18 16 0 7 4 12 10 13 3 1 5 3 8 3s5-2 8-3c6-1 10-6 10-13 0-10-8-16-18-16z"/></svg>
+<div class="shell-lines" aria-hidden="true">
+    <span class="spark"></span>
+    <span class="spark"></span>
+    <span class="spark"></span>
+    <span class="spark"></span>
+    <span class="spark"></span>
+    <span class="spark"></span>
+    <span class="spark"></span>
+    <span class="spark"></span>
+    <span class="spark"></span>
+    <span class="energy-streak one"></span>
+    <span class="energy-streak two"></span>
+    <span class="energy-streak three"></span>
+    <span class="circuit-node one"></span>
+    <span class="circuit-node two"></span>
+    <span class="circuit-node three"></span>
+</div>
+<div class="nature-vines" aria-hidden="true">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+<div class="sky-birds" aria-hidden="true">
+    <span class="guide-bird"><i></i></span>
+    <span class="guide-bird"><i></i></span>
+    <span class="guide-bird"><i></i></span>
+    <span class="guide-bird"><i></i></span>
+    <span class="guide-bird"><i></i></span>
+    <span class="guide-bird"><i></i></span>
+    <span class="guide-bird"><i></i></span>
+    <span class="guide-bird"><i></i></span>
+    <span class="guide-bird"><i></i></span>
 </div>
 
-<!-- ── Header ────────────────────────────────────────────────────────────── -->
 <header id="top">
-    <a href="#top" class="logo">
-        <img src="{{ asset('images/logo.png') }}" alt="Tomodachi Logo">
-        <span class="logo-text">Tomodachi</span>
+    <a href="#top" class="brand" aria-label="Tomodachi Home">
+        <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" width="32" height="32" fill="currentColor">
+                <path d="M34 8c12 1 20 9 20 20 0 15-14 25-30 28 3-9 2-16-4-23C28 32 37 26 43 17c-8 5-15 8-24 9C21 15 26 9 34 8Z"/>
+                <path d="M20 42c-5 0-9-4-9-9 0-3 2-5 5-5 2 0 4 1 5 3 1-2 3-3 5-3 3 0 5 2 5 5 0 5-4 9-11 9Z" opacity=".82"/>
+            </svg>
+        </span>
+        <span class="brand-text">Tomodachi</span>
     </a>
-
-    <nav>
+    <nav aria-label="Navigasi utama">
         <a href="#about">About</a>
         <a href="#features">Features</a>
         <a href="#roles">Roles</a>
         <a href="#guide">User Guide</a>
         <a href="#technology">Tech</a>
         <a href="#contact">Contact</a>
-        <a href="#download" class="nav-cta">Download APK</a>
+        <a class="nav-cta" href="#download">Download APK</a>
     </nav>
-
-    <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu">
+    <button class="hamburger" id="hamburgerBtn" type="button" aria-label="Buka menu">
         <span></span><span></span><span></span>
     </button>
 </header>
 
 <div class="mobile-nav" id="mobileNav">
-    <a href="#about"      onclick="closeMobileNav()">About</a>
-    <a href="#features"   onclick="closeMobileNav()">Features</a>
-    <a href="#roles"      onclick="closeMobileNav()">Roles</a>
-    <a href="#guide"      onclick="closeMobileNav()">User Guide</a>
-    <a href="#technology" onclick="closeMobileNav()">Technology</a>
-    <a href="#contact"    onclick="closeMobileNav()">Contact Us</a>
-    <a href="#download"   onclick="closeMobileNav()">Download APK</a>
+    <a href="#about">About</a>
+    <a href="#features">Features</a>
+    <a href="#roles">Roles</a>
+    <a href="#guide">User Guide</a>
+    <a href="#technology">Tech</a>
+    <a href="#contact">Contact</a>
+    <a class="nav-cta" href="#download">Download APK</a>
 </div>
 
-<!-- ── Hero ──────────────────────────────────────────────────────────────── -->
-<section class="hero" id="hero">
-    <div class="hero-content">
-        <div class="hero-badge reveal">
-            <span class="badge-dot"></span>
-            Sistem Aktif & Online
+<main>
+    <section class="hero" id="home">
+        <div class="hero-showcase" data-animate>
+            <div class="hero-nature" aria-hidden="true"></div>
+            <div class="hero-cat-stage" aria-hidden="true">
+                <div class="hero-cat-card">
+                    <img src="{{ asset('images/cat.png') }}" alt="">
+                    <span class="cat-sparkle one"></span>
+                    <span class="cat-sparkle two"></span>
+                    <span class="cat-sparkle three"></span>
+                    <span class="cat-sparkle four"></span>
+                </div>
+            </div>
+            <div class="hero-energy" aria-hidden="true">
+                <span class="ember"></span>
+                <span class="ember"></span>
+                <span class="ember"></span>
+                <span class="ember"></span>
+                <span class="ember"></span>
+                <span class="bolt one"></span>
+                <span class="bolt two"></span>
+            </div>
+            <div class="hero-overlay">
+                <div class="hero-copy">
+                    <div class="status"><span class="status-gem"></span>Sistem Aktif &amp; Online</div>
+                    <h1>Natural <span class="hot">Pet Shop</span><br>Management<br>System</h1>
+                    <p>Kelola produk, stok, transaksi, laporan bisnis, dan AI assistant dalam satu platform modern. Dibangun dengan Laravel &amp; Flutter untuk pengalaman terbaik.</p>
+                    <div class="hero-actions">
+                        <a class="btn-primary" href="#features">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 21V9" stroke-linecap="round"/><path d="M12 13c-5 0-8-3-8-8 5 0 8 3 8 8ZM12 15c5 0 8-3 8-8-5 0-8 3-8 8Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            Explore Features
+                        </a>
+                        <a class="btn-ghost" href="#download">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 4v12" stroke-linecap="round"/><path d="m7 11 5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 20c4-3 10-3 14 0" stroke-linecap="round"/></svg>
+                            Download APK
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
+    </section>
 
-        <h1 class="reveal reveal-delay-1">
-            Smart <span class="grad">Pet Shop</span><br>
-            Management System
-        </h1>
+    <section id="about" class="about">
+        <div class="command-panel" data-animate="left">
+            <div class="mecha-pet-frame about-mecha sent-mecha">
+                <div class="pet-scene" aria-hidden="true">
+                    <div class="animal cat">
+                        <span class="tail"></span>
+                        <span class="body"></span>
+                        <span class="leg back"></span>
+                        <span class="leg front"></span>
+                        <span class="ear one"></span>
+                        <span class="ear two"></span>
+                        <span class="head">
+                            <span class="eye"></span>
+                            <span class="muzzle"></span>
+                        </span>
+                        <span class="food"></span>
+                    </div>
+                </div>
+                <span class="core-glow"></span>
+                <span class="spark-bit"></span>
+                <span class="spark-bit"></span>
+                <span class="spark-bit"></span>
+                <span class="spark-bit"></span>
+                <span class="spark-bit"></span>
+            </div>
+        </div>
+        <div class="about-copy" data-animate="right">
+            <div class="eyebrow">Kenapa Tomodachi?</div>
+            <h2 class="section-title">Taman kerja untuk pet shop modern</h2>
+            <p>Tomodachi menyatukan inventori, transaksi POS, laporan, dan role pengguna dalam dashboard yang cepat dipantau. Nuansa visual dibuat lebih natural agar terasa ramah, segar, dan dekat dengan dunia hewan peliharaan.</p>
+            <div class="spec-grid">
+                <div class="spec"><strong>3</strong><span>User roles</span></div>
+                <div class="spec"><strong>6+</strong><span>Core features</span></div>
+                <div class="spec"><strong>24/7</strong><span>System access</span></div>
+            </div>
+        </div>
+    </section>
 
-        <p class="reveal reveal-delay-2">
-            Kelola produk, stok, transaksi, laporan bisnis, dan AI assistant dalam satu platform modern.
-            Dibangun dengan Laravel & Flutter untuk pengalaman terbaik.
-        </p>
+    <section id="features">
+        <div class="section-head" data-animate>
+            <div class="eyebrow">Features</div>
+            <h2 class="section-title">Fitur segar untuk operasional harian</h2>
+            <p class="section-sub">Setiap modul dibuat untuk mempercepat kerja kasir, admin, dan owner tanpa kehilangan kontrol bisnis.</p>
+        </div>
+        <div class="features-grid">
+            @php
+                $features = [
+                    ['Inventory', 'Kontrol stok real-time, kategori produk, dan notifikasi stok menipis.'],
+                    ['Sales Analytics', 'Pantau performa penjualan dan omzet melalui laporan yang mudah dibaca.'],
+                    ['Stock Tracking', 'Pergerakan stok tercatat otomatis setiap terjadi transaksi atau restock.'],
+                    ['POS Processing', 'Checkout cepat, pembayaran tunai atau digital, dan struk transaksi.'],
+                    ['Pet Care Modules', 'Profil pelanggan dan kebutuhan hewan tersimpan dalam satu sistem.'],
+                    ['AI Assistant', 'Bantu owner membaca insight bisnis dan rekomendasi restock.'],
+                ];
+            @endphp
+            @foreach ($features as $index => $feature)
+            <article class="feature-card delay-{{ ($index % 5) + 1 }}" data-animate>
+                <div class="feature-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21V8" stroke-linecap="round"/><path d="M12 13C7 13 4 10 4 5c5 0 8 3 8 8ZM12 15c5 0 8-3 8-8-5 0-8 3-8 8Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <h3>{{ $feature[0] }}</h3>
+                <p>{{ $feature[1] }}</p>
+            </article>
+            @endforeach
+        </div>
+    </section>
 
-        <div class="hero-actions reveal reveal-delay-3">
-            <a href="#features" class="btn-primary">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5-5 5M6 12h12"/>
-                </svg>
-                Explore Features
+    <section id="roles">
+        <div class="section-head" data-animate>
+            <div class="eyebrow">User Roles</div>
+            <h2 class="section-title">Tiga karakter, satu sistem</h2>
+            <p class="section-sub">Owner, Admin, dan Kasir punya akses berbeda agar operasional tetap rapi dan aman.</p>
+        </div>
+        <div class="roles-grid">
+            <article class="role-card delay-1" data-animate>
+                <div class="role-avatar">
+                    <svg viewBox="0 0 64 64" fill="currentColor"><path d="M31 56V31c-9-1-16-8-17-19 11 1 18 8 19 19h1c2-12 9-20 20-23-1 15-9 24-20 25v23h-3Z"/><path d="M18 58h30c-4-6-9-9-15-9s-11 3-15 9Z" opacity=".72"/></svg>
+                </div>
+                <h3>Owner</h3>
+                <p>Melihat metrik bisnis, laporan penjualan, performa toko, dan insight strategis.</p>
+                <span class="role-tag">Business Control</span>
+            </article>
+            <article class="role-card delay-2" data-animate>
+                <div class="role-avatar">
+                    <svg viewBox="0 0 64 64" fill="currentColor"><path d="M32 10c4 8 4 15 0 22-4-7-4-14 0-22Z"/><path d="M18 18c9 1 15 6 16 15-9-1-15-6-16-15ZM46 18c-9 1-15 6-16 15 9-1 15-6 16-15Z" opacity=".86"/><path d="M32 34c7 0 13 6 13 13s-6 11-13 11-13-4-13-11 6-13 13-13Z"/></svg>
+                </div>
+                <h3>Admin</h3>
+                <p>Mengelola data produk, konfigurasi sistem, stok, kategori, dan monitoring operasional.</p>
+                <span class="role-tag">Data & System</span>
+            </article>
+            <article class="role-card delay-3" data-animate>
+                <div class="role-avatar">
+                    <svg viewBox="0 0 64 64" fill="currentColor"><path d="M14 26h36l-5 26H19l-5-26Zm9 6 2 14h14l2-14H23Z"/><path d="M22 26c1-9 5-14 10-14s9 5 10 14h-5c-.8-6-2.6-9-5-9s-4.2 3-5 9h-5Z" opacity=".82"/><path d="M31 6c6 1 10 5 10 11-6-1-10-5-10-11Z"/></svg>
+                </div>
+                <h3>Kasir</h3>
+                <p>Memproses penjualan, pembayaran pelanggan, cetak struk, dan riwayat transaksi.</p>
+                <span class="role-tag">POS & Transactions</span>
+            </article>
+        </div>
+    </section>
+
+    <section id="guide">
+        <div class="guide-layout">
+            <div class="guide-birds" aria-hidden="true">
+                <span class="guide-bird"><i></i></span>
+                <span class="guide-bird"><i></i></span>
+                <span class="guide-bird"><i></i></span>
+                <span class="guide-bird"><i></i></span>
+                <span class="guide-bird"><i></i></span>
+                <span class="guide-bird"><i></i></span>
+            </div>
+            <div class="guide-visual" data-animate="left">
+                <div class="mecha-pet-frame guide-mecha sent-mecha">
+                    <div class="pet-scene" aria-hidden="true">
+                        <div class="animal rabbit">
+                            <span class="tail"></span>
+                            <span class="body"></span>
+                            <span class="leg back"></span>
+                            <span class="leg front"></span>
+                            <span class="ear one"></span>
+                            <span class="ear two"></span>
+                            <span class="head">
+                                <span class="eye"></span>
+                                <span class="muzzle"></span>
+                            </span>
+                            <span class="food"></span>
+                        </div>
+                    </div>
+                    <span class="core-glow"></span>
+                    <span class="spark-bit"></span>
+                    <span class="spark-bit"></span>
+                    <span class="spark-bit"></span>
+                    <span class="spark-bit"></span>
+                    <span class="spark-bit"></span>
+                </div>
+            </div>
+            <div>
+                <div class="section-head" data-animate>
+                    <div class="eyebrow">Panduan User</div>
+                    <h2 class="section-title">Aktif dalam lima langkah</h2>
+                    <p class="section-sub">Mulai dari instalasi sampai laporan, alurnya dibuat sederhana untuk dipakai setiap hari.</p>
+                </div>
+                <div class="guide-list">
+                    <article class="guide-card delay-1" data-animate>
+                        <span class="guide-num">1</span>
+                        <h3>Download & Install APK</h3>
+                        <p>Siapkan aplikasi Tomodachi di perangkat Android kamu.</p>
+                        <ol><li>Klik tombol <strong>Download APK</strong>.</li><li>Buka file <code>.apk</code> dan izinkan instalasi.</li><li>Tunggu proses selesai lalu buka aplikasi.</li></ol>
+                    </article>
+                    <article class="guide-card delay-2" data-animate>
+                        <span class="guide-num">2</span>
+                        <h3>Login & Akses Dashboard</h3>
+                        <p>Masuk dengan akun yang sudah didaftarkan.</p>
+                        <ol><li>Input email dan password.</li><li>Menu otomatis menyesuaikan role.</li><li>Hubungi owner jika perlu reset akun.</li></ol>
+                    </article>
+                    <article class="guide-card delay-3" data-animate>
+                        <span class="guide-num">3</span>
+                        <h3>Kelola Produk & Stok</h3>
+                        <p>Admin dan Owner dapat mengatur data produk serta stok barang.</p>
+                        <ol><li>Tambah produk, kategori, harga, dan stok.</li><li>Stok berkurang otomatis saat transaksi.</li><li>Pantau notifikasi stok menipis.</li></ol>
+                    </article>
+                    <article class="guide-card delay-4" data-animate>
+                        <span class="guide-num">4</span>
+                        <h3>Lakukan Transaksi POS</h3>
+                        <p>Kasir melayani pelanggan dengan alur checkout cepat.</p>
+                        <ol><li>Pilih produk dari katalog.</li><li>Pilih metode pembayaran.</li><li>Cetak atau kirim struk digital.</li></ol>
+                    </article>
+                    <article class="guide-card delay-5" data-animate>
+                        <span class="guide-num">5</span>
+                        <h3>Pantau Laporan & AI</h3>
+                        <p>Owner membaca performa toko dan rekomendasi otomatis.</p>
+                        <ol><li>Buka menu laporan.</li><li>Filter berdasarkan tanggal atau kategori.</li><li>Gunakan AI Assistant untuk insight restock.</li></ol>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="stats">
+        <div class="stats-grid">
+            <div class="stat-card delay-1" data-animate><div class="num">3</div><p>User Roles</p></div>
+            <div class="stat-card delay-2" data-animate><div class="num">6+</div><p>Fitur Utama</p></div>
+            <div class="stat-card delay-3" data-animate><div class="num">24/7</div><p>System Access</p></div>
+            <div class="stat-card delay-4" data-animate><div class="num">100%</div><p>Integrated</p></div>
+        </div>
+    </section>
+
+    <section id="technology">
+        <div class="section-head" data-animate>
+            <div class="eyebrow">Tech Stack</div>
+            <h2 class="section-title">Dibangun dengan teknologi modern</h2>
+            <p class="section-sub">Stack yang stabil untuk backend, mobile app, database, pembayaran, dan AI assistant.</p>
+        </div>
+        <div class="tech-grid">
+            @php
+                $techs = [
+                    ['Laravel 10', 'REST API Backend'],
+                    ['Flutter', 'Mobile & Web App'],
+                    ['MySQL 8', 'Database System'],
+                    ['Sanctum', 'Auth & Security'],
+                    ['Midtrans', 'Payment Gateway'],
+                    ['OpenRouter AI', 'AI Assistant'],
+                    ['Docker', 'Deployment'],
+                    ['Nginx', 'Reverse Proxy'],
+                ];
+            @endphp
+            @foreach ($techs as $index => $tech)
+            <div class="tech-pill delay-{{ ($index % 5) + 1 }}" data-animate>
+                <div class="tech-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21V10" stroke-linecap="round"/><path d="M12 14c-4.5 0-7-2.5-7-7 4.5 0 7 2.5 7 7ZM12 16c4.5 0 7-2.5 7-7-4.5 0-7 2.5-7 7Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <div><div class="tech-name">{{ $tech[0] }}</div><div class="tech-desc">{{ $tech[1] }}</div></div>
+            </div>
+            @endforeach
+        </div>
+    </section>
+
+    <section id="download">
+        <div class="download-box" data-animate>
+            <div class="eyebrow" style="margin: 0 auto 18px;">Download</div>
+            <h2>Coba aplikasinya sekarang</h2>
+            <p>Download APK Tomodachi Pet Shop untuk Android dan mulai kelola toko hewan peliharaanmu dengan sistem yang lebih cepat.</p>
+            <a href="https://drive.google.com/drive/folders/17kIPbwfhSULLZN9Ar4K1S5SmzqmR8c6e" target="_blank" rel="noopener noreferrer" class="btn-primary">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 4v12" stroke-linecap="round"/><path d="m7 11 5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 20c4-3 10-3 14 0" stroke-linecap="round"/></svg>
+                Download APK Gratis
             </a>
-            <a href="#download" class="btn-download">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
-                </svg>
-                Download APK
+        </div>
+    </section>
+
+    <section id="contact">
+        <div class="download-box" data-animate>
+            <div class="eyebrow" style="margin: 0 auto 18px; color: var(--green); border-color: rgba(94,255,141,.45);">Contact Us</div>
+            <h2>Butuh customisasi aplikasi?</h2>
+            <p>Jika ingin menambahkan fitur, mengubah tema, atau menyesuaikan aplikasi dengan kebutuhan pet shop kamu, hubungi kami via WhatsApp.</p>
+            <a href="https://wa.me/6285158173446" target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path d="M5 19c3.5-5 8.5-8.5 14-10" stroke-linecap="round"/><path d="M9 15c-3 0-5-2-5-5 3 0 5 2 5 5ZM14 12c0-4 2.5-7 6-8 0 4-2.5 7-6 8Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Hubungi via WhatsApp
             </a>
         </div>
+    </section>
+</main>
 
-        <div class="hero-stats reveal reveal-delay-4">
-            <div class="hero-stat">
-                <div class="num">3</div>
-                <div class="lbl">User Roles</div>
-            </div>
-            <div class="hero-stat">
-                <div class="num">6+</div>
-                <div class="lbl">Fitur Utama</div>
-            </div>
-            <div class="hero-stat">
-                <div class="num">24/7</div>
-                <div class="lbl">Akses Penuh</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="hero-visual reveal reveal-delay-2">
-        <div class="hero-img-wrap">
-            <img src="{{ asset('images/cat.png') }}" alt="Tomodachi Pet Shop mascot">
-        </div>
-    </div>
-</section>
-
-<!-- ── About ──────────────────────────────────────────────────────────────── -->
-<section id="about">
-    <div class="section-head reveal">
-        <div class="section-label">About</div>
-        <h2 class="section-title">Kenapa Tomodachi?</h2>
-        <p class="section-sub">
-            Solusi manajemen pet shop yang modern, cepat, dan mudah digunakan — dari kasir hingga owner, semua terkontrol dalam satu sistem.
-        </p>
-    </div>
-</section>
-
-<!-- ── Features ──────────────────────────────────────────────────────────── -->
-<section id="features">
-    <div class="section-head reveal">
-        <div class="section-label">Features</div>
-        <h2 class="section-title">Fitur Lengkap untuk Pet Shop Modern</h2>
-        <p class="section-sub">Semua yang kamu butuhkan untuk mengelola bisnis pet shop secara efisien.</p>
-    </div>
-
-    <div class="features-grid">
-        <div class="feature-card reveal reveal-delay-1">
-            <div class="feature-icon">
-                <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 10V11"/></svg>
-            </div>
-            <h3>Product Management</h3>
-            <p>Kelola produk, harga, SKU, dan gambar dengan mudah. Sinkron antara stok offline dan online.</p>
-        </div>
-        <div class="feature-card reveal reveal-delay-2">
-            <div class="feature-icon">
-                <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>
-            </div>
-            <h3>Category Management</h3>
-            <p>Kategorisasi produk berdasarkan jenis hewan dan sub-kategori untuk pencarian yang lebih cepat.</p>
-        </div>
-        <div class="feature-card reveal reveal-delay-3">
-            <div class="feature-icon">
-                <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            </div>
-            <h3>POS Transactions</h3>
-            <p>Transaksi kasir cepat dengan dukungan pembayaran tunai, QRIS, dan transfer via Midtrans.</p>
-        </div>
-        <div class="feature-card reveal reveal-delay-4">
-            <div class="feature-icon">
-                <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            </div>
-            <h3>Analytics Dashboard</h3>
-            <p>Pantau performa bisnis real-time: pendapatan, transaksi, produk terlaris, dan alert stok.</p>
-        </div>
-        <div class="feature-card reveal reveal-delay-5">
-            <div class="feature-icon">
-                <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-            </div>
-            <h3>Sales Reports</h3>
-            <p>Laporan penjualan harian, mingguan, dan bulanan yang dapat difilter dan diekspor.</p>
-        </div>
-        <div class="feature-card reveal reveal-delay-1">
-            <div class="feature-icon">
-                <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-            </div>
-            <h3>AI Assistant</h3>
-            <p>Tommi AI siap bantu analisis stok, rekomendasi restock, dan insight bisnis berbasis data nyata.</p>
-        </div>
-    </div>
-</section>
-
-<!-- ── Roles ──────────────────────────────────────────────────────────────── -->
-<section id="roles">
-    <div class="section-head reveal">
-        <div class="section-label">User Roles</div>
-        <h2 class="section-title">Tiga Level Akses</h2>
-        <p class="section-sub">Setiap peran punya akses yang tepat sesuai tanggung jawabnya.</p>
-    </div>
-
-    <div class="roles-grid">
-        <div class="role-card reveal reveal-delay-1">
-            <div class="role-emoji">
-                <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z"/></svg>
-            </div>
-            <h3>Owner</h3>
-            <p>Akses penuh ke laporan bisnis, analytics dashboard, manajemen akun, dan seluruh data penjualan.</p>
-            <span class="role-tag">Full Analytics Access</span>
-        </div>
-        <div class="role-card reveal reveal-delay-2">
-            <div class="role-emoji">
-                <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-            </div>
-            <h3>Admin</h3>
-            <p>Mengelola produk, kategori, dan stok barang. Dapat memperbarui data produk dan harga.</p>
-            <span class="role-tag">Product & Stock</span>
-        </div>
-        <div class="role-card reveal reveal-delay-3">
-            <div class="role-emoji">
-                <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path stroke-linecap="round" stroke-linejoin="round" d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.97-1.67L23 6H6"/></svg>
-            </div>
-            <h3>Kasir</h3>
-            <p>Melakukan transaksi penjualan, mencetak struk, dan mengelola pembayaran pelanggan.</p>
-            <span class="role-tag">POS & Transactions</span>
-        </div>
-    </div>
-</section>
-
-<!-- ── Panduan Pengguna ──────────────────────────────────────────────────── -->
-<section id="guide">
-    <div class="section-head reveal">
-        <div class="section-label">Panduan</div>
-        <h2 class="section-title">Cara Menggunakan Tomodachi</h2>
-        <p class="section-sub">Mulai kelola toko hewan peliharaanmu hanya dengan beberapa langkah mudah.</p>
-    </div>
-
-    <div class="guide-grid">
-        <div class="guide-item reveal reveal-delay-1">
-            <div class="guide-marker"><span class="guide-step-num">1</span><div class="guide-marker-line"></div></div>
-            <div class="guide-card">
-                <h3>Download & Install APK</h3>
-                <p>Siapkan aplikasi Tomodachi di perangkat Android kamu sebelum mulai digunakan.</p>
-                <ol class="guide-steps">
-                    <li>Klik tombol <strong>Download APK</strong> di navbar atau bagian Download halaman ini.</li>
-                    <li>Buka file <code>.apk</code> yang terunduh dan izinkan instalasi jika diminta sistem.</li>
-                    <li>Tunggu instalasi selesai, lalu buka aplikasi Tomodachi.</li>
-                </ol>
-            </div>
-        </div>
-        <div class="guide-item reveal reveal-delay-2">
-            <div class="guide-marker"><span class="guide-step-num">2</span><div class="guide-marker-line"></div></div>
-            <div class="guide-card">
-                <h3>Login & Akses Dashboard</h3>
-                <p>Masuk dengan akun terdaftar, tampilan menu menyesuaikan otomatis sesuai peran.</p>
-                <ol class="guide-steps">
-                    <li>Buka menu <strong>Login</strong>, masukkan email dan password akun.</li>
-                    <li><strong>Owner</strong> masuk ke dashboard analytics, <strong>Admin</strong> ke menu produk, <strong>Kasir</strong> ke halaman POS.</li>
-                    <li>Lupa password? Hubungi Owner toko untuk reset akun.</li>
-                </ol>
-            </div>
-        </div>
-        <div class="guide-item reveal reveal-delay-3">
-            <div class="guide-marker"><span class="guide-step-num">3</span><div class="guide-marker-line"></div></div>
-            <div class="guide-card">
-                <h3>Kelola Produk & Stok</h3>
-                <p>Langkah untuk Owner dan Admin dalam mengatur data produk dan stok barang.</p>
-                <ol class="guide-steps">
-                    <li>Buka menu <strong>Produk</strong>, klik <strong>Tambah Produk</strong>, isi nama, kategori, dan harga.</li>
-                    <li>Stok berkurang otomatis setiap ada transaksi dari Kasir.</li>
-                    <li>Sistem mengirim notifikasi jika stok mulai menipis.</li>
-                </ol>
-            </div>
-        </div>
-        <div class="guide-item reveal reveal-delay-4">
-            <div class="guide-marker"><span class="guide-step-num">4</span><div class="guide-marker-line"></div></div>
-            <div class="guide-card">
-                <h3>Lakukan Transaksi POS</h3>
-                <p>Alur transaksi cepat untuk peran Kasir saat melayani pelanggan.</p>
-                <ol class="guide-steps">
-                    <li>Pilih produk dari katalog atau scan barcode, total dihitung otomatis.</li>
-                    <li>Pilih metode pembayaran: tunai, QRIS, atau transfer via Midtrans.</li>
-                    <li>Cetak atau kirim struk digital ke pelanggan.</li>
-                </ol>
-            </div>
-        </div>
-        <div class="guide-item reveal reveal-delay-5">
-            <div class="guide-marker"><span class="guide-step-num">5</span><div class="guide-marker-line"></div></div>
-            <div class="guide-card">
-                <h3>Pantau Laporan & AI Assistant</h3>
-                <p>Fitur khusus Owner untuk memantau performa bisnis dan mendapat insight otomatis.</p>
-                <ol class="guide-steps">
-                    <li>Buka menu <strong>Laporan</strong>, filter data berdasarkan tanggal atau kategori.</li>
-                    <li>Tanya <strong>Tommi AI Assistant</strong> untuk rekomendasi restock dan insight bisnis.</li>
-                    <li>Export laporan jika dibutuhkan untuk arsip atau presentasi.</li>
-                </ol>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ── Stats ──────────────────────────────────────────────────────────────── -->
-<section id="stats">
-    <div class="stats-grid">
-        <div class="stat-card reveal reveal-delay-1">
-            <div class="num">3</div>
-            <p>User Roles</p>
-        </div>
-        <div class="stat-card reveal reveal-delay-2">
-            <div class="num">6+</div>
-            <p>Fitur Utama</p>
-        </div>
-        <div class="stat-card reveal reveal-delay-3">
-            <div class="num">24/7</div>
-            <p>System Access</p>
-        </div>
-        <div class="stat-card reveal reveal-delay-4">
-            <div class="num">100%</div>
-            <p>Integrated</p>
-        </div>
-    </div>
-</section>
-
-<!-- ── Technology ─────────────────────────────────────────────────────────── -->
-<section id="technology">
-    <div class="section-head reveal">
-        <div class="section-label">Tech Stack</div>
-        <h2 class="section-title">Dibangun dengan Teknologi Modern</h2>
-        <p class="section-sub">Stack yang battle-tested untuk performa dan skalabilitas terbaik.</p>
-    </div>
-
-    <div class="tech-grid">
-        <div class="tech-pill reveal reveal-delay-1">
-            <div class="tech-icon tech-badge" style="background:rgba(255,69,0,0.15);color:#FF4500; display:flex; align-items:center; justify-content:center;">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M22.046 7.422c-.053-.298-.246-.548-.521-.676l-8.877-4.148c-.413-.193-.892-.193-1.305 0l-8.875 4.148c-.276.129-.469.379-.522.677-.053.298.04.606.252.831l4.757 5.048c.189.2.457.315.733.315h4.636c.552 0 1-.448 1-1s-.448-1-1-1h-3.951l-3.32-3.523 7.394-3.456 7.394 3.456-3.87 4.106h-2.18c-.552 0-1 .448-1 1s.448 1 1 1h2.862c.277 0 .545-.116.734-.316l4.409-4.679c.211-.225.304-.533.25-.831zM12.871 16.486l-2.454 2.604-5.342-2.497c-.275-.129-.468-.379-.521-.677-.053-.298.04-.606.251-.83l1.83-1.942 2.658 2.82c.189.201.458.316.734.316h5.836l1.326-1.408h1.835l-2.617 2.778c-.189.2-.457.315-.733.315h-2.803z"/></svg>
-            </div>
-            <div class="tech-info">
-                <div class="tech-name">Laravel 10</div>
-                <div class="tech-desc">REST API Backend</div>
-            </div>
-        </div>
-        <div class="tech-pill reveal reveal-delay-2">
-            <div class="tech-icon tech-badge" style="background:rgba(70,150,255,0.15);color:#4696FF; display:flex; align-items:center; justify-content:center;">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M14.314 0L2.3 12 6 15.7 21.684.01h-7.37z"/><path d="M10.791 15.518l-3.2 3.2.001.001 3.2 3.271H18.17l-6.443-6.471z"/><path d="M10.791 15.518l3.19 3.19 6.443-6.472h-7.37z"/></svg>
-            </div>
-            <div class="tech-info">
-                <div class="tech-name">Flutter</div>
-                <div class="tech-desc">Mobile & Web App</div>
-            </div>
-        </div>
-        <div class="tech-pill reveal reveal-delay-3">
-            <div class="tech-icon tech-badge" style="background:rgba(0,130,200,0.15);color:#0082C8">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-            </div>
-            <div class="tech-info">
-                <div class="tech-name">MySQL 8</div>
-                <div class="tech-desc">Database System</div>
-            </div>
-        </div>
-        <div class="tech-pill reveal reveal-delay-4">
-            <div class="tech-icon tech-badge" style="background:rgba(255,138,0,0.15);color:#FF8A00">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-            </div>
-            <div class="tech-info">
-                <div class="tech-name">Sanctum</div>
-                <div class="tech-desc">Auth & Security</div>
-            </div>
-        </div>
-        <div class="tech-pill reveal reveal-delay-5">
-            <div class="tech-icon tech-badge" style="background:rgba(100,200,100,0.15);color:#44BB44">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            </div>
-            <div class="tech-info">
-                <div class="tech-name">Midtrans</div>
-                <div class="tech-desc">Payment Gateway</div>
-            </div>
-        </div>
-        <div class="tech-pill reveal reveal-delay-1">
-            <div class="tech-icon tech-badge" style="background:rgba(180,100,255,0.15);color:#B464FF">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-            </div>
-            <div class="tech-info">
-                <div class="tech-name">OpenRouter AI</div>
-                <div class="tech-desc">AI Assistant</div>
-            </div>
-        </div>
-        <div class="tech-pill reveal reveal-delay-2">
-            <div class="tech-icon tech-badge" style="background:rgba(30,150,255,0.15);color:#1E96FF">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><path stroke-linecap="round" d="M7 10l5 5 5-5"/></svg>
-            </div>
-            <div class="tech-info">
-                <div class="tech-name">Docker</div>
-                <div class="tech-desc">Deployment</div>
-            </div>
-        </div>
-        <div class="tech-pill reveal reveal-delay-3">
-            <div class="tech-icon tech-badge" style="background:rgba(0,180,100,0.15);color:#00B464">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-            </div>
-            <div class="tech-info">
-                <div class="tech-name">Nginx</div>
-                <div class="tech-desc">Reverse Proxy</div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ── Download CTA ───────────────────────────────────────────────────────── -->
-<section id="download">
-    <div class="download-box reveal">
-        <div class="section-label" style="margin-bottom:20px">Download</div>
-        <h2>Coba Aplikasinya Sekarang</h2>
-        <p>Download APK Tomodachi Pet Shop untuk Android dan mulai kelola toko hewan peliharaanmu dengan lebih cerdas.</p>
-        <a href="https://drive.google.com/drive/folders/17kIPbwfhSULLZN9Ar4K1S5SmzqmR8c6e"
-           target="_blank"
-           rel="noopener noreferrer"
-           class="btn-primary"
-           style="display:inline-flex;">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
-            </svg>
-            Download APK Gratis
-        </a>
-    </div>
-</section>
-
-<!-- ── Contact ────────────────────────────────────────────────────────────── -->
-<section id="contact" style="background: var(--bg3); text-align: center;">
-    <div class="download-box reveal" style="border-color: rgba(37,211,102,0.15);">
-        <div class="section-label" style="margin-bottom:20px; background: rgba(37,211,102,0.1); border-color: rgba(37,211,102,0.2); color: #25D366;">Contact Us</div>
-        <h2>Butuh Customisasi Aplikasi?</h2>
-        <p>Jika ingin menambahkan fitur, mengubah tema, atau customize aplikasi sesuai kebutuhan spesifik pet shop-mu, jangan ragu untuk menghubungi kami via WhatsApp.</p>
-        <a href="https://wa.me/6285158173446"
-           target="_blank"
-           rel="noopener noreferrer"
-           class="btn-whatsapp"
-           style="display:inline-flex;">
-            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
-            </svg>
-            Hubungi via WhatsApp
-        </a>
-    </div>
-</section>
-
-<!-- ── Footer ─────────────────────────────────────────────────────────────── -->
 <footer>
-    <a href="#top" class="footer-logo">
-        <img src="{{ asset('images/logo.png') }}" alt="Logo">
-        <span>Tomodachi Pet Shop</span>
+    <a href="#home" class="footer-logo brand" aria-label="Tomodachi Home">
+        <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" width="32" height="32" fill="currentColor">
+                <path d="M34 8c12 1 20 9 20 20 0 15-14 25-30 28 3-9 2-16-4-23C28 32 37 26 43 17c-8 5-15 8-24 9C21 15 26 9 34 8Z"/>
+                <path d="M20 42c-5 0-9-4-9-9 0-3 2-5 5-5 2 0 4 1 5 3 1-2 3-3 5-3 3 0 5 2 5 5 0 5-4 9-11 9Z" opacity=".82"/>
+            </svg>
+        </span>
+        <span class="brand-text">Tomodachi</span>
     </a>
-    <p>© {{ date('Y') }} Tomodachi Pet Shop · Laravel · Flutter · AI</p>
+    <p>&copy; {{ date('Y') }} Tomodachi Pet Shop. Laravel, Flutter, AI.</p>
     <div class="footer-links">
         <a href="#about">About</a>
         <a href="#features">Features</a>
@@ -1102,44 +2505,103 @@ footer p { color: var(--muted); font-size: 14px; }
 </footer>
 
 <script>
-/* ── Hamburger Menu ───────────────────────────────────────────────────────── */
 const hamburgerBtn = document.getElementById('hamburgerBtn');
-const mobileNav    = document.getElementById('mobileNav');
+const mobileNav = document.getElementById('mobileNav');
+const header = document.getElementById('top');
+const root = document.documentElement;
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 hamburgerBtn.addEventListener('click', () => {
     hamburgerBtn.classList.toggle('open');
     mobileNav.classList.toggle('open');
 });
 
-function closeMobileNav() {
-    hamburgerBtn.classList.remove('open');
-    mobileNav.classList.remove('open');
-}
-
-/* ── Scroll Reveal ───────────────────────────────────────────────────────── */
-const revealEls = document.querySelectorAll('.reveal');
+document.querySelectorAll('.mobile-nav a').forEach(link => {
+    link.addEventListener('click', () => {
+        hamburgerBtn.classList.remove('open');
+        mobileNav.classList.remove('open');
+    });
+});
 
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-            observer.unobserve(entry.target);
+        entry.target.classList.toggle('visible', entry.isIntersecting);
+    });
+}, { threshold: 0.1, rootMargin: '0px 0px -36px 0px' });
+
+document.querySelectorAll('[data-animate]').forEach((el) => observer.observe(el));
+
+const leafPalette = [
+    ['#fff2bf', '#ff8a00'],
+    ['#ffe4bd', '#ffb02e'],
+    ['#ffd06b', '#e66d00'],
+    ['#fff7ed', '#f47c20'],
+];
+
+const createLeafBurst = (x, y) => {
+    if (prefersReducedMotion.matches) {
+        return;
+    }
+
+    const particleCount = 16;
+    for (let i = 0; i < particleCount; i += 1) {
+        const leaf = document.createElement('span');
+        const angle = (Math.PI * 2 * i) / particleCount + (Math.random() * .55);
+        const distance = 42 + Math.random() * 98;
+        const lift = 12 + Math.random() * 58;
+        const tx = Math.cos(angle) * distance;
+        const ty = Math.sin(angle) * distance - lift;
+        const palette = leafPalette[Math.floor(Math.random() * leafPalette.length)];
+
+        leaf.className = 'leaf-burst-particle';
+        leaf.style.setProperty('--burst-x', `${x}px`);
+        leaf.style.setProperty('--burst-y', `${y}px`);
+        leaf.style.setProperty('--leaf-tx', `${tx.toFixed(1)}px`);
+        leaf.style.setProperty('--leaf-ty', `${ty.toFixed(1)}px`);
+        leaf.style.setProperty('--leaf-rot', `${Math.floor(Math.random() * 360)}deg`);
+        leaf.style.setProperty('--leaf-spin', `${220 + Math.floor(Math.random() * 420)}deg`);
+        leaf.style.setProperty('--leaf-scale', `${(.72 + Math.random() * .72).toFixed(2)}`);
+        leaf.style.setProperty('--leaf-delay', `${Math.floor(Math.random() * 55)}ms`);
+        leaf.style.setProperty('--leaf-time', `${(.72 + Math.random() * .34).toFixed(2)}s`);
+        leaf.style.setProperty('--leaf-w', `${12 + Math.floor(Math.random() * 13)}px`);
+        leaf.style.setProperty('--leaf-h', `${8 + Math.floor(Math.random() * 8)}px`);
+        leaf.style.setProperty('--leaf-color-a', palette[0]);
+        leaf.style.setProperty('--leaf-color-b', palette[1]);
+
+        document.body.appendChild(leaf);
+        leaf.addEventListener('animationend', () => leaf.remove(), { once: true });
+    }
+};
+
+document.addEventListener('pointerdown', (event) => {
+    createLeafBurst(event.clientX, event.clientY);
+}, { passive: true });
+
+document.querySelectorAll('.feature-card').forEach((card) => {
+    card.addEventListener('pointerdown', () => {
+        card.classList.remove('feature-burst');
+        void card.offsetWidth;
+        card.classList.add('feature-burst');
+    }, { passive: true });
+
+    card.addEventListener('animationend', (event) => {
+        if (event.animationName === 'featureClickBloom') {
+            card.classList.remove('feature-burst');
         }
     });
-}, { threshold: 0.12 });
-
-revealEls.forEach(el => observer.observe(el));
-
-/* ── Header Scroll Shadow ────────────────────────────────────────────────── */
-const header = document.getElementById('top');
-window.addEventListener('scroll', () => {
-    if (window.scrollY > 20) {
-        header.style.background = 'rgba(11,12,16,0.92)';
-    } else {
-        header.style.background = 'rgba(11,12,16,0.7)';
-    }
 });
-</script>
 
+const updateScrollNature = () => {
+    const maxScroll = Math.max(document.body.scrollHeight - window.innerHeight, 1);
+    const scrollProgress = window.scrollY / maxScroll;
+    root.style.setProperty('--scroll-progress', scrollProgress.toFixed(3));
+    root.style.setProperty('--scroll-shift', `${(scrollProgress * 18).toFixed(2)}%`);
+    root.style.setProperty('--scroll-lift', `${(scrollProgress * -26).toFixed(2)}px`);
+    header.classList.toggle('scrolled', window.scrollY > 18);
+};
+
+updateScrollNature();
+window.addEventListener('scroll', updateScrollNature, { passive: true });
+</script>
 </body>
 </html>
