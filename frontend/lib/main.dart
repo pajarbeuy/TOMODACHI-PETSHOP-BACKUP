@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'screens/splash_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  SemanticsBinding.instance.ensureSemantics(); // Enable accessibility DOM for Playwright E2E
   // Prefetch Plus Jakarta Sans to avoid layout jumping
   GoogleFonts.pendingFonts([
     GoogleFonts.plusJakartaSans(),

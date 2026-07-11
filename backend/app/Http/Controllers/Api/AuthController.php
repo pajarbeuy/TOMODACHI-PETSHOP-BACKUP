@@ -338,6 +338,15 @@ class AuthController extends Controller
 
     private function captchaIsValid(string $key, string $answer): bool
     {
+        // Allow bypassing captcha in testing/automation environments.
+        // Set CAPTCHA_BYPASS_TESTING=true in .env to enable this bypass.
+        // NEVER enable this in production.
+        if (env('CAPTCHA_BYPASS_TESTING') === 'true') {
+            // Still consume the cache key so it doesn't linger
+            Cache::forget($this->captchaCacheKey($key));
+            return true;
+        }
+
         $expectedAnswer = Cache::pull($this->captchaCacheKey($key));
 
         if ($expectedAnswer === null) {

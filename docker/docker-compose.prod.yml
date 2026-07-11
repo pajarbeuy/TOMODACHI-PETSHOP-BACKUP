@@ -3,10 +3,12 @@ services:
     image: nginx:alpine
     container_name: tomodachi_nginx
     ports:
-      - "${NGINX_PORT:-80}:80"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/conf.d/finnaberry.conf:/etc/nginx/conf.d/finnaberry.conf:ro
+      - /etc/nginx/ssl:/etc/nginx/ssl:ro
       - laravel_public:/var/www/laravel/public:ro
       - laravel_public_storage:/var/www/laravel/storage/app/public:ro
     depends_on:
