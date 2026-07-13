@@ -7,5 +7,9 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_kasir.yaml"
 - waitForAnimationToEnd
+- tapOn:
+    text: ".*"
+    index: 0
+- tapOn: ".*Item - Rp.*"
 - assertVisible: "Subtotal"
 - takeScreenshot: "40_pos_subtotal"

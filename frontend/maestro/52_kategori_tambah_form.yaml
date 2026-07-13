@@ -7,7 +7,7 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_admin.yaml"
 - waitForAnimationToEnd
+- tapOn: "Kategori\nTab 2 of 2"
 - tapOn: "Kategori"
-- tapOn: "Kategori" # Floating action button label
 - assertVisible: "Tambah Kategori"
 - takeScreenshot: "52_kategori_tambah_form"

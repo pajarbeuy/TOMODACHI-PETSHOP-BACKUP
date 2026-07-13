@@ -7,9 +7,9 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_kasir.yaml"
 - waitForAnimationToEnd
-- tapOn: "Riwayat"
+- tapOn: ".*Riwayat.*"
 - scrollUntilVisible:
-    element: "Halaman"
+    element: ".* / .*"
     direction: DOWN
     timeout: 5000
 - takeScreenshot: "45_riwayat_pagination"

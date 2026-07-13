@@ -7,7 +7,8 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_admin.yaml"
 - waitForAnimationToEnd
-- tapOn: "Produk"
-- tapOn: "Tambah Produk"
+- tapOn: ".*Produk.*"
+- tapOn:
+    point: "82%,13%"
 - assertVisible: "Tambah Produk Baru"
 - takeScreenshot: "48_produk_tambah_form"

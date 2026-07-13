@@ -8,6 +8,6 @@ appId: com.example.frontendd
     file: "login_owner.yaml"
 - waitForAnimationToEnd
 - tapOn: "Akun"
-- tapOn: "Cari nama, email, atau role..."
+- tapOn: "Cari akun..."
 - inputText: "kasir"
 - takeScreenshot: "65_akun_pencarian"

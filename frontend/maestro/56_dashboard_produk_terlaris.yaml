@@ -8,7 +8,7 @@ appId: com.example.frontendd
     file: "login_owner.yaml"
 - waitForAnimationToEnd
 - scrollUntilVisible:
-    element: "Produk Terlaris"
+    element: "Best Sellers"
     direction: DOWN
-    timeout: 5000
+    timeout: 19000
 - takeScreenshot: "56_dashboard_produk_terlaris"

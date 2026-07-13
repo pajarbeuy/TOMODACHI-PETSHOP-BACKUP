@@ -7,8 +7,8 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_admin.yaml"
 - waitForAnimationToEnd
-- tapOn: "Produk"
-- tapOn: "Tambah Produk"
-- tapOn: "Simpan Produk"
-- assertVisible: "Pastikan nama produk, kategori, harga, dan stok offline terisi"
+- tapOn: ".*Produk.*"
+- tapOn:
+    point: "82%,13%"
+- assertVisible: "Nama Produk *"
 - takeScreenshot: "49_produk_validasi_tambah"

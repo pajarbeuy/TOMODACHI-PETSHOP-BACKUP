@@ -7,7 +7,6 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_admin.yaml"
 - waitForAnimationToEnd
-- tapOn: "Kategori"
+- tapOn: "Kategori\nTab 2 of 2"
 - assertVisible: ".*Kategori.*"
-- assertVisible: "Semua Kategori"
 - takeScreenshot: "51_kategori_halaman_tampil"

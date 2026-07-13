@@ -7,7 +7,7 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_owner.yaml"
 - waitForAnimationToEnd
-- tapOn: "AI"
+- tapOn: "AI\nTab 3 of 3"
 - tapOn: "Produk mana yang harus direstock?"
 - assertVisible: "Produk mana yang harus direstock?"
 - takeScreenshot: "61_ai_tap_suggestion"

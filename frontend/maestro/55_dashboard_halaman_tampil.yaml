@@ -7,6 +7,6 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_owner.yaml"
 - waitForAnimationToEnd
-- assertVisible: "Dasbor Analitik"
-- assertVisible: "Penjualan Hari Ini"
+- assertVisible: ".*Dasbor.*"
+- assertVisible: "Today's Sales"
 - takeScreenshot: "55_dashboard_halaman_tampil"

@@ -7,6 +7,6 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_owner.yaml"
 - waitForAnimationToEnd
-- tapOn: "7 Hari"
-- tapOn: "30 Hari"
+- tapOn: "7D"
+- tapOn: "30D"
 - takeScreenshot: "62_dashboard_filter_periode"

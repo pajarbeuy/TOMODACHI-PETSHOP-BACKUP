@@ -7,6 +7,6 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_kasir.yaml"
 - waitForAnimationToEnd
-- tapOn: "Riwayat"
-- assertVisible: "Riwayat Transaksi"
+- tapOn: ".*Riwayat.*"
+- tapOn: "Riwayat Transaksi Kasir"
 - takeScreenshot: "41_riwayat_halaman_tampil"

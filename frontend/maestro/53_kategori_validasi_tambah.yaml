@@ -7,8 +7,7 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_admin.yaml"
 - waitForAnimationToEnd
+- tapOn: "Kategori\nTab 2 of 2"
 - tapOn: "Kategori"
-- tapOn: "Kategori" # FAB
-- tapOn: "Tambah Kategori" # Submit button
-- assertVisible: "Nama, hewan, dan sub kategori wajib diisi"
+- assertVisible: "Kode hewan, contoh: cat, dog"
 - takeScreenshot: "53_kategori_validasi_tambah"

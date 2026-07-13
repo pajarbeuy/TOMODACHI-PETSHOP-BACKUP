@@ -7,6 +7,6 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_owner.yaml"
 - waitForAnimationToEnd
-- tapOn: "Akun"
-- assertVisible: "Manajemen Akun"
+- tapOn: "Akun\nTab 2 of 3"
+- assertVisible: "Cari akun..."
 - takeScreenshot: "57_akun_halaman_tampil"

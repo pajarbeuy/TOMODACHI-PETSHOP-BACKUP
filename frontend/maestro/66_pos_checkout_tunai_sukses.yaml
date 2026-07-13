@@ -1,0 +1,16 @@
+appId: com.example.frontendd
+---
+# TC-066 | POS – Checkout Tunai Sukses
+# Memastikan proses pembayaran tunai berhasil sampai cetak struk
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- tapOn: ".*Rp.*" # Tap product
+- tapOn: ".*Item - Rp.*" # Buka keranjang
+- tapOn: "Tunai"
+- tapOn: "BAYAR SEKARANG"
+- waitForAnimationToEnd
+- assertVisible: "STRUK DIGITAL"
+- takeScreenshot: "66_pos_checkout_tunai_sukses"

@@ -7,6 +7,6 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_kasir.yaml"
 - waitForAnimationToEnd
-- tapOn: "Riwayat"
-- tapOn: "Tanggal Mulai"
+- tapOn: ".*Riwayat.*"
+- tapOn: ".*Mulai.*"
 - takeScreenshot: "43_riwayat_filter_tanggal"

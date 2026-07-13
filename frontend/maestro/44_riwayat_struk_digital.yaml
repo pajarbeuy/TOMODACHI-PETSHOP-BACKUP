@@ -7,7 +7,9 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_kasir.yaml"
 - waitForAnimationToEnd
-- tapOn: "Riwayat"
-- tapOn: "STRUK"
+- tapOn: ".*Riwayat.*"
+- tapOn: "Semua Saluran"
+- tapOn: "Offline (Toko)"
+- tapOn: ".*TRX.*"
 - assertVisible: "STRUK DIGITAL"
 - takeScreenshot: "44_riwayat_struk_digital"

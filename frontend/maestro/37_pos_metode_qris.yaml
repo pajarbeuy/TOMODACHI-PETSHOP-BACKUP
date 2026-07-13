@@ -7,13 +7,16 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_kasir.yaml"
 - waitForAnimationToEnd
-- extendedWaitUntil:
-    visible: "___WAIT_FOR_PRODUCTS___"
-    timeout: 5000
+- assertVisible:
+    id: "___WAIT_FOR_PRODUCTS___"
     optional: true
 - tapOn:
     text: ".*"
     index: 0
 - tapOn: ".*Item - Rp.*"
+- tapOn: "QRIS/TF"
 - assertVisible: "QRIS/TF"
 - takeScreenshot: "37_pos_metode_qris"
+
+
+

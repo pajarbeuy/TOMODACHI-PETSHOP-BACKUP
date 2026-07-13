@@ -7,11 +7,9 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_admin.yaml"
 - waitForAnimationToEnd
-- tapOn: "Produk"
+- tapOn: ".*Produk.*"
 - tapOn:
-    id: "delete_product_button"
-    optional: true
-- assertVisible:
-    text: "Hapus Produk"
-    optional: true
+    point: "90%,50%" # Tap 3-dot menu of the first product
+- tapOn: "Hapus"
+- assertVisible: "Hapus Produk"
 - takeScreenshot: "64_produk_hapus"

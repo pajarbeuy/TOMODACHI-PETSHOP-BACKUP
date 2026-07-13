@@ -7,11 +7,7 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_admin.yaml"
 - waitForAnimationToEnd
-- tapOn: "Kategori"
-- tapOn:
-    id: "edit_category_button"
-    optional: true
-- assertVisible:
-    text: "Edit Kategori"
-    optional: true
+- tapOn: "Kategori\nTab 2 of 2"
+- tapOn: "Edit"
+- assertVisible: "Edit Kategori"
 - takeScreenshot: "54_kategori_edit"

@@ -7,17 +7,17 @@ appId: com.example.frontendd
 - runFlow:
     file: "login_kasir.yaml"
 - waitForAnimationToEnd
-- extendedWaitUntil:
-    visible: "___WAIT_FOR_PRODUCTS___"
-    timeout: 5000
+- assertVisible:
+    id: "___WAIT_FOR_PRODUCTS___"
     optional: true
-- tapOn:
-    text: ".*"
-    index: 0
+- tapOn: "Tomodachi Cat Food Tuna 1kg\nSKU: CAT-FOOD-TUNA-1KG\nRp 55.000\nStok: 772"
 - tapOn: ".*Item - Rp.*"
-- tapOn: "Cash"
+- tapOn: "Tunai"
 - tapOn: "Nominal Bayar (Rp)"
 - inputText: "1"
 - tapOn: "BAYAR SEKARANG"
 - assertVisible: "Insufficient paid amount."
 - takeScreenshot: "38_pos_bayar_kurang"
+
+
+

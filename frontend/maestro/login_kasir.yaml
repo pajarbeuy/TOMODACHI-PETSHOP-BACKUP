@@ -6,10 +6,12 @@ appId: com.example.frontendd
 - inputText: "password123"
 
 # Pause 10 detik — tester isi captcha & tap Sign In manual
-- extendedWaitUntil:
-    visible: "WAIT_FOR_TESTER_INPUT"
-    timeout: 10000
+- assertVisible:
+    id: "WAIT_FOR_TESTER_INPUT"
     optional: true
 
 - tapOn: "Sign In"
 - waitForAnimationToEnd
+
+
+
