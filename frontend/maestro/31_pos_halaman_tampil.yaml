@@ -1,0 +1,11 @@
+appId: com.example.frontendd
+---
+# TC-031 | POS – Halaman POS tampil
+# Memastikan halaman POS menampilkan daftar produk
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- assertVisible: ".*POS.*"
+- takeScreenshot: "31_pos_halaman_tampil"

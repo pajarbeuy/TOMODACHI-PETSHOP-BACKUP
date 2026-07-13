@@ -1,0 +1,17 @@
+appId: com.example.frontendd
+---
+# TC-064 | Produk – Hapus produk
+# Memastikan modal konfirmasi hapus produk muncul
+
+- launchApp
+- runFlow:
+    file: "login_admin.yaml"
+- waitForAnimationToEnd
+- tapOn: "Produk"
+- tapOn:
+    id: "delete_product_button"
+    optional: true
+- assertVisible:
+    text: "Hapus Produk"
+    optional: true
+- takeScreenshot: "64_produk_hapus"

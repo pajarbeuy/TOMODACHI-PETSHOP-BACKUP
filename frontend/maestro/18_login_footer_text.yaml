@@ -1,0 +1,12 @@
+appId: com.example.frontendd
+---
+# TC-018 | Login – Footer text
+# Memastikan footer text tampil di halaman login
+
+- launchApp
+- assertVisible: "Welcome back! 👋"
+- scrollUntilVisible:
+    element: "© 2024 Tomodachi Petshop · All rights reserved"
+    direction: DOWN
+    timeout: 5000
+- takeScreenshot: "18_login_footer_text"

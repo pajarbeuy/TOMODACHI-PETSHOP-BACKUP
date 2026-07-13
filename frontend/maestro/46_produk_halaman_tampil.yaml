@@ -1,0 +1,12 @@
+appId: com.example.frontendd
+---
+# TC-046 | Produk – Halaman produk tampil
+# Memastikan halaman manajemen produk tampil (Admin)
+
+- launchApp
+- runFlow:
+    file: "login_admin.yaml"
+- waitForAnimationToEnd
+- tapOn: "Produk"
+- assertVisible: "Manajemen Produk"
+- takeScreenshot: "46_produk_halaman_tampil"

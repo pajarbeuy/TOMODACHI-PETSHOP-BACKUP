@@ -1,0 +1,14 @@
+appId: com.example.frontendd
+---
+# TC-049 | Produk – Validasi tambah produk
+# Memastikan validasi form tambah produk
+
+- launchApp
+- runFlow:
+    file: "login_admin.yaml"
+- waitForAnimationToEnd
+- tapOn: "Produk"
+- tapOn: "Tambah Produk"
+- tapOn: "Simpan Produk"
+- assertVisible: "Pastikan nama produk, kategori, harga, dan stok offline terisi"
+- takeScreenshot: "49_produk_validasi_tambah"

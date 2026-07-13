@@ -1,0 +1,12 @@
+appId: com.example.frontendd
+---
+# TC-057 | Akun – Halaman akun tampil
+# Memastikan halaman manajemen akun owner tampil
+
+- launchApp
+- runFlow:
+    file: "login_owner.yaml"
+- waitForAnimationToEnd
+- tapOn: "Akun"
+- assertVisible: "Manajemen Akun"
+- takeScreenshot: "57_akun_halaman_tampil"

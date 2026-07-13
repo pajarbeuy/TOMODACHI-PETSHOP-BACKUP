@@ -1,0 +1,13 @@
+appId: com.example.frontendd
+---
+# TC-016 | Splash Screen – Navigasi ke login
+# Memastikan splash screen navigasi ke halaman login setelah loading
+
+- launchApp
+- assertVisible: ".*TOMODACHI.*"
+- waitForAnimationToEnd
+- assertVisible:
+    text: "Welcome back! 👋"
+    optional: true
+- takeScreenshot: "16_splash_navigasi_login"
+

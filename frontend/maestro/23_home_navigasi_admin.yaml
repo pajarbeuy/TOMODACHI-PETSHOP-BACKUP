@@ -1,0 +1,12 @@
+appId: com.example.frontendd
+---
+# TC-023 | Home – Navigasi bottom bar admin
+# Memastikan bottom navigation bar admin memiliki tab Produk dan Kategori
+
+- launchApp
+- runFlow:
+    file: "login_admin.yaml"
+- waitForAnimationToEnd
+- assertVisible: ".*Produk.*"
+- assertVisible: ".*Kategori.*"
+- takeScreenshot: "23_home_navigasi_admin"

@@ -1,0 +1,13 @@
+appId: com.example.frontendd
+---
+# TC-051 | Kategori – Halaman kategori tampil
+# Memastikan halaman manajemen kategori tampil (Admin)
+
+- launchApp
+- runFlow:
+    file: "login_admin.yaml"
+- waitForAnimationToEnd
+- tapOn: "Kategori"
+- assertVisible: ".*Kategori.*"
+- assertVisible: "Semua Kategori"
+- takeScreenshot: "51_kategori_halaman_tampil"

@@ -1,0 +1,13 @@
+appId: com.example.frontendd
+---
+# TC-061 | AI – Tap suggestion
+# Memastikan suggestion text AI bisa ditap dan muncul di input
+
+- launchApp
+- runFlow:
+    file: "login_owner.yaml"
+- waitForAnimationToEnd
+- tapOn: "AI"
+- tapOn: "Produk mana yang harus direstock?"
+- assertVisible: "Produk mana yang harus direstock?"
+- takeScreenshot: "61_ai_tap_suggestion"

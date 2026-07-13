@@ -1,0 +1,12 @@
+appId: com.example.frontendd
+---
+# TC-055 | Dashboard – Halaman analitik owner
+# Memastikan dashboard owner tampil
+
+- launchApp
+- runFlow:
+    file: "login_owner.yaml"
+- waitForAnimationToEnd
+- assertVisible: "Dasbor Analitik"
+- assertVisible: "Penjualan Hari Ini"
+- takeScreenshot: "55_dashboard_halaman_tampil"

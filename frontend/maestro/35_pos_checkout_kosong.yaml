@@ -1,0 +1,12 @@
+appId: com.example.frontendd
+---
+# TC-035 | POS – Checkout keranjang kosong
+# Memastikan error muncul saat checkout tanpa item di keranjang
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- tapOn: ".*Item - Rp.*"
+- assertVisible: "Keranjang kosong"
+- takeScreenshot: "35_pos_checkout_kosong"

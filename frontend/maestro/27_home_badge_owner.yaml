@@ -1,0 +1,11 @@
+appId: com.example.frontendd
+---
+# TC-027 | Home – Role badge owner tampil
+# Memastikan badge role Owner tampil di AppBar
+
+- launchApp
+- runFlow:
+    file: "login_owner.yaml"
+- waitForAnimationToEnd
+- assertVisible: ".*Owner.*"
+- takeScreenshot: "27_home_badge_owner"

@@ -1,0 +1,9 @@
+appId: com.example.frontendd
+---
+# TC-014 | Splash Screen – Tampilan awal
+# Memastikan splash screen tampil dengan branding yang benar
+
+- launchApp
+- assertVisible: ".*TOMODACHI.*"
+- assertVisible: "PETSHOP"
+- takeScreenshot: "14_splash_screen_tampilan"

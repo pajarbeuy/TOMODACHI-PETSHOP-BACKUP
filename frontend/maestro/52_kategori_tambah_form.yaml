@@ -1,0 +1,13 @@
+appId: com.example.frontendd
+---
+# TC-052 | Kategori – Tambah kategori form
+# Memastikan form tambah kategori bisa dibuka
+
+- launchApp
+- runFlow:
+    file: "login_admin.yaml"
+- waitForAnimationToEnd
+- tapOn: "Kategori"
+- tapOn: "Kategori" # Floating action button label
+- assertVisible: "Tambah Kategori"
+- takeScreenshot: "52_kategori_tambah_form"

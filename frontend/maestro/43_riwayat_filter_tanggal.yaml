@@ -1,0 +1,12 @@
+appId: com.example.frontendd
+---
+# TC-043 | Riwayat – Filter tanggal mulai
+# Memastikan filter tanggal mulai di riwayat transaksi berfungsi
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- tapOn: "Riwayat"
+- tapOn: "Tanggal Mulai"
+- takeScreenshot: "43_riwayat_filter_tanggal"

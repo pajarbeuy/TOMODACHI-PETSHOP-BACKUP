@@ -1,0 +1,11 @@
+appId: com.example.frontendd
+---
+# TC-039 | POS – Grid produk tampil
+# Memastikan grid produk tampil dengan gambar dan harga
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- assertVisible: "Rp"
+- takeScreenshot: "39_pos_grid_produk"

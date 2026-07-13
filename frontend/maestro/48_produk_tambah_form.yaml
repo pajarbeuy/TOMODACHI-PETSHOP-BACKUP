@@ -1,0 +1,13 @@
+appId: com.example.frontendd
+---
+# TC-048 | Produk – Tambah produk form
+# Memastikan form tambah produk bisa dibuka
+
+- launchApp
+- runFlow:
+    file: "login_admin.yaml"
+- waitForAnimationToEnd
+- tapOn: "Produk"
+- tapOn: "Tambah Produk"
+- assertVisible: "Tambah Produk Baru"
+- takeScreenshot: "48_produk_tambah_form"

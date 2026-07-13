@@ -1,0 +1,11 @@
+appId: com.example.frontendd
+---
+# TC-019 | Login – Input email format
+# Memastikan field email menerima input teks
+
+- launchApp
+- assertVisible: "Welcome back! 👋"
+- tapOn: "you@example.com"
+- inputText: "test@example.com"
+- assertVisible: "test@example.com"
+- takeScreenshot: "19_login_input_email"

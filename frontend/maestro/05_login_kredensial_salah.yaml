@@ -1,0 +1,16 @@
+appId: com.example.frontendd
+---
+# TC-005 | Login – Kredensial salah
+# Memastikan error muncul saat login dengan email/password yang salah
+
+- launchApp
+- assertVisible: "Welcome back! 👋"
+- tapOn: "you@example.com"
+- inputText: "salah@email.com"
+- tapOn: "Enter your password"
+- inputText: "wrongpassword"
+- tapOn: "Captcha Verification"
+- inputText: "99"
+- tapOn: "Sign In"
+- assertVisible: "Login Error"
+- takeScreenshot: "05_login_kredensial_salah"

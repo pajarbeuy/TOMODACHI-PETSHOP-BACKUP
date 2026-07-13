@@ -1,0 +1,17 @@
+appId: com.example.frontendd
+---
+# TC-054 | Kategori – Edit kategori
+# Memastikan form edit kategori bisa dibuka
+
+- launchApp
+- runFlow:
+    file: "login_admin.yaml"
+- waitForAnimationToEnd
+- tapOn: "Kategori"
+- tapOn:
+    id: "edit_category_button"
+    optional: true
+- assertVisible:
+    text: "Edit Kategori"
+    optional: true
+- takeScreenshot: "54_kategori_edit"

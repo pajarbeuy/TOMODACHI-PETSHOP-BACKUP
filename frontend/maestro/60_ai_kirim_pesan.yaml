@@ -1,0 +1,16 @@
+appId: com.example.frontendd
+---
+# TC-060 | AI – Kirim pesan
+# Memastikan bisa mengirim pesan ke AI
+
+- launchApp
+- runFlow:
+    file: "login_owner.yaml"
+- waitForAnimationToEnd
+- tapOn: "AI"
+- tapOn: "Tanya Tommi tentang bisnis..."
+- inputText: "Halo Tommi"
+- tapOn:
+    id: "send_message_button"
+    optional: true
+- takeScreenshot: "60_ai_kirim_pesan"

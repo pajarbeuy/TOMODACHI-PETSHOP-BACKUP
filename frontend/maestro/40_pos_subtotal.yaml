@@ -1,0 +1,11 @@
+appId: com.example.frontendd
+---
+# TC-040 | POS – Subtotal keranjang
+# Memastikan subtotal ditampilkan di keranjang
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- assertVisible: "Subtotal"
+- takeScreenshot: "40_pos_subtotal"

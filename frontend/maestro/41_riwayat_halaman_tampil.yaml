@@ -1,0 +1,12 @@
+appId: com.example.frontendd
+---
+# TC-041 | Riwayat – Halaman riwayat transaksi tampil
+# Memastikan halaman riwayat transaksi tampil dengan benar
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- tapOn: "Riwayat"
+- assertVisible: "Riwayat Transaksi"
+- takeScreenshot: "41_riwayat_halaman_tampil"

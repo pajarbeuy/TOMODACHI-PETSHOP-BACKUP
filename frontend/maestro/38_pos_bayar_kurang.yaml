@@ -1,0 +1,23 @@
+appId: com.example.frontendd
+---
+# TC-038 | POS – Bayar kurang (insufficient)
+# Memastikan error muncul saat bayar kurang dari total
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "___WAIT_FOR_PRODUCTS___"
+    timeout: 5000
+    optional: true
+- tapOn:
+    text: ".*"
+    index: 0
+- tapOn: ".*Item - Rp.*"
+- tapOn: "Cash"
+- tapOn: "Nominal Bayar (Rp)"
+- inputText: "1"
+- tapOn: "BAYAR SEKARANG"
+- assertVisible: "Insufficient paid amount."
+- takeScreenshot: "38_pos_bayar_kurang"

@@ -1,0 +1,14 @@
+appId: com.example.frontendd
+---
+# TC-056 | Dashboard – Produk Terlaris
+# Memastikan daftar produk terlaris tampil di dashboard
+
+- launchApp
+- runFlow:
+    file: "login_owner.yaml"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Produk Terlaris"
+    direction: DOWN
+    timeout: 5000
+- takeScreenshot: "56_dashboard_produk_terlaris"

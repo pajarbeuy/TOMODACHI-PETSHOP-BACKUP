@@ -1,0 +1,20 @@
+appId: com.example.frontendd
+---
+# TC-050 | Produk – Field tambah produk
+# Memastikan field pada form tambah produk lengkap
+
+- launchApp
+- runFlow:
+    file: "login_admin.yaml"
+- waitForAnimationToEnd
+- tapOn: "Produk"
+- tapOn: "Tambah Produk"
+- assertVisible: "Nama Produk *"
+- assertVisible: "Kategori *"
+- assertVisible: "Harga Beli *"
+- assertVisible: "Harga Jual *"
+- scrollUntilVisible:
+    element: "Stok Offline *"
+    direction: DOWN
+    timeout: 5000
+- takeScreenshot: "50_produk_fields"

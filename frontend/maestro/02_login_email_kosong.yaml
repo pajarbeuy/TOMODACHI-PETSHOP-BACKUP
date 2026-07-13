@@ -1,0 +1,14 @@
+appId: com.example.frontendd
+---
+# TC-002 | Login – Validasi email kosong
+# Memastikan error muncul jika hanya email yang tidak diisi
+
+- launchApp
+- assertVisible: "Welcome back! 👋"
+- tapOn: "you@example.com"
+- eraseText
+- tapOn: "Enter your password"
+- inputText: "password123"
+- tapOn: "Sign In"
+- assertVisible: "Email and password are required"
+- takeScreenshot: "02_login_email_kosong"
