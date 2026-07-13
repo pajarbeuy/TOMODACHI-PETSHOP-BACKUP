@@ -1,0 +1,10 @@
+appId: com.example.frontendd
+---
+# TC-010 | Login – Hint text placeholder
+# Memastikan hint text pada field email dan password sesuai
+
+- launchApp
+- assertVisible: "Welcome back! 👋"
+- assertVisible: "you@example.com"
+- assertVisible: "Enter your password"
+- takeScreenshot: "10_login_hint_text"

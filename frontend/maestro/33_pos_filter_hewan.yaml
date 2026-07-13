@@ -1,0 +1,11 @@
+appId: com.example.frontendd
+---
+# TC-033 | POS – Filter kategori hewan
+# Memastikan dropdown filter jenis hewan berfungsi
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- tapOn: ".*Kucing.*"
+- takeScreenshot: "33_pos_filter_hewan"

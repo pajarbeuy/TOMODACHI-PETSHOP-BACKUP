@@ -1,0 +1,12 @@
+appId: com.example.frontendd
+---
+# TC-022 | Home – Navigasi bottom bar kasir
+# Memastikan bottom navigation bar kasir memiliki tab POS dan Riwayat
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- assertVisible: ".*POS.*"
+- assertVisible: ".*Riwayat.*"
+- takeScreenshot: "22_home_navigasi_kasir"

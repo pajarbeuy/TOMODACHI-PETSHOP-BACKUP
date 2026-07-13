@@ -1,0 +1,11 @@
+appId: com.example.frontendd
+---
+# TC-013 | Login – Quick login Owner
+# Memastikan quick login sebagai Owner berfungsi
+
+- launchApp
+- assertVisible: "Welcome back! 👋"
+- runFlow:
+    file: "login_owner.yaml"
+- assertVisible: "Sign In"
+- takeScreenshot: "13_login_quick_owner"

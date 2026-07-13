@@ -1,0 +1,16 @@
+appId: com.example.frontendd
+env:
+  # Base Application Configuration
+  APP_ID: com.example.frontendd
+  
+  # Admin Credentials
+  ADMIN_EMAIL: admin@tomodachi.com
+  
+  # Kasir Credentials
+  KASIR_EMAIL: kasir@tomodachi.com
+  
+  # Owner Credentials
+  OWNER_EMAIL: owner@tomodachi.com
+  
+  # Global Password for Test Accounts
+  TEST_PASSWORD: password123

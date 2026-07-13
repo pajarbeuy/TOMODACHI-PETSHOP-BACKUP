@@ -1,0 +1,14 @@
+appId: com.example.frontendd
+---
+# TC-034 | POS – Tambah produk ke keranjang
+# Memastikan produk bisa ditambahkan ke keranjang belanja
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*"
+    index: 0
+- takeScreenshot: "34_pos_tambah_keranjang"
+

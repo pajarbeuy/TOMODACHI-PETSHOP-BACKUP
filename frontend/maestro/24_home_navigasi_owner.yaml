@@ -1,0 +1,14 @@
+appId: com.example.frontendd
+---
+# TC-024 | Home – Navigasi bottom bar owner
+# Memastikan bottom navigation bar owner memiliki tab Dasbor, Akun, AI
+
+- launchApp
+- runFlow:
+    file: "login_owner.yaml"
+- waitForAnimationToEnd
+- assertVisible: ".*Dasbor.*"
+- assertVisible: ".*Akun.*"
+- assertVisible: ".*AI.*"
+- takeScreenshot: "24_home_navigasi_owner"
+

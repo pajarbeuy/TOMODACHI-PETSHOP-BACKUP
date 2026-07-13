@@ -1,0 +1,9 @@
+appId: com.example.frontendd
+---
+# TC-008 | Login – Checkbox remember me
+# Memastikan checkbox remember me dapat di-tap
+
+- launchApp
+- assertVisible: "Welcome back! 👋"
+- tapOn: "Remember me"
+- takeScreenshot: "08_login_remember_me"

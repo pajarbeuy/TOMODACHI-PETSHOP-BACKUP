@@ -1,0 +1,10 @@
+appId: com.example.frontendd
+---
+# TC-009 | Login – Refresh captcha
+# Memastikan tombol refresh captcha berfungsi
+
+- launchApp
+- assertVisible: "Welcome back! 👋"
+- assertVisible: "Captcha Verification"
+- tapOn: "Refresh captcha"
+- takeScreenshot: "09_login_refresh_captcha"

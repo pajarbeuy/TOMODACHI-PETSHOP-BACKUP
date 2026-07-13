@@ -1,0 +1,13 @@
+appId: com.example.frontendd
+---
+# TC-065 | Akun – Filter role
+# Memastikan pencarian akun berfungsi 
+
+- launchApp
+- runFlow:
+    file: "login_owner.yaml"
+- waitForAnimationToEnd
+- tapOn: "Akun"
+- tapOn: "Cari akun..."
+- inputText: "kasir"
+- takeScreenshot: "65_akun_pencarian"

@@ -1,0 +1,21 @@
+appId: com.example.frontendd
+---
+# TC-036 | POS – Metode pembayaran cash
+# Memastikan pilihan metode pembayaran cash tersedia
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "___WAIT_FOR_PRODUCTS___"
+    optional: true
+- tapOn:
+    text: ".*"
+    index: 0
+- tapOn: ".*Item - Rp.*"
+- assertVisible: "Tunai"
+- takeScreenshot: "36_pos_metode_cash"
+
+
+

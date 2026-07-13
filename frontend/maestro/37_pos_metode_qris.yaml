@@ -1,0 +1,22 @@
+appId: com.example.frontendd
+---
+# TC-037 | POS – Metode pembayaran QRIS
+# Memastikan pilihan metode pembayaran QRIS tersedia
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "___WAIT_FOR_PRODUCTS___"
+    optional: true
+- tapOn:
+    text: ".*"
+    index: 0
+- tapOn: ".*Item - Rp.*"
+- tapOn: "QRIS/TF"
+- assertVisible: "QRIS/TF"
+- takeScreenshot: "37_pos_metode_qris"
+
+
+

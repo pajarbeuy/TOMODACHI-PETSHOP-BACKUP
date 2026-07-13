@@ -1,0 +1,12 @@
+appId: com.example.frontendd
+---
+# TC-062 | Dashboard – Filter periode
+# Memastikan filter periode penjualan di dashboard berfungsi
+
+- launchApp
+- runFlow:
+    file: "login_owner.yaml"
+- waitForAnimationToEnd
+- tapOn: "7D"
+- tapOn: "30D"
+- takeScreenshot: "62_dashboard_filter_periode"

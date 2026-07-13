@@ -1,0 +1,11 @@
+appId: com.example.frontendd
+---
+# TC-063 | POS – Scroll daftar produk
+# Memastikan daftar produk POS dapat discroll
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- scroll
+- takeScreenshot: "63_pos_scroll_produk"

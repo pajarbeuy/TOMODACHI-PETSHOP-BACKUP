@@ -1,0 +1,11 @@
+appId: com.example.frontendd
+---
+# TC-026 | Home – Role badge admin tampil
+# Memastikan badge role Admin tampil di AppBar
+
+- launchApp
+- runFlow:
+    file: "login_admin.yaml"
+- waitForAnimationToEnd
+- assertVisible: ".*Admin.*"
+- takeScreenshot: "26_home_badge_admin"

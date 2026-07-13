@@ -1,0 +1,15 @@
+appId: com.example.frontendd
+---
+# TC-044 | Riwayat – Struk digital tampil
+# Memastikan struk digital (receipt) bisa ditampilkan
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- tapOn: ".*Riwayat.*"
+- tapOn: "Semua Saluran"
+- tapOn: "Offline (Toko)"
+- tapOn: ".*TRX.*"
+- assertVisible: "STRUK DIGITAL"
+- takeScreenshot: "44_riwayat_struk_digital"

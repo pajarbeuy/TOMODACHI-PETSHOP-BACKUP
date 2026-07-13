@@ -1,0 +1,4 @@
+appId: com.example.frontendd
+---
+- launchApp
+- delay: 8000

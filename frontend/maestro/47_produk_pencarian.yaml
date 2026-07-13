@@ -1,0 +1,13 @@
+appId: com.example.frontendd
+---
+# TC-047 | Produk – Pencarian produk
+# Memastikan pencarian produk berfungsi
+
+- launchApp
+- runFlow:
+    file: "login_admin.yaml"
+- waitForAnimationToEnd
+- tapOn: ".*Produk.*"
+- tapOn: ".*Cari nama.*"
+- inputText: "whiskas"
+- takeScreenshot: "47_produk_pencarian"

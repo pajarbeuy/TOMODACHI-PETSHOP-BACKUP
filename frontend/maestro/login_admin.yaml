@@ -1,0 +1,17 @@
+appId: com.example.frontendd
+---
+- tapOn: "you@example.com"
+- inputText: "admin@tomodachi.com"
+- tapOn: "Enter your password"
+- inputText: "password123"
+
+# Pause 10 detik — tester isi captcha & tap Sign In manual
+- assertVisible:
+    id: "WAIT_FOR_TESTER_INPUT"
+    optional: true
+
+- tapOn: "Sign In"
+- waitForAnimationToEnd
+
+
+

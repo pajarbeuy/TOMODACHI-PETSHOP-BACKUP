@@ -1,0 +1,11 @@
+appId: com.example.frontendd
+---
+# TC-025 | Home – Tombol logout tampil
+# Memastikan tombol logout tampil di AppBar
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- assertVisible: "Logout"
+- takeScreenshot: "25_home_tombol_logout"

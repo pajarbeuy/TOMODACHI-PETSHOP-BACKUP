@@ -1,0 +1,13 @@
+appId: com.example.frontendd
+---
+# TC-053 | Kategori – Validasi tambah kategori
+# Memastikan validasi form tambah kategori
+
+- launchApp
+- runFlow:
+    file: "login_admin.yaml"
+- waitForAnimationToEnd
+- tapOn: "Kategori\nTab 2 of 2"
+- tapOn: "Kategori"
+- assertVisible: "Kode hewan, contoh: cat, dog"
+- takeScreenshot: "53_kategori_validasi_tambah"

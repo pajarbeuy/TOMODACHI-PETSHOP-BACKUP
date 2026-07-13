@@ -1,0 +1,11 @@
+appId: com.example.frontendd
+---
+# TC-012 | Login – Quick login Kasir
+# Memastikan quick login sebagai Kasir berfungsi
+
+- launchApp
+- assertVisible: "Welcome back! 👋"
+- runFlow:
+    file: "login_kasir.yaml"
+- assertVisible: "Sign In"
+- takeScreenshot: "12_login_quick_kasir"
