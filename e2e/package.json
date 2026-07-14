@@ -1,0 +1,20 @@
+{
+  "name": "tomodachi-petshop-e2e",
+  "version": "1.0.0",
+  "description": "Playwright automation tests untuk Tomodachi Pet Shop Flutter Web",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report",
+    "test:login": "playwright test tests/01-login.spec.js",
+    "test:kasir": "playwright test tests/02-kasir-pos.spec.js",
+    "test:admin": "playwright test tests/03-admin-products.spec.js",
+    "test:owner": "playwright test tests/04-owner-dashboard.spec.js",
+    "test:debug": "playwright test --debug"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0",
+    "dotenv": "^16.4.5"
+  }
+}

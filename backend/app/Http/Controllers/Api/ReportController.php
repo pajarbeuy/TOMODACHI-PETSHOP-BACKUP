@@ -128,17 +128,17 @@ class ReportController extends Controller
                 DB::raw('SUM(total) as total_revenue'),
                 DB::raw('COUNT(id) as transaction_count')
             )
-            ->groupBy('date')
-            ->orderBy('date', 'desc')
-            ->get();
+            ->groupBy(DB::raw('DATE(transactions.created_at)'))
+            ->get()
+            ->pluck('items_sold', 'date');
         }
 
-        $formatted = $results->map(function ($item) {
+        $formatted = $results->map(function ($item) use ($period, $itemsSoldData) {
             return [
                 'date' => $item->date,
                 'total_revenue' => floatval($item->total_revenue),
                 'transaction_count' => intval($item->transaction_count),
-                'items_sold' => intval($item->items_sold ?? 0),
+                'items_sold' => $period === 'daily' ? intval($itemsSoldData->get($item->date) ?? 0) : 0,
             ];
         });
 

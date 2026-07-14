@@ -1,0 +1,12 @@
+appId: com.example.frontendd
+---
+# TC-029 | Logout – Kembali ke login
+# Memastikan logout mengarahkan kembali ke halaman login
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- tapOn: "Logout"
+- assertVisible: "Welcome back! 👋"
+- takeScreenshot: "29_logout_kembali_login"

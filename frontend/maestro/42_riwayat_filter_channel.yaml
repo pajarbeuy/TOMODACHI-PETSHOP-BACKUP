@@ -1,0 +1,12 @@
+appId: com.example.frontendd
+---
+# TC-042 | Riwayat – Filter channel offline
+# Memastikan filter channel offline di riwayat transaksi berfungsi
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- tapOn: ".*Riwayat.*"
+- tapOn: "Semua Saluran"
+- takeScreenshot: "42_riwayat_filter_channel"

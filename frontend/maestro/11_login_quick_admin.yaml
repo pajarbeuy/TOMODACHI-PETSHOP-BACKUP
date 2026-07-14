@@ -1,0 +1,11 @@
+appId: com.example.frontendd
+---
+# TC-011 | Login – Quick login Admin
+# Memastikan quick login sebagai Admin berfungsi
+
+- launchApp
+- assertVisible: "Welcome back! 👋"
+- runFlow:
+    file: "login_admin.yaml"
+- assertVisible: "Sign In"
+- takeScreenshot: "11_login_quick_admin"

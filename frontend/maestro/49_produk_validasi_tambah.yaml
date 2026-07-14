@@ -1,0 +1,14 @@
+appId: com.example.frontendd
+---
+# TC-049 | Produk – Validasi tambah produk
+# Memastikan validasi form tambah produk
+
+- launchApp
+- runFlow:
+    file: "login_admin.yaml"
+- waitForAnimationToEnd
+- tapOn: ".*Produk.*"
+- tapOn:
+    point: "82%,13%"
+- assertVisible: "Nama Produk *"
+- takeScreenshot: "49_produk_validasi_tambah"

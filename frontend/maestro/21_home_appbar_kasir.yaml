@@ -1,0 +1,12 @@
+appId: com.example.frontendd
+---
+# TC-021 | Home – AppBar tampil setelah login kasir
+# Memastikan AppBar menampilkan nama user dan role setelah login
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- assertVisible: ".*Tomodachi.*"
+- assertVisible: ".*Kasir.*"
+- takeScreenshot: "21_home_appbar_kasir"

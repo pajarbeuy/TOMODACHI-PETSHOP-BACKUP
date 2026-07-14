@@ -1,0 +1,12 @@
+appId: com.example.frontendd
+---
+# TC-028 | Home – Pindah tab riwayat (kasir)
+# Memastikan kasir dapat berpindah ke tab Riwayat Transaksi
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- tapOn: ".*Riwayat.*"
+- assertVisible: "Riwayat Transaksi Kasir"
+- takeScreenshot: "28_home_tab_riwayat"

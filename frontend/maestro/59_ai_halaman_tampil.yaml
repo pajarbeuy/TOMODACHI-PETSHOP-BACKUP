@@ -1,0 +1,12 @@
+appId: com.example.frontendd
+---
+# TC-059 | AI – Halaman AI Chat tampil
+# Memastikan halaman asisten AI tampil
+
+- launchApp
+- runFlow:
+    file: "login_owner.yaml"
+- waitForAnimationToEnd
+- tapOn: "AI\nTab 3 of 3"
+- assertVisible: "Halo! Saya **Tommi**"
+- takeScreenshot: "59_ai_halaman_tampil"

@@ -178,6 +178,108 @@ class TransactionApiTest extends TestCase
         $this->assertSame('completed', $transaction->fresh()->status);
     }
 
+    public function test_midtrans_notification_restocks_items_on_cancel(): void
+    {
+        config(['midtrans.server_key' => 'server-key']);
+        $kasir = $this->userWithRole('kasir');
+        
+        $product = $this->product(['offline_qty' => 8]); // Stock has been decremented to 8 during checkout pending
+        
+        $transaction = $this->transaction($kasir, [
+            'status' => 'pending',
+            'midtrans_order_id' => 'ORDER-CANCELLED',
+            'amount_paid' => 0,
+        ]);
+        
+        $this->transactionItem($transaction, $product, [
+            'quantity' => 2,
+            'unit_price' => 60000,
+            'subtotal' => 120000,
+        ]);
+
+        $this->postJson('/api/midtrans/notification', $this->midtransPayload('ORDER-CANCELLED', 'cancel'))
+            ->assertOk()
+            ->assertJsonPath('status', true);
+
+        $this->assertSame('cancelled', $transaction->fresh()->status);
+        $this->assertSame(10, $product->stock->fresh()->offline_qty); // Stock restored from 8 to 10
+    }
+
+    public function test_midtrans_notification_restocks_items_on_expire(): void
+    {
+        config(['midtrans.server_key' => 'server-key']);
+        $kasir = $this->userWithRole('kasir');
+        
+        $product = $this->product(['online_qty' => 5]); // Current stock is 5
+        
+        $transaction = $this->transaction($kasir, [
+            'channel' => 'online',
+            'status' => 'pending',
+            'midtrans_order_id' => 'ORDER-EXPIRED',
+            'amount_paid' => 0,
+        ]);
+        
+        $this->transactionItem($transaction, $product, [
+            'quantity' => 3,
+            'unit_price' => 50000,
+            'subtotal' => 150000,
+        ]);
+
+        $this->postJson('/api/midtrans/notification', $this->midtransPayload('ORDER-EXPIRED', 'expire'))
+            ->assertOk();
+
+        $this->assertSame('cancelled', $transaction->fresh()->status);
+        $this->assertSame(8, $product->stock->fresh()->online_qty); // Stock restored from 5 to 8
+    }
+
+    public function test_checkout_rejects_negative_amount_paid(): void
+    {
+        Sanctum::actingAs($this->userWithRole('kasir'));
+        $product = $this->product();
+
+        $this->postJson('/api/transactions', $this->checkoutPayload($product->id, [], [
+            'amount_paid' => -100,
+        ]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['amount_paid']);
+    }
+
+    public function test_checkout_rejects_negative_quantity(): void
+    {
+        Sanctum::actingAs($this->userWithRole('kasir'));
+        $product = $this->product();
+
+        $this->postJson('/api/transactions', $this->checkoutPayload($product->id, [
+            'quantity' => -2,
+        ]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['items.0.quantity']);
+    }
+
+    public function test_checkout_rejects_zero_quantity(): void
+    {
+        Sanctum::actingAs($this->userWithRole('kasir'));
+        $product = $this->product();
+
+        $this->postJson('/api/transactions', $this->checkoutPayload($product->id, [
+            'quantity' => 0,
+        ]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['items.0.quantity']);
+    }
+
+    public function test_checkout_rejects_negative_unit_price(): void
+    {
+        Sanctum::actingAs($this->userWithRole('kasir'));
+        $product = $this->product();
+
+        $this->postJson('/api/transactions', $this->checkoutPayload($product->id, [
+            'unit_price' => -5000,
+        ]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['items.0.unit_price']);
+    }
+
     private function checkoutPayload(int $productId, array $itemOverrides = [], array $overrides = []): array
     {
         return array_merge([

@@ -1,0 +1,9 @@
+appId: com.example.frontendd
+---
+# TC-020 | Login – Sign In button tampil
+# Memastikan tombol Sign In tampil dengan benar
+
+- launchApp
+- assertVisible: "Welcome back! 👋"
+- assertVisible: "Sign In"
+- takeScreenshot: "20_login_sign_in_button"

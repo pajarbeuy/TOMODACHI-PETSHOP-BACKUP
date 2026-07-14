@@ -1,0 +1,9 @@
+appId: com.example.frontendd
+---
+# TC-017 | Login – Branding left panel (wide)
+# Memastikan branding text tampil di left panel pada layar lebar
+
+- launchApp
+- assertVisible: ".*TOMODACHI.*"
+- assertVisible: ".*TOMODACHI PETSHOP.*"
+- takeScreenshot: "17_login_branding_panel"

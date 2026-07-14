@@ -1,0 +1,12 @@
+appId: com.example.frontendd
+---
+# TC-032 | POS – Pencarian produk
+# Memastikan field pencarian produk berfungsi di POS
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- tapOn: "Cari produk berdasarkan nama..."
+- inputText: "makanan"
+- takeScreenshot: "32_pos_pencarian_produk"

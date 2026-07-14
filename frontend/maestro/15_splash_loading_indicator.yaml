@@ -1,0 +1,8 @@
+appId: com.example.frontendd
+---
+# TC-015 | Splash Screen – Loading indicator
+# Memastikan loading indicator tampil di splash screen
+
+- launchApp
+- assertVisible: ".*TOMODACHI.*"
+- takeScreenshot: "15_splash_loading_indicator"

@@ -1,0 +1,14 @@
+appId: com.example.frontendd
+---
+# TC-006 | Login – Tampilan halaman login
+# Memastikan semua elemen UI login tampil dengan benar
+
+- launchApp
+- assertVisible: "Welcome back! 👋"
+- assertVisible: "Sign in to manage your petshop"
+- assertVisible: "Email Address"
+- assertVisible: "Password"
+- assertVisible: "Captcha Verification"
+- assertVisible: "Remember me"
+- assertVisible: "Forgot password?"
+- takeScreenshot: "06_login_tampilan_halaman"

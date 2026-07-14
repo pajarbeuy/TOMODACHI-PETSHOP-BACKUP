@@ -1,0 +1,13 @@
+appId: com.example.frontendd
+---
+# TC-001 | Login – Validasi field kosong
+# Memastikan sistem menampilkan error jika email dan password tidak diisi
+
+- launchApp
+- assertVisible: ".*Tomodachi.*"
+- tapOn: "you@example.com"
+- eraseText
+- tapOn: "Enter your password"
+- tapOn: "Sign In"
+- assertVisible: "Email and password are required"
+- takeScreenshot: "01_login_validasi_kosong"

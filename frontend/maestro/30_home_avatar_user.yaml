@@ -1,0 +1,11 @@
+appId: com.example.frontendd
+---
+# TC-030 | Home – Avatar user tampil
+# Memastikan avatar inisial nama user tampil di AppBar
+
+- launchApp
+- runFlow:
+    file: "login_kasir.yaml"
+- waitForAnimationToEnd
+- assertVisible: ".*Tomodachi.*"
+- takeScreenshot: "30_home_avatar_user"
