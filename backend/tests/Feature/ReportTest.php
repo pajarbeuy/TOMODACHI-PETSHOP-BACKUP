@@ -44,6 +44,7 @@ class ReportTest extends TestCase
         $category = Category::create([
             'name'        => 'Makanan Kucing',
             'animal_type' => 'cat',
+            'sub_category'=> 'food',
         ]);
 
         $this->product = Product::create([

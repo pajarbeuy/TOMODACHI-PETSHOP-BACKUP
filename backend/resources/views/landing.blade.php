@@ -7,6 +7,7 @@
 <title>Tomodachi Pet Shop POS - Smart Pet Shop Management</title>
 
 <link rel="canonical" href="{{ url('/') }}">
+<link rel="preload" href="{{ asset('images/cat.png') }}" as="image" fetchpriority="high">
 <meta property="og:type" content="website">
 <meta property="og:url" content="{{ url('/') }}">
 <meta property="og:title" content="Tomodachi Pet Shop POS">
@@ -50,6 +51,7 @@
 
 <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
 
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -72,7 +74,7 @@
     --ease: cubic-bezier(.2,.8,.2,1);
 }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
 body {
     min-height: 100vh;
     overflow-x: hidden;
@@ -151,6 +153,7 @@ body::after {
 }
 .spark {
     position: absolute;
+    top: 0;
     width: 18px;
     height: 10px;
     border-radius: 90% 0 90% 0;
@@ -261,6 +264,7 @@ header {
     background: rgba(29, 27, 24, 0.68);
     border-bottom: 1px solid rgba(255, 226, 189, 0.18);
     backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
     transition: background .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
 }
 header.scrolled {
@@ -281,13 +285,16 @@ header.scrolled {
     height: 46px;
     display: grid;
     place-items: center;
-    color: #eaffc8;
-    border: 1px solid rgba(255, 226, 189, .56);
-    background:
-        radial-gradient(circle at 34% 24%, rgba(255,255,255,.42), transparent 26%),
-        linear-gradient(145deg, rgba(255, 180, 92, .96), rgba(168, 78, 20, .94));
     border-radius: 50%;
-    box-shadow: 0 0 24px rgba(255, 164, 72, 0.28), inset 0 -10px 24px rgba(72, 26, 4, .22);
+    overflow: hidden;
+    background: transparent;
+    flex-shrink: 0;
+}
+.brand-mark img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
     animation: insigniaCharge 3.2s ease-in-out infinite;
 }
 .brand-text {
@@ -617,47 +624,54 @@ nav a:hover::before, .mobile-nav a:hover::before,
     z-index: 4;
     display: flex;
     align-items: center;
-    padding: clamp(112px, 12vw, 154px) 6.4% 6.3%;
+    padding: 90px clamp(32px, 6.4vw, 90px) 48px;
     pointer-events: none;
 }
 .hero-copy {
     position: relative;
     z-index: 2;
-    max-width: min(620px, 44vw);
+    max-width: clamp(340px, 46vw, 620px);
     pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 .hero-copy .status {
-    margin-bottom: 28px;
+    margin-bottom: 24px;
+    width: fit-content;
 }
 .hero-copy h1 {
-    max-width: 620px;
-    font-size: clamp(58px, 6.1vw, 106px);
-    line-height: .9;
+    font-family: "Barlow Condensed", Inter, sans-serif;
+    font-size: clamp(52px, 5.8vw, 96px);
+    line-height: .92;
     font-weight: 800;
     text-transform: none;
-    text-shadow: 0 8px 0 rgba(0,0,0,.38), 0 0 24px rgba(102, 215, 255, .12);
+    letter-spacing: .01em;
+    text-shadow: 0 6px 0 rgba(0,0,0,.35), 0 0 24px rgba(0,0,0,.2);
+    margin: 0;
 }
 .hero-copy h1 .hot {
     color: var(--orange);
-    text-shadow: 0 0 30px rgba(255, 138, 31, .8), 0 8px 0 rgba(0,0,0,.35);
+    text-shadow: 0 0 28px rgba(255,138,31,.75), 0 6px 0 rgba(0,0,0,.3);
 }
-.hero-copy p {
-    max-width: 585px;
-    margin-top: 26px;
-    color: rgba(237, 246, 255, .74);
-    font-size: clamp(17px, 1.45vw, 22px);
-    line-height: 1.68;
-    text-shadow: 0 2px 14px rgba(0, 0, 0, .72);
+.hero-copy > p {
+    max-width: 520px;
+    margin-top: 22px;
+    color: rgba(237, 220, 205, .82);
+    font-size: clamp(15px, 1.35vw, 19px);
+    line-height: 1.72;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, .6);
 }
 .hero-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
-    margin-top: 38px;
+    align-items: center;
+    gap: 14px;
+    margin-top: 34px;
 }
 .hero-actions .btn-primary,
 .hero-actions .btn-ghost {
-    min-width: 200px;
+    min-width: 190px;
 }
 .sr-only {
     position: absolute;
@@ -695,49 +709,6 @@ nav a:hover::before, .mobile-nav a:hover::before,
 h1, h2, h3 {
     font-family: "Barlow Condensed", Inter, sans-serif;
     letter-spacing: .01em;
-}
-.hero h1 {
-    max-width: 720px;
-    font-size: clamp(56px, 8vw, 118px);
-    line-height: .88;
-    font-weight: 800;
-    text-transform: uppercase;
-    text-shadow: 0 8px 0 rgba(0,0,0,.24), 0 0 28px rgba(168, 224, 99, .14);
-}
-.hero h1 .hot {
-    display: inline-block;
-    color: var(--orange);
-    text-shadow: 0 0 32px rgba(168, 224, 99, .48), 0 8px 0 rgba(0,0,0,.25);
-}
-.hero p {
-    max-width: 600px;
-    margin-top: 28px;
-    color: var(--muted);
-    font-size: clamp(17px, 1.55vw, 23px);
-    line-height: 1.7;
-}
-.hero-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 16px;
-    margin-top: 36px;
-}
-.hero .hero-copy h1 {
-    max-width: 620px;
-    font-size: clamp(58px, 6.1vw, 106px);
-    line-height: .9;
-    text-transform: none;
-}
-.hero .hero-copy p {
-    max-width: 610px;
-    margin-top: 26px;
-    color: rgba(237, 246, 255, .74);
-    font-size: clamp(17px, 1.45vw, 22px);
-    line-height: 1.68;
-}
-.hero .hero-actions {
-    margin-top: 38px;
 }
 .btn-primary, .btn-ghost, .btn-whatsapp {
     position: relative;
@@ -812,10 +783,14 @@ h1, h2, h3 {
 .mini-bot.one { right: 3%; top: 20%; }
 .mini-bot.two { left: 8%; bottom: 18%; animation-delay: -1.7s; color: var(--cyan); border-color: rgba(102, 215, 255, .52); }
 
+main {
+    position: relative;
+    z-index: 2;
+}
 section {
     position: relative;
     z-index: 2;
-    padding: 96px clamp(18px, 7vw, 100px);
+    padding: 100px clamp(24px, 7vw, 100px);
 }
 section::before {
     content: "";
@@ -1021,6 +996,70 @@ section::before {
     min-height: 430px;
     border: 1px solid var(--line);
 }
+
+/* 3D Model Viewer frame */
+.model3d-frame {
+    position: relative;
+    width: 100%;
+    min-height: 430px;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 226, 189, .28);
+    background:
+        radial-gradient(circle at 30% 30%, rgba(255, 138, 0, .12), transparent 44%),
+        radial-gradient(circle at 72% 68%, rgba(255, 194, 102, .10), transparent 38%),
+        linear-gradient(145deg, rgba(40, 36, 30, .96), rgba(22, 20, 17, .98));
+    box-shadow:
+        0 22px 70px rgba(0,0,0,.28),
+        inset 0 1px 0 rgba(255,247,237,.06);
+    isolation: isolate;
+}
+.model3d-frame::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    border-radius: 18px;
+    background:
+        linear-gradient(90deg, transparent, rgba(255,247,237,.14), transparent) top / 100% 1px no-repeat,
+        linear-gradient(180deg, rgba(255,255,255,.04), transparent 40%);
+}
+.model3d-frame model-viewer {
+    width: 100%;
+    height: 430px;
+    background: transparent;
+    --poster-color: transparent;
+}
+.model3d-badge {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 14px;
+    background: rgba(29, 27, 24, .76);
+    border: 1px solid rgba(255, 226, 189, .22);
+    border-radius: 999px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    white-space: nowrap;
+    pointer-events: none;
+}
+.model3d-badge span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--orange);
+    box-shadow: 0 0 8px var(--orange);
+    animation: pulseGem 1.8s ease-in-out infinite;
+}
 .about-copy {
     display: grid;
     gap: 20px;
@@ -1052,42 +1091,98 @@ section::before {
 .features-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px;
+    gap: 22px;
 }
 .feature-card {
-    min-height: 210px;
-    padding: 26px;
-    transition: transform .25s var(--ease), border-color .25s var(--ease), box-shadow .25s var(--ease);
+    min-height: 230px;
+    padding: 32px 28px;
+    transition: transform .3s var(--ease), border-color .3s var(--ease), box-shadow .3s var(--ease);
+    cursor: default;
 }
 .feature-card.feature-burst {
     animation: featureClickBloom .54s cubic-bezier(.16, 1, .3, 1);
 }
 .feature-card:hover, .role-card:hover, .tech-pill:hover, .guide-card:hover, .stat-card:hover {
-    transform: translateY(-8px);
+    transform: translateY(-10px);
     border-color: var(--line-hot);
-    box-shadow: 0 24px 76px rgba(0,0,0,.34), 0 0 34px rgba(255, 164, 72, .18);
+    box-shadow: 0 28px 80px rgba(0,0,0,.38), 0 0 40px rgba(255, 164, 72, .2);
 }
+/* Feature icon — each card gets its own accent via CSS vars on the wrapper */
 .feature-icon {
-    width: 54px;
-    height: 54px;
+    width: 58px;
+    height: 58px;
     display: grid;
     place-items: center;
-    margin-bottom: 20px;
-    color: var(--orange-soft);
-    border: 1px solid var(--line-hot);
-    background: rgba(255, 247, 237, .12);
-    border-radius: var(--radius);
-    box-shadow: inset 0 0 18px rgba(255, 247, 237, .1), 0 0 16px rgba(255, 164, 72, .12);
+    margin-bottom: 22px;
+    color: var(--fi-color, var(--orange-soft));
+    border: 1.5px solid var(--fi-border, rgba(255,138,0,.55));
+    background: var(--fi-bg, rgba(255,138,0,.12));
+    border-radius: 14px;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.1),
+        0 0 20px var(--fi-glow, rgba(255,138,0,.15));
     animation: iconCharge 3.8s ease-in-out infinite;
+    flex-shrink: 0;
+}
+/* Per-card accent colours — set on .feature-card so vars cascade to both icon & label */
+.feature-card:nth-child(1) {
+    --fi-color: #ffb55a;
+    --fi-border: rgba(255,160,60,.6);
+    --fi-bg: rgba(255,138,0,.14);
+    --fi-glow: rgba(255,138,0,.22);
+}
+.feature-card:nth-child(2) {
+    --fi-color: #7ee8a2;
+    --fi-border: rgba(100,220,140,.55);
+    --fi-bg: rgba(80,200,120,.1);
+    --fi-glow: rgba(80,200,120,.18);
+}
+.feature-card:nth-child(3) {
+    --fi-color: #56cfe1;
+    --fi-border: rgba(80,200,225,.55);
+    --fi-bg: rgba(60,190,215,.1);
+    --fi-glow: rgba(60,190,215,.18);
+}
+.feature-card:nth-child(4) {
+    --fi-color: #c77dff;
+    --fi-border: rgba(180,100,255,.5);
+    --fi-bg: rgba(150,80,230,.12);
+    --fi-glow: rgba(150,80,230,.18);
+}
+.feature-card:nth-child(5) {
+    --fi-color: #ff8fab;
+    --fi-border: rgba(255,100,140,.5);
+    --fi-bg: rgba(230,80,120,.1);
+    --fi-glow: rgba(230,80,120,.18);
+}
+.feature-card:nth-child(6) {
+    --fi-color: #ffd166;
+    --fi-border: rgba(255,200,80,.52);
+    --fi-bg: rgba(240,170,40,.12);
+    --fi-glow: rgba(240,170,40,.2);
+}
+.feature-card-label {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    color: var(--fi-color, var(--orange-soft));
+    background: var(--fi-bg, rgba(255,138,0,.12));
+    border: 1px solid var(--fi-border, rgba(255,138,0,.3));
 }
 .feature-card h3, .role-card h3, .guide-card h3 {
-    font-size: 28px;
-    line-height: 1;
+    font-size: 26px;
+    line-height: 1.05;
     margin-bottom: 10px;
 }
 .feature-card p, .role-card p, .guide-card p, .guide-card li {
     color: var(--muted);
-    line-height: 1.65;
+    line-height: 1.7;
+    font-size: 15px;
 }
 
 .roles-grid {
@@ -1809,14 +1904,14 @@ footer a:hover { color: var(--orange-soft); }
     45%, 62% { opacity: .85; transform: translateX(36px) rotate(-24deg) scaleX(1.04); }
 }
 @keyframes sparkDrift {
-    0% { top: 105%; transform: translateX(0) scale(.8); opacity: 0; }
+    0% { transform: translate3d(0, 105vh, 0) scale(.8); opacity: 0; }
     10%, 82% { opacity: 1; }
-    100% { top: -10%; transform: translateX(42px) scale(1.4); opacity: 0; }
+    100% { transform: translate3d(42px, -10vh, 0) scale(1.4); opacity: 0; }
 }
 @keyframes leafFall {
-    0% { top: -12%; transform: translate3d(0, 0, 0) rotate(0deg) scale(.82); opacity: 0; }
+    0% { transform: translate3d(0, -12vh, 0) rotate(0deg) scale(.82); opacity: 0; }
     8%, 82% { opacity: .88; }
-    100% { top: 112%; transform: translate3d(76px, 0, 0) rotate(420deg) scale(1.08); opacity: 0; }
+    100% { transform: translate3d(76px, 112vh, 0) rotate(420deg) scale(1.08); opacity: 0; }
 }
 @keyframes leafFallSoft {
     0% { transform: translate3d(-20px, -20px, 0) rotate(0deg); opacity: 0; }
@@ -2034,19 +2129,18 @@ footer a:hover { color: var(--orange-soft); }
         width: min(36vw, 350px);
     }
     .hero-overlay {
-        padding: 104px 5.5% 42px;
-        align-items: flex-start;
-        background: linear-gradient(90deg, rgba(2, 7, 13, .54), rgba(2, 7, 13, .18) 58%, transparent);
+        padding: 80px 5% 36px;
+        align-items: center;
     }
     .hero-copy {
-        max-width: 56vw;
+        max-width: 54vw;
     }
-    .hero .hero-copy h1 {
-        font-size: clamp(48px, 8vw, 78px);
+    .hero-copy h1 {
+        font-size: clamp(42px, 7.5vw, 74px);
     }
-    .hero .hero-copy p {
-        font-size: 16px;
-        max-width: 520px;
+    .hero-copy > p {
+        font-size: 15px;
+        max-width: 480px;
     }
     .about, .guide-layout { grid-template-columns: 1fr; }
     .guide-visual { position: relative; top: 0; }
@@ -2084,20 +2178,20 @@ footer a:hover { color: var(--orange-soft); }
         height: 10px;
     }
     .hero-overlay {
-        padding: 92px 18px 26px;
+        padding: 72px 18px 24px;
         align-items: flex-start;
         background: linear-gradient(90deg, rgba(2, 7, 13, .88), rgba(2, 7, 13, .35) 70%, transparent);
     }
     .hero-copy {
-        max-width: 72vw;
+        max-width: 76vw;
     }
     .hero-copy .status {
-        margin-bottom: 20px;
-        padding: 9px 12px;
+        margin-bottom: 18px;
+        padding: 8px 12px;
         font-size: 13px;
     }
-    .hero .hero-copy h1 { font-size: clamp(40px, 13vw, 64px); }
-    .hero .hero-copy p { font-size: 14px; line-height: 1.55; max-width: 300px; }
+    .hero-copy h1 { font-size: clamp(36px, 11vw, 58px); }
+    .hero-copy > p { font-size: 14px; line-height: 1.58; max-width: 300px; }
     .hero-actions { align-items: stretch; }
     .hero-actions .btn-primary,
     .hero-actions .btn-ghost {
@@ -2107,7 +2201,7 @@ footer a:hover { color: var(--orange-soft); }
         padding: 12px 18px;
     }
     .btn-whatsapp { width: 100%; }
-    section { padding: 70px 18px; }
+    section { padding: 72px 18px; }
     .features-grid, .roles-grid, .tech-grid, .stats-grid, .spec-grid { grid-template-columns: 1fr; }
     .guide-card { padding: 74px 20px 22px; }
     .guide-num { left: 20px; }
@@ -2170,10 +2264,7 @@ footer a:hover { color: var(--orange-soft); }
 <header id="top">
     <a href="#top" class="brand" aria-label="Tomodachi Home">
         <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 64 64" width="32" height="32" fill="currentColor">
-                <path d="M34 8c12 1 20 9 20 20 0 15-14 25-30 28 3-9 2-16-4-23C28 32 37 26 43 17c-8 5-15 8-24 9C21 15 26 9 34 8Z"/>
-                <path d="M20 42c-5 0-9-4-9-9 0-3 2-5 5-5 2 0 4 1 5 3 1-2 3-3 5-3 3 0 5 2 5 5 0 5-4 9-11 9Z" opacity=".82"/>
-            </svg>
+            <img src="{{ asset('images/logo.png') }}" alt="Tomodachi Logo" width="46" height="46">
         </span>
         <span class="brand-text">Tomodachi</span>
     </a>
@@ -2207,7 +2298,7 @@ footer a:hover { color: var(--orange-soft); }
             <div class="hero-nature" aria-hidden="true"></div>
             <div class="hero-cat-stage" aria-hidden="true">
                 <div class="hero-cat-card">
-                    <img src="{{ asset('images/cat.png') }}" alt="">
+                    <img src="{{ asset('images/cat.png') }}" fetchpriority="high" width="320" height="320" alt="Tomodachi Hero Cat">
                     <span class="cat-sparkle one"></span>
                     <span class="cat-sparkle two"></span>
                     <span class="cat-sparkle three"></span>
@@ -2233,7 +2324,7 @@ footer a:hover { color: var(--orange-soft); }
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 21V9" stroke-linecap="round"/><path d="M12 13c-5 0-8-3-8-8 5 0 8 3 8 8ZM12 15c5 0 8-3 8-8-5 0-8 3-8 8Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             Explore Features
                         </a>
-                        <a class="btn-ghost" href="#download">
+                        <a class="btn-ghost" href="{{ asset('download/tomodachi-apk-v2.0.apk') }}" download>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 4v12" stroke-linecap="round"/><path d="m7 11 5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 20c4-3 10-3 14 0" stroke-linecap="round"/></svg>
                             Download APK
                         </a>
@@ -2245,28 +2336,30 @@ footer a:hover { color: var(--orange-soft); }
 
     <section id="about" class="about">
         <div class="command-panel" data-animate="left">
-            <div class="mecha-pet-frame about-mecha sent-mecha">
-                <div class="pet-scene" aria-hidden="true">
-                    <div class="animal cat">
-                        <span class="tail"></span>
-                        <span class="body"></span>
-                        <span class="leg back"></span>
-                        <span class="leg front"></span>
-                        <span class="ear one"></span>
-                        <span class="ear two"></span>
-                        <span class="head">
-                            <span class="eye"></span>
-                            <span class="muzzle"></span>
-                        </span>
-                        <span class="food"></span>
-                    </div>
+            <div class="model3d-frame" style="border-radius: 10px; min-height: 360px;">
+                <model-viewer
+                    src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/Fox/glTF-Binary/Fox.glb"
+                    alt="Tomodachi Pet Cat 3D"
+                    auto-rotate
+                    auto-rotate-delay="500"
+                    rotation-per-second="24deg"
+                    camera-controls
+                    disable-zoom
+                    shadow-intensity="0"
+                    environment-image="neutral"
+                    exposure="1.3"
+                    animation-name="Survey"
+                    autoplay
+                    camera-orbit="0deg 80deg 120%"
+                    min-camera-orbit="auto 50deg auto"
+                    max-camera-orbit="auto 88deg auto"
+                    interaction-prompt="none"
+                    loading="lazy"
+                    style="height: 360px;"
+                ></model-viewer>
+                <div class="model3d-badge">
+                    <span></span> Tomodachi Pet — 3D Preview
                 </div>
-                <span class="core-glow"></span>
-                <span class="spark-bit"></span>
-                <span class="spark-bit"></span>
-                <span class="spark-bit"></span>
-                <span class="spark-bit"></span>
-                <span class="spark-bit"></span>
             </div>
         </div>
         <div class="about-copy" data-animate="right">
@@ -2290,21 +2383,52 @@ footer a:hover { color: var(--orange-soft); }
         <div class="features-grid">
             @php
                 $features = [
-                    ['Inventory', 'Kontrol stok real-time, kategori produk, dan notifikasi stok menipis.'],
-                    ['Sales Analytics', 'Pantau performa penjualan dan omzet melalui laporan yang mudah dibaca.'],
-                    ['Stock Tracking', 'Pergerakan stok tercatat otomatis setiap terjadi transaksi atau restock.'],
-                    ['POS Processing', 'Checkout cepat, pembayaran tunai atau digital, dan struk transaksi.'],
-                    ['Pet Care Modules', 'Profil pelanggan dan kebutuhan hewan tersimpan dalam satu sistem.'],
-                    ['AI Assistant', 'Bantu owner membaca insight bisnis dan rekomendasi restock.'],
+                    [
+                        'Inventory',
+                        'Stok',
+                        'Kontrol stok real-time, kategori produk, dan notifikasi stok menipis.',
+                        '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>'
+                    ],
+                    [
+                        'Sales Analytics',
+                        'Laporan',
+                        'Pantau performa penjualan dan omzet melalui laporan yang mudah dibaca.',
+                        '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>'
+                    ],
+                    [
+                        'Stock Tracking',
+                        'Tracking',
+                        'Pergerakan stok tercatat otomatis setiap terjadi transaksi atau restock.',
+                        '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"/><path d="m7.5 4.27 9 5.15"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/><circle cx="18.5" cy="15.5" r="2.5"/><path d="M20.27 17.27 22 19"/></svg>'
+                    ],
+                    [
+                        'POS Processing',
+                        'Kasir',
+                        'Checkout cepat, pembayaran tunai atau digital, dan struk transaksi.',
+                        '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>'
+                    ],
+                    [
+                        'Pet Care Modules',
+                        'Pelanggan',
+                        'Profil pelanggan dan kebutuhan hewan tersimpan dalam satu sistem.',
+                        '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
+                    ],
+                    [
+                        'AI Assistant',
+                        'AI',
+                        'Bantu owner membaca insight bisnis dan rekomendasi restock secara otomatis.',
+                        '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M10 8h4M12 6v4"/><rect x="4" y="14" width="16" height="7" rx="2"/><path d="M8 14v-2a4 4 0 0 1 8 0v2"/><line x1="9" y1="18" x2="9" y2="18"/><line x1="12" y1="18" x2="12" y2="18"/><line x1="15" y1="18" x2="15" y2="18"/></svg>'
+                    ],
                 ];
             @endphp
             @foreach ($features as $index => $feature)
             <article class="feature-card delay-{{ ($index % 5) + 1 }}" data-animate>
                 <div class="feature-icon">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21V8" stroke-linecap="round"/><path d="M12 13C7 13 4 10 4 5c5 0 8 3 8 8ZM12 15c5 0 8-3 8-8-5 0-8 3-8 8Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    {!! $feature[3] !!}
                 </div>
+                <span class="feature-card-label">{{ $feature[1] }}</span>
                 <h3>{{ $feature[0] }}</h3>
-                <p>{{ $feature[1] }}</p>
+                <p>{{ $feature[2] }}</p>
             </article>
             @endforeach
         </div>
@@ -2319,7 +2443,9 @@ footer a:hover { color: var(--orange-soft); }
         <div class="roles-grid">
             <article class="role-card delay-1" data-animate>
                 <div class="role-avatar">
-                    <svg viewBox="0 0 64 64" fill="currentColor"><path d="M31 56V31c-9-1-16-8-17-19 11 1 18 8 19 19h1c2-12 9-20 20-23-1 15-9 24-20 25v23h-3Z"/><path d="M18 58h30c-4-6-9-9-15-9s-11 3-15 9Z" opacity=".72"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
+                    </svg>
                 </div>
                 <h3>Owner</h3>
                 <p>Melihat metrik bisnis, laporan penjualan, performa toko, dan insight strategis.</p>
@@ -2327,7 +2453,10 @@ footer a:hover { color: var(--orange-soft); }
             </article>
             <article class="role-card delay-2" data-animate>
                 <div class="role-avatar">
-                    <svg viewBox="0 0 64 64" fill="currentColor"><path d="M32 10c4 8 4 15 0 22-4-7-4-14 0-22Z"/><path d="M18 18c9 1 15 6 16 15-9-1-15-6-16-15ZM46 18c-9 1-15 6-16 15 9-1 15-6 16-15Z" opacity=".86"/><path d="M32 34c7 0 13 6 13 13s-6 11-13 11-13-4-13-11 6-13 13-13Z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                    </svg>
                 </div>
                 <h3>Admin</h3>
                 <p>Mengelola data produk, konfigurasi sistem, stok, kategori, dan monitoring operasional.</p>
@@ -2335,7 +2464,10 @@ footer a:hover { color: var(--orange-soft); }
             </article>
             <article class="role-card delay-3" data-animate>
                 <div class="role-avatar">
-                    <svg viewBox="0 0 64 64" fill="currentColor"><path d="M14 26h36l-5 26H19l-5-26Zm9 6 2 14h14l2-14H23Z"/><path d="M22 26c1-9 5-14 10-14s9 5 10 14h-5c-.8-6-2.6-9-5-9s-4.2 3-5 9h-5Z" opacity=".82"/><path d="M31 6c6 1 10 5 10 11-6-1-10-5-10-11Z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z" />
+                        <path d="M16 8H8m8 4H8m4 4H8" />
+                    </svg>
                 </div>
                 <h3>Kasir</h3>
                 <p>Memproses penjualan, pembayaran pelanggan, cetak struk, dan riwayat transaksi.</p>
@@ -2355,28 +2487,31 @@ footer a:hover { color: var(--orange-soft); }
                 <span class="guide-bird"><i></i></span>
             </div>
             <div class="guide-visual" data-animate="left">
-                <div class="mecha-pet-frame guide-mecha sent-mecha">
-                    <div class="pet-scene" aria-hidden="true">
-                        <div class="animal rabbit">
-                            <span class="tail"></span>
-                            <span class="body"></span>
-                            <span class="leg back"></span>
-                            <span class="leg front"></span>
-                            <span class="ear one"></span>
-                            <span class="ear two"></span>
-                            <span class="head">
-                                <span class="eye"></span>
-                                <span class="muzzle"></span>
-                            </span>
-                            <span class="food"></span>
-                        </div>
+                <div class="model3d-frame">
+                    <model-viewer
+                        src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/Fox/glTF-Binary/Fox.glb"
+                        alt="Tomodachi Pet 3D"
+                        auto-rotate
+                        auto-rotate-delay="0"
+                        rotation-per-second="30deg"
+                        camera-controls
+                        disable-zoom
+                        shadow-intensity="0"
+                        environment-image="neutral"
+                        exposure="1.4"
+                        animation-name="Walk"
+                        autoplay
+                        camera-orbit="0deg 75deg 105%"
+                        min-camera-orbit="auto 45deg auto"
+                        max-camera-orbit="auto 90deg auto"
+                        interaction-prompt="none"
+                        loading="lazy"
+                        ar
+                        ar-modes="webxr scene-viewer quick-look"
+                    ></model-viewer>
+                    <div class="model3d-badge">
+                        <span></span> Tomodachi Pet — Interactive 3D
                     </div>
-                    <span class="core-glow"></span>
-                    <span class="spark-bit"></span>
-                    <span class="spark-bit"></span>
-                    <span class="spark-bit"></span>
-                    <span class="spark-bit"></span>
-                    <span class="spark-bit"></span>
                 </div>
             </div>
             <div>
@@ -2390,7 +2525,7 @@ footer a:hover { color: var(--orange-soft); }
                         <span class="guide-num">1</span>
                         <h3>Download & Install APK</h3>
                         <p>Siapkan aplikasi Tomodachi di perangkat Android kamu.</p>
-                        <ol><li>Klik tombol <strong>Download APK</strong>.</li><li>Buka file <code>.apk</code> dan izinkan instalasi.</li><li>Tunggu proses selesai lalu buka aplikasi.</li></ol>
+                        <ol><li>Klik tombol <a href="{{ asset('download/tomodachi-apk-v2.0.apk') }}" download style="color: var(--orange); font-weight: bold; text-decoration: underline;">Download APK</a>.</li><li>Buka file <code>.apk</code> dan izinkan instalasi.</li><li>Tunggu proses selesai lalu buka aplikasi.</li></ol>
                     </article>
                     <article class="guide-card delay-2" data-animate>
                         <span class="guide-num">2</span>
@@ -2408,7 +2543,7 @@ footer a:hover { color: var(--orange-soft); }
                         <span class="guide-num">4</span>
                         <h3>Lakukan Transaksi POS</h3>
                         <p>Kasir melayani pelanggan dengan alur checkout cepat.</p>
-                        <ol><li>Pilih produk dari katalog.</li><li>Pilih metode pembayaran.</li><li>Cetak atau kirim struk digital.</li></ol>
+                        <ol><li>Pilih produk dari katalog.</li><li>Pilih metode pembayaran.</li></ol>
                     </article>
                     <article class="guide-card delay-5" data-animate>
                         <span class="guide-num">5</span>
@@ -2439,20 +2574,44 @@ footer a:hover { color: var(--orange-soft); }
         <div class="tech-grid">
             @php
                 $techs = [
-                    ['Laravel 10', 'REST API Backend'],
-                    ['Flutter', 'Mobile & Web App'],
-                    ['MySQL 8', 'Database System'],
-                    ['Sanctum', 'Auth & Security'],
-                    ['Midtrans', 'Payment Gateway'],
-                    ['OpenRouter AI', 'AI Assistant'],
-                    ['Docker', 'Deployment'],
-                    ['Nginx', 'Reverse Proxy'],
+                    [
+                        'Laravel 10', 'REST API Backend',
+                        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>'
+                    ],
+                    [
+                        'Flutter', 'Mobile & Web App',
+                        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>'
+                    ],
+                    [
+                        'MySQL 8', 'Database System',
+                        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>'
+                    ],
+                    [
+                        'Sanctum', 'Auth & Security',
+                        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'
+                    ],
+                    [
+                        'Midtrans', 'Payment Gateway',
+                        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>'
+                    ],
+                    [
+                        'OpenRouter AI', 'AI Assistant',
+                        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>'
+                    ],
+                    [
+                        'Docker', 'Deployment',
+                        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>'
+                    ],
+                    [
+                        'Nginx', 'Reverse Proxy',
+                        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg>'
+                    ],
                 ];
             @endphp
             @foreach ($techs as $index => $tech)
             <div class="tech-pill delay-{{ ($index % 5) + 1 }}" data-animate>
                 <div class="tech-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21V10" stroke-linecap="round"/><path d="M12 14c-4.5 0-7-2.5-7-7 4.5 0 7 2.5 7 7ZM12 16c4.5 0 7-2.5 7-7-4.5 0-7 2.5-7 7Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    {!! $tech[2] !!}
                 </div>
                 <div><div class="tech-name">{{ $tech[0] }}</div><div class="tech-desc">{{ $tech[1] }}</div></div>
             </div>
@@ -2465,7 +2624,7 @@ footer a:hover { color: var(--orange-soft); }
             <div class="eyebrow" style="margin: 0 auto 18px;">Download</div>
             <h2>Coba aplikasinya sekarang</h2>
             <p>Download APK Tomodachi Pet Shop untuk Android dan mulai kelola toko hewan peliharaanmu dengan sistem yang lebih cepat.</p>
-            <a href="https://drive.google.com/drive/folders/17kIPbwfhSULLZN9Ar4K1S5SmzqmR8c6e" target="_blank" rel="noopener noreferrer" class="btn-primary">
+            <a href="{{ asset('download/tomodachi-apk-v2.0.1.apk') }}" class="btn-primary" download>
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 4v12" stroke-linecap="round"/><path d="m7 11 5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 20c4-3 10-3 14 0" stroke-linecap="round"/></svg>
                 Download APK Gratis
             </a>
@@ -2488,10 +2647,7 @@ footer a:hover { color: var(--orange-soft); }
 <footer>
     <a href="#home" class="footer-logo brand" aria-label="Tomodachi Home">
         <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 64 64" width="32" height="32" fill="currentColor">
-                <path d="M34 8c12 1 20 9 20 20 0 15-14 25-30 28 3-9 2-16-4-23C28 32 37 26 43 17c-8 5-15 8-24 9C21 15 26 9 34 8Z"/>
-                <path d="M20 42c-5 0-9-4-9-9 0-3 2-5 5-5 2 0 4 1 5 3 1-2 3-3 5-3 3 0 5 2 5 5 0 5-4 9-11 9Z" opacity=".82"/>
-            </svg>
+            <img src="{{ asset('images/logo.png') }}" alt="Tomodachi Logo" width="46" height="46">
         </span>
         <span class="brand-text">Tomodachi</span>
     </a>

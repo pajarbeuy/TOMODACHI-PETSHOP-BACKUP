@@ -116,9 +116,9 @@ class ReportController extends Controller
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('SUM(total) as total_revenue'),
                 DB::raw('COUNT(id) as transaction_count'),
-                DB::raw('(SELECT SUM(quantity) FROM transaction_items WHERE transaction_id IN (SELECT id FROM transactions WHERE DATE(created_at) = DATE(transactions.created_at) AND status = "completed")) as items_sold')
+                DB::raw('SUM((SELECT COALESCE(SUM(quantity), 0) FROM transaction_items WHERE transaction_id = transactions.id)) as items_sold')
             )
-            ->groupBy('date')
+            ->groupBy(DB::raw('DATE(created_at)'))
             ->orderBy('date', 'desc')
             ->get();
         } else {
