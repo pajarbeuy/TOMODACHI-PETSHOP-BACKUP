@@ -2181,7 +2181,7 @@ footer a:hover { color: var(--orange-soft); }
         <a href="#about">About</a>
         <a href="#features">Features</a>
         <a href="#roles">Roles</a>
-        <a href="#guide">User Guide</a>
+        <a href="#guide">Panduan</a>
         <a href="#technology">Tech</a>
         <a href="#contact">Contact</a>
         <a class="nav-cta" href="#download">Download APK</a>
@@ -2523,7 +2523,7 @@ document.querySelectorAll('.mobile-nav a').forEach(link => {
     });
 });
 
-const observer = new IntersectionObserver((entries) => {
+const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         entry.target.classList.toggle('visible', entry.isIntersecting);
     });

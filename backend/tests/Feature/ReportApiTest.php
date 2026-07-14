@@ -67,12 +67,12 @@ class ReportApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('status', true)
             ->assertJsonPath('data.summary.total_transactions', 1)
-            ->assertJsonPath('data.summary.total_revenue', 120000.0)
+            ->assertJsonPath('data.summary.total_revenue', 120000)
             ->assertJsonPath('data.summary.total_items_sold', 2)
             ->assertJsonPath('data.by_channel.offline.total_transactions', 1)
-            ->assertJsonPath('data.by_channel.offline.total_revenue', 120000.0)
+            ->assertJsonPath('data.by_channel.offline.total_revenue', 120000)
             ->assertJsonPath('data.by_channel.online.total_transactions', 1)
-            ->assertJsonPath('data.by_channel.online.total_revenue', 90000.0);
+            ->assertJsonPath('data.by_channel.online.total_revenue', 90000);
     }
 
     public function test_owner_can_retrieve_sales_summary_grouped_by_day(): void
@@ -159,7 +159,7 @@ class ReportApiTest extends TestCase
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.rank', 1)
             ->assertJsonPath('data.0.product_name', 'Premium Cat Food')
-            ->assertJsonPath('data.0.total_revenue', 150000.0);
+            ->assertJsonPath('data.0.total_revenue', 150000);
     }
 
     public function test_owner_dashboard_analytics_returns_expected_kpis(): void
@@ -207,7 +207,7 @@ class ReportApiTest extends TestCase
         $this->getJson('/api/dashboard/analytics')
             ->assertOk()
             ->assertJsonPath('status', true)
-            ->assertJsonPath('data.kpi.today_sales', 180000.0)
+            ->assertJsonPath('data.kpi.today_sales', 180000)
             ->assertJsonPath('data.kpi.total_transactions_today', 1)
             ->assertJsonPath('data.kpi.items_sold_today', 3)
             ->assertJsonPath('data.kpi.active_products', 3)
@@ -215,8 +215,8 @@ class ReportApiTest extends TestCase
             ->assertJsonCount(7, 'data.sales_trend')
             ->assertJsonPath('data.sales_trend.6.date', now()->toDateString())
             ->assertJsonPath('data.top_products.0.product_name', 'Cat Sales Product')
-            ->assertJsonPath('data.category_breakdown.cat', 75.0)
-            ->assertJsonPath('data.category_breakdown.dog', 25.0);
+            ->assertJsonPath('data.category_breakdown.cat', 75)
+            ->assertJsonPath('data.category_breakdown.dog', 25);
     }
 
     private function datedCompletedTransaction($cashier, $date, array $overrides = []): Transaction
