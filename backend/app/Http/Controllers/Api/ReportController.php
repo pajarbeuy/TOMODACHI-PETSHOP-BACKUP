@@ -111,42 +111,33 @@ class ReportController extends Controller
             if (!empty($month)) {
                 $query->whereMonth('created_at', $month);
             }
-        }
-
-        $results = $query->select(
-            DB::raw('DATE(created_at) as date'),
-            DB::raw('SUM(total) as total_revenue'),
-            DB::raw('COUNT(id) as transaction_count')
-        )
-        ->groupBy(DB::raw('DATE(created_at)'))
-        ->orderBy('date', 'desc')
-        ->get();
-
-        $itemsSoldData = collect();
-        if ($period === 'daily') {
-            $itemsSoldQuery = TransactionItem::join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
-                ->whereYear('transactions.created_at', $year)
-                ->where('transactions.status', 'completed');
-
-            if (!empty($month)) {
-                $itemsSoldQuery->whereMonth('transactions.created_at', $month);
-            }
-
-            $itemsSoldData = $itemsSoldQuery->select(
-                DB::raw('DATE(transactions.created_at) as date'),
-                DB::raw('SUM(transaction_items.quantity) as items_sold')
+            
+            $results = $query->select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('SUM(total) as total_revenue'),
+                DB::raw('COUNT(id) as transaction_count'),
+                DB::raw('SUM((SELECT COALESCE(SUM(quantity), 0) FROM transaction_items WHERE transaction_id = transactions.id)) as items_sold')
             )
-            ->groupBy(DB::raw('DATE(transactions.created_at)'))
-            ->get()
-            ->pluck('items_sold', 'date');
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->orderBy('date', 'desc')
+            ->get();
+        } else {
+            // General group
+            $results = $query->select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('SUM(total) as total_revenue'),
+                DB::raw('COUNT(id) as transaction_count')
+            )
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->get();
         }
 
-        $formatted = $results->map(function ($item) use ($period, $itemsSoldData) {
+        $formatted = $results->map(function ($item) use ($period) {
             return [
                 'date' => $item->date,
                 'total_revenue' => floatval($item->total_revenue),
                 'transaction_count' => intval($item->transaction_count),
-                'items_sold' => $period === 'daily' ? intval($itemsSoldData->get($item->date) ?? 0) : 0,
+                'items_sold' => $period === 'daily' ? intval($item->items_sold ?? 0) : 0,
             ];
         });
 

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:frontendd/main.dart';
@@ -9,15 +8,14 @@ void main() {
     expect(const TomodachiApp(), isA<StatelessWidget>());
   });
 
-  test('TomodachiApp builds a MaterialApp shell', () {
-    final app = const TomodachiApp().build(_FakeBuildContext()) as MaterialApp;
+  testWidgets('TomodachiApp builds MaterialApp shell correctly', (WidgetTester tester) async {
+    await tester.pumpWidget(const TomodachiApp());
 
-    expect(app.debugShowCheckedModeBanner, isFalse);
-    expect(app.title, 'Tomodachi Pet Shop');
+    final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
+    expect(materialApp.debugShowCheckedModeBanner, isFalse);
+    expect(materialApp.title, 'Tomodachi Pet Shop');
+
+    // Advance 4 seconds to complete splash screen navigation without timing out infinite progress spinner
+    await tester.pump(const Duration(seconds: 4));
   });
-}
-
-class _FakeBuildContext implements BuildContext {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

@@ -6,6 +6,10 @@ Route::get('/', function () {
     return view('landing');
 });
 
+Route::get('/restock', function () {
+    return view('restock-redirect');
+});
+
 Route::get('/status', function () {
     return response()->json([
         'status' => true,

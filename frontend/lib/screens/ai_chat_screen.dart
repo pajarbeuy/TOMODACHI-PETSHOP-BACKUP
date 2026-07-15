@@ -25,13 +25,15 @@ class _AiChatScreenState extends State<AiChatScreen>
   RestockAnalysis? _restockData;
   bool _restockLoading = false;
 
+
+
   // Suggested questions
   final List<String> _suggestions = [
-    'Produk mana yang harus direstock?',
+    'Bagaimana cara mengembangkan bisnis ini?',
+    'Ide promo menarik untuk menaikkan omzet?',
+    'Rekomendasi restock & analisis stok',
     'Berapa total penjualan bulan ini?',
-    'Produk apa yang paling laris?',
-    'Analisis performa stok saya',
-    'Berikan insight bisnis terkini',
+    'Tips meningkatkan loyalitas pelanggan?',
   ];
 
   // Color palette
@@ -74,11 +76,11 @@ class _AiChatScreenState extends State<AiChatScreen>
       role: 'assistant',
       content:
           'Halo! Saya **Tommi** 🐾, asisten AI Tomodachi Pet Shop.\n\n'
-          'Saya siap membantu kamu menganalisis:\n'
-          '• 📦 Status stok & rekomendasi restock\n'
-          '• 💰 Laporan penjualan & pendapatan\n'
-          '• 🏆 Performa produk terlaris\n'
-          '• 📊 Insight bisnis petshop\n\n'
+          'Saya siap membantu kamu:\n'
+          '• 📦 Menganalisis status stok & rekomendasi restock\n'
+          '• 💰 Memantau laporan penjualan & pendapatan\n'
+          '• 🏆 Menemukan produk terlaris\n'
+          '• 📈 Konsultasi strategi bisnis & ide promo petshop\n\n'
           'Ada yang bisa saya bantu?',
       timestamp: DateTime.now(),
     );
