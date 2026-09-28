@@ -96,13 +96,14 @@ class ProductController extends Controller
     {
         $products = Product::with(['category', 'stock']);
 
-        // Search by name or SKU
+        // Search by name, SKU, or barcode
         if ($request->has('search')) {
             $search = $request->query('search');
             if (!empty($search)) {
                 $products->where(function ($q) use ($search) {
                     $q->where('name', 'like', '%' . $search . '%')
-                      ->orWhere('sku', 'like', '%' . $search . '%');
+                      ->orWhere('sku', 'like', '%' . $search . '%')
+                      ->orWhere('barcode', 'like', '%' . $search . '%');
                 });
             }
         }
@@ -193,6 +194,7 @@ class ProductController extends Controller
             'buy_price' => 'required|numeric|min:0',
             'sell_price' => 'required|numeric|min:0',
             'sku' => 'nullable|string|unique:products,sku',
+            'barcode' => 'nullable|string|max:50|unique:products,barcode',
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'image_url' => 'nullable|string',
@@ -232,10 +234,15 @@ class ProductController extends Controller
             ? strtoupper(trim($validated['sku']))
             : $this->generateUniqueSku($category, $validated['name']);
 
+        $barcode = isset($validated['barcode']) && trim($validated['barcode']) !== ''
+            ? trim($validated['barcode'])
+            : null;
+
         $product = Product::create([
             'category_id' => $validated['category_id'],
             'name' => $validated['name'],
             'sku' => $sku,
+            'barcode' => $barcode,
             'buy_price' => $buyPrice,
             'sell_price' => $sellPrice,
             'margin_percentage' => round($marginPercentage, 2),
@@ -301,6 +308,55 @@ class ProductController extends Controller
     }
 
     /**
+     * Find a product by its barcode.
+     * GET /api/products/barcode/{barcode}
+     */
+    public function findByBarcode(Request $request, string $barcode)
+    {
+        // Validate barcode format
+        $barcode = trim($barcode);
+        if (empty($barcode) || strlen($barcode) > 50) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Barcode tidak valid',
+            ], 422);
+        }
+
+        $product = Product::with(['category', 'stock'])
+            ->where('barcode', $barcode)
+            ->first();
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found',
+            ], 404);
+        }
+
+        $this->attachPublicImageUrl($request, $product);
+
+        // Build response matching PRD format
+        $stockData = $product->stock;
+        $offlineQty = $stockData ? (int) $stockData->offline_qty : 0;
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $product->id,
+                'barcode' => $product->barcode,
+                'sku' => $product->sku,
+                'name' => $product->name,
+                'sell_price' => $product->sell_price,
+                'buy_price' => $product->buy_price,
+                'stock' => $stockData,
+                'image_url' => $product->image_url,
+                'category' => $product->category,
+                'category_id' => $product->category_id,
+            ],
+        ], 200);
+    }
+
+    /**
      * Update the specified resource in storage.
      * PUT /api/products/{id} (can also be POST with _method=PUT to support image upload)
      */
@@ -317,6 +373,7 @@ class ProductController extends Controller
             'buy_price' => 'required|numeric|min:0',
             'sell_price' => 'required|numeric|min:0',
             'sku' => 'required|string|unique:products,sku,' . $id,
+            'barcode' => 'nullable|string|max:50|unique:products,barcode,' . $id,
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'image_url' => 'nullable|string',
@@ -350,10 +407,15 @@ class ProductController extends Controller
 
         $marginPercentage = $buyPrice > 0 ? (($sellPrice - $buyPrice) / $buyPrice) * 100 : 0;
 
+        $barcode = isset($validated['barcode']) && trim($validated['barcode']) !== ''
+            ? trim($validated['barcode'])
+            : null;
+
         $product->update([
             'category_id' => $validated['category_id'],
             'name' => $validated['name'],
             'sku' => $validated['sku'],
+            'barcode' => $barcode,
             'buy_price' => $buyPrice,
             'sell_price' => $sellPrice,
             'margin_percentage' => round($marginPercentage, 2),

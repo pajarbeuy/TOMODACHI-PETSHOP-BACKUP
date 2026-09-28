@@ -2529,7 +2529,7 @@ const revealObserver = new IntersectionObserver((entries) => {
     });
 }, { threshold: 0.1, rootMargin: '0px 0px -36px 0px' });
 
-document.querySelectorAll('[data-animate]').forEach((el) => observer.observe(el));
+document.querySelectorAll('[data-animate]').forEach((el) => revealObserver.observe(el));
 
 const leafPalette = [
     ['#fff2bf', '#ff8a00'],

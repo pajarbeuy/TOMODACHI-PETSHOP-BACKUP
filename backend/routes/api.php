@@ -96,6 +96,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // 2. Products general (accessible by both kasir and owner)
     Route::get('products', [ProductController::class, 'index']);
+    Route::get('products/barcode/{barcode}', [ProductController::class, 'findByBarcode']);
     Route::get('products/{product}', [ProductController::class, 'show']);
 
     // 3. Products modification (Owner and Admin only)

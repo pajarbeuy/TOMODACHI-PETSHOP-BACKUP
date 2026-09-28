@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../barcode_scanner_service.dart';
 import '../../payment_url_launcher.dart';
 import '../../product_service.dart';
 import '../../transaction_service.dart';
@@ -62,6 +64,14 @@ class _PosTabState extends State<PosTab> {
   bool _cartSheetOpen = false;
   final AudioPlayer _paymentSuccessPlayer = AudioPlayer();
 
+  // ── Barcode Scanner ─────────────────────────────────────────────────────────
+  final BarcodeScannerService _barcodeScanner = BarcodeScannerService();
+  final StringBuffer _hidBuffer = StringBuffer();
+  Timer? _hidDebounce;
+  bool _processingBarcode = false;
+  final FocusNode _barcodeFocusNode = FocusNode();
+  String? _lastHighlightedProductId;
+
   @override
   void initState() {
     super.initState();
@@ -75,11 +85,222 @@ class _PosTabState extends State<PosTab> {
   void dispose() {
     _paymentStatusTimer?.cancel();
     _searchDebounce?.cancel();
+    _hidDebounce?.cancel();
+    _barcodeFocusNode.dispose();
+    _barcodeScanner.dispose();
     _cartVersion.dispose();
     _paymentSuccessPlayer.dispose();
     _searchCtrl.dispose();
     _amountPaidCtrl.dispose();
     super.dispose();
+  }
+
+  // ── USB HID Barcode Scanner (Keyboard) ────────────────────────────────────
+
+  /// Handles raw key events from USB barcode scanners which act as keyboards.
+  /// Scanners type characters rapidly and end with Enter.
+  void _onKeyEvent(KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) return;
+
+    // Ignore if the search field or another text input has focus
+    final focusedWidget = FocusManager.instance.primaryFocus;
+    if (focusedWidget != null) {
+      // Check if focus is in an EditableText (TextField, etc)
+      final ctx = focusedWidget.context;
+      if (ctx != null) {
+        // If user is typing in a TextField, let the scanner input go there
+        // Only intercept if no text field has focus
+        final editableText = ctx.findAncestorWidgetOfExactType<EditableText>();
+        if (editableText != null) return;
+      }
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.enter ||
+        event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+      // Enter pressed — process buffer as barcode
+      _hidDebounce?.cancel();
+      final barcode = _hidBuffer.toString().trim();
+      _hidBuffer.clear();
+      if (barcode.isNotEmpty && barcode.length >= 3) {
+        _processBarcode(barcode);
+      }
+    } else {
+      final char = event.character;
+      if (char != null && char.isNotEmpty && !char.contains('\n')) {
+        _hidBuffer.write(char);
+        // Reset debounce — if no new character arrives within 100ms,
+        // the buffer is likely not from a scanner (too slow).
+        _hidDebounce?.cancel();
+        _hidDebounce = Timer(const Duration(milliseconds: 100), () {
+          _hidBuffer.clear();
+        });
+      }
+    }
+  }
+
+  // ── Barcode Processing ────────────────────────────────────────────────────
+
+  Future<void> _processBarcode(String barcode) async {
+    if (_processingBarcode) return;
+    _processingBarcode = true;
+
+    try {
+      final res = await widget.productService.findByBarcode(barcode);
+
+      if (!mounted) return;
+
+      if (res['success'] == true && res['data'] != null) {
+        final prod = res['data'];
+        final int stock = int.parse(
+          (prod['stock']?['offline_qty'] ?? 0).toString(),
+        );
+
+        if (stock <= 0) {
+          // FR-05: Stock habis
+          _barcodeScanner.playErrorBeep();
+          _showBarcodeSnackBar('Stok produk habis: ${prod['name']}', false);
+        } else {
+          // Success — add to cart
+          _addToCart(prod);
+          _barcodeScanner.playSuccessBeep();
+          _showBarcodeSnackBar(
+            '✓ ${prod['name']} ditambahkan ke keranjang',
+            true,
+          );
+          // Highlight the product briefly
+          setState(() {
+            _lastHighlightedProductId = prod['id'].toString();
+          });
+          Future<void>.delayed(const Duration(seconds: 2), () {
+            if (mounted) {
+              setState(() => _lastHighlightedProductId = null);
+            }
+          });
+        }
+      } else {
+        // FR-04: Product not found
+        _barcodeScanner.playErrorBeep();
+        _showBarcodeNotFoundDialog(barcode);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _barcodeScanner.playErrorBeep();
+
+      final errorMsg = e.toString();
+      if (errorMsg.contains('Product not found') ||
+          errorMsg.contains('404')) {
+        _showBarcodeNotFoundDialog(barcode);
+      } else if (errorMsg.contains('Network') ||
+          errorMsg.contains('connection')) {
+        _showBarcodeSnackBar('Tidak dapat terhubung ke server', false);
+      } else if (errorMsg.contains('timeout')) {
+        _showBarcodeSnackBar('Request timeout', false);
+      } else {
+        _showBarcodeSnackBar(
+          userFriendlyError(e, fallback: 'Barcode tidak valid'),
+          false,
+        );
+      }
+    } finally {
+      _processingBarcode = false;
+    }
+  }
+
+  void _showBarcodeSnackBar(String message, bool success) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              success ? Icons.check_circle : Icons.error,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor:
+            success ? const Color(0xFF2E7D32) : Colors.red.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showBarcodeNotFoundDialog(String barcode) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFFFFFDF9),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Column(
+          children: [
+            const Icon(
+              Icons.search_off,
+              color: Colors.red,
+              size: 54,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Produk tidak ditemukan',
+              style: _plusJakarta(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Barcode:',
+              style: _plusJakarta(fontSize: 13, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 4),
+            SelectableText(
+              barcode,
+              style: _plusJakarta(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFFF9A4D),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFFFB570),
+            ),
+            child: Text(
+              'Tutup',
+              style: _plusJakarta(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Camera Scanner Dialog ─────────────────────────────────────────────────
+
+  void _openCameraScanner() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return _CameraScannerDialog(
+          barcodeScanner: _barcodeScanner,
+          onBarcodeScanned: (barcode) {
+            _processBarcode(barcode);
+          },
+          plusJakarta: _plusJakarta,
+        );
+      },
+    );
   }
 
   Future<void> _playPaymentSuccessAudio() async {
@@ -858,15 +1079,20 @@ class _PosTabState extends State<PosTab> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWide = screenWidth >= 1000;
 
-    final productsArea = Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSearchAndFilters(),
-          const SizedBox(height: 16),
-          Expanded(child: _buildProductsGrid()),
-        ],
+    final productsArea = KeyboardListener(
+      focusNode: _barcodeFocusNode,
+      autofocus: true,
+      onKeyEvent: _onKeyEvent,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSearchAndFilters(),
+            const SizedBox(height: 16),
+            Expanded(child: _buildProductsGrid()),
+          ],
+        ),
       ),
     );
 
@@ -960,34 +1186,63 @@ class _PosTabState extends State<PosTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Search bar
-        TextField(
-          controller: _searchCtrl,
-          style: _plusJakarta(fontSize: 14),
-          decoration: InputDecoration(
-            hintText: 'Cari produk berdasarkan nama...',
-            prefixIcon: const Icon(Icons.search, color: Color(0xFFFFB570)),
-            suffixIcon: searchQuery.isEmpty
-                ? null
-                : IconButton(
-                    tooltip: 'Hapus pencarian',
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      color: Color(0xFFB68B6D),
-                    ),
-                    onPressed: _searchCtrl.clear,
+        // Search bar with scan button
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _searchCtrl,
+                style: _plusJakarta(fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Cari produk atau scan barcode...',
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFFFFB570)),
+                  suffixIcon: searchQuery.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'Hapus pencarian',
+                          icon: const Icon(
+                            Icons.close_rounded,
+                            color: Color(0xFFB68B6D),
+                          ),
+                          onPressed: _searchCtrl.clear,
+                        ),
+                  filled: true,
+                  fillColor: const Color(0xFFFFF9F2),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
                   ),
-            filled: true,
-            fillColor: const Color(0xFFFFF9F2),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
+            const SizedBox(width: 10),
+            // Scan Barcode Button
+            Tooltip(
+              message: 'Scan Barcode (Kamera)',
+              child: Material(
+                color: const Color(0xFFFFB570),
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  onTap: _openCameraScanner,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    width: 52,
+                    height: 52,
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.qr_code_scanner,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
         if (_loadingProducts && _products.isNotEmpty) ...[
           const SizedBox(height: 6),
@@ -1109,12 +1364,34 @@ class _PosTabState extends State<PosTab> {
                 ? widget.productService.resolveImageUrl(img)
                 : null;
 
-            return Card(
+            final isHighlighted =
+                _lastHighlightedProductId == prod['id'].toString();
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 400),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: isHighlighted
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFFFFB570).withValues(alpha: 0.5),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ]
+                    : [],
+              ),
+              child: Card(
               color: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: Colors.grey.shade100),
+                side: BorderSide(
+                  color: isHighlighted
+                      ? const Color(0xFFFFB570)
+                      : Colors.grey.shade100,
+                  width: isHighlighted ? 2.5 : 1,
+                ),
               ),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
@@ -1128,14 +1405,28 @@ class _PosTabState extends State<PosTab> {
                         width: double.infinity,
                         color: const Color(0xFFFFFDF9),
                         child: imageUrl != null
-                            ? CachedNetworkImage(
-                                imageUrl: imageUrl,
+                            ? Image.network(
+                                imageUrl,
                                 fit: BoxFit.contain,
-                                errorWidget: (context, url, error) => const Icon(
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(
                                   Icons.pets,
                                   size: 36,
                                   color: Color(0xFFFFD4A8),
                                 ),
+                                loadingBuilder: (context, child, progress) =>
+                                    progress == null
+                                        ? child
+                                        : const Center(
+                                            child: SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Color(0xFFFFB570),
+                                              ),
+                                            ),
+                                          ),
                               )
                             : const Icon(
                                 Icons.pets,
@@ -1209,6 +1500,7 @@ class _PosTabState extends State<PosTab> {
                   ],
                 ),
               ),
+            ),
             );
           },
         );
@@ -1517,6 +1809,259 @@ class _PosTabState extends State<PosTab> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         padding: const EdgeInsets.symmetric(vertical: 12),
       ),
+    );
+  }
+}
+
+// ── Camera Scanner Dialog Widget ──────────────────────────────────────────────
+
+class _CameraScannerDialog extends StatefulWidget {
+  final BarcodeScannerService barcodeScanner;
+  final void Function(String barcode) onBarcodeScanned;
+  final TextStyle Function({
+    double fontSize,
+    FontWeight fontWeight,
+    Color color,
+    double letterSpacing,
+  }) plusJakarta;
+
+  const _CameraScannerDialog({
+    required this.barcodeScanner,
+    required this.onBarcodeScanned,
+    required this.plusJakarta,
+  });
+
+  @override
+  State<_CameraScannerDialog> createState() => _CameraScannerDialogState();
+}
+
+class _CameraScannerDialogState extends State<_CameraScannerDialog> {
+  bool _isStarting = false;
+  bool _isActive = false;
+  String? _error;
+  final String _elementId = 'qr-reader-${DateTime.now().millisecondsSinceEpoch}';
+
+  @override
+  void initState() {
+    super.initState();
+    // Register the platform view factory so Web creates the HTML div element in the DOM
+    widget.barcodeScanner.registerViewFactory(_elementId);
+
+    // Wait for the first frame to render and mount the HTML element before starting camera scan
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future<void>.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _startScanner();
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.barcodeScanner.stopCameraScanner();
+    _removeHtmlElement();
+    super.dispose();
+  }
+
+  void _removeHtmlElement() {
+    try {
+      // Element cleanup handled by stopCameraScanner -> clear()
+    } catch (_) {}
+  }
+
+  Future<void> _startScanner() async {
+    if (_isStarting || _isActive) return;
+    setState(() {
+      _isStarting = true;
+      _error = null;
+    });
+
+    try {
+      await widget.barcodeScanner.startCameraScanner(
+        elementId: _elementId,
+        onScan: (barcode) {
+          widget.onBarcodeScanned(barcode);
+        },
+      );
+      if (mounted) {
+        setState(() {
+          _isActive = true;
+          _isStarting = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isStarting = false;
+          _error = 'Tidak dapat mengakses kamera.\n$e';
+        });
+      }
+    }
+  }
+
+  Future<void> _stopAndClose() async {
+    await widget.barcodeScanner.stopCameraScanner();
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: const Color(0xFFFFFDF9),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Row(
+        children: [
+          const Icon(Icons.qr_code_scanner, color: Color(0xFFFFB570), size: 28),
+          const SizedBox(width: 10),
+          Text(
+            'Scan Barcode',
+            style: widget.plusJakarta(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const Spacer(),
+          if (_isActive)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF2E7D32),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'AKTIF',
+                    style: widget.plusJakarta(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF2E7D32),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+      content: SizedBox(
+        width: 400,
+        height: 350,
+        child: Column(
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  width: double.infinity,
+                  color: Colors.black,
+                  child: Stack(
+                    children: [
+                      // Always render the camera preview in the DOM (on web) so document.getElementById finds it!
+                      widget.barcodeScanner.buildCameraPreview(_elementId),
+
+                      // Loading overlay
+                      if (_isStarting)
+                        Container(
+                          color: Colors.black,
+                          child: const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircularProgressIndicator(
+                                  color: Color(0xFFFFB570),
+                                ),
+                                SizedBox(height: 12),
+                                Text(
+                                  'Mengaktifkan kamera...',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                      // Error overlay
+                      if (_error != null)
+                        Container(
+                          color: Colors.black,
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.videocam_off,
+                                    color: Colors.white54,
+                                    size: 48,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    _error!,
+                                    textAlign: TextAlign.center,
+                                    style: widget.plusJakarta(
+                                      fontSize: 12,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  ElevatedButton(
+                                    onPressed: _startScanner,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFFFB570),
+                                    ),
+                                    child: const Text('Coba Lagi'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Arahkan kamera ke barcode produk.\nScanner akan otomatis mendeteksi barcode.',
+              textAlign: TextAlign.center,
+              style: widget.plusJakarta(
+                fontSize: 11,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _stopAndClose,
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFFFFB570),
+          ),
+          child: Text(
+            'Tutup Scanner',
+            style: widget.plusJakarta(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
     );
   }
 }

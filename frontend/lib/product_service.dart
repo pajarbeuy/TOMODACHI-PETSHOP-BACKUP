@@ -6,6 +6,35 @@ class ProductService {
   ProductService(this._client);
 
   String resolveImageUrl(String value) {
+    // The /storage/ path is served as a static file by PHP's built-in dev
+    // server (and by Apache/Nginx in production) without passing through
+    // Laravel middleware, so CORS headers are never added.
+    //
+    // The backend exposes a dedicated proxy route:
+    //   GET /api/product-images/{path}
+    // which streams the file from Storage::disk('public') and explicitly sets
+    // the required Access-Control-Allow-Origin header.
+    //
+    // We rewrite /storage/... URLs to go through that proxy so that
+    // Flutter Web can load images cross-origin without a CORS error.
+    final uri = Uri.tryParse(value);
+    if (uri != null && uri.hasScheme) {
+      // Absolute URL — extract just the path portion and rewrite if needed
+      final path = uri.path;
+      if (path.startsWith('/storage/')) {
+        final storagePath = path.substring('/storage/'.length);
+        return _client.resolveUrl('/api/product-images/$storagePath');
+      }
+      return value;
+    }
+
+    // Relative path
+    final normalised = value.startsWith('/') ? value : '/$value';
+    if (normalised.startsWith('/storage/')) {
+      final storagePath = normalised.substring('/storage/'.length);
+      return _client.resolveUrl('/api/product-images/$storagePath');
+    }
+
     return _client.resolveUrl(value);
   }
 
@@ -39,6 +68,11 @@ class ProductService {
     return await _client.get('/api/products/$id');
   }
 
+  /// Find product by barcode
+  Future<Map<String, dynamic>> findByBarcode(String barcode) async {
+    return await _client.get('/api/products/barcode/$barcode');
+  }
+
   /// Get grouped animal and sub-categories
   Future<Map<String, dynamic>> getCategories() async {
     return await _client.get('/api/products/categories');
@@ -48,6 +82,7 @@ class ProductService {
   Future<Map<String, dynamic>> createProduct({
     required String name,
     String? sku,
+    String? barcode,
     required String categoryId,
     required double buyPrice,
     required double sellPrice,
@@ -75,6 +110,9 @@ class ProductService {
     if (sku != null && sku.trim().isNotEmpty) {
       fields['sku'] = sku.trim();
     }
+    if (barcode != null && barcode.trim().isNotEmpty) {
+      fields['barcode'] = barcode.trim();
+    }
     if (imageUrl != null) fields['image_url'] = imageUrl;
 
     return await _client.postMultipart(
@@ -91,6 +129,7 @@ class ProductService {
     required String id,
     required String name,
     required String sku,
+    String? barcode,
     required String categoryId,
     required double buyPrice,
     required double sellPrice,
@@ -116,6 +155,9 @@ class ProductService {
       'description': description ?? '',
       'confirm_price_below_cost': confirmPriceBelowCost ? 'true' : 'false',
     };
+    if (barcode != null && barcode.trim().isNotEmpty) {
+      fields['barcode'] = barcode.trim();
+    }
     if (imageUrl != null) fields['image_url'] = imageUrl;
 
     // Dedicated POST update route keeps multipart uploads compatible with Laravel.
@@ -133,3 +175,4 @@ class ProductService {
     return await _client.delete('/api/products/$id');
   }
 }
+

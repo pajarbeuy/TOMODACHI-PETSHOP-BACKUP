@@ -212,6 +212,9 @@ class _ProductsTabState extends State<ProductsTab> {
     final imgUrlCtrl = TextEditingController(
       text: isEdit ? product['image_url'] ?? '' : '',
     );
+    final barcodeCtrl = TextEditingController(
+      text: isEdit ? product['barcode'] ?? '' : '',
+    );
 
     String? selectedCategoryId = isEdit
         ? product['category_id']?.toString()
@@ -341,6 +344,15 @@ class _ProductsTabState extends State<ProductsTab> {
                       ),
                       const SizedBox(height: 12),
                     ],
+                    TextField(
+                      controller: barcodeCtrl,
+                      style: _plusJakarta(fontSize: 14),
+                      decoration: modalInputDecoration(
+                        'Barcode Produk',
+                        hintText: 'Opsional - EAN-13, UPC, dll',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       initialValue: selectedCategoryId,
                       isExpanded: true,
@@ -520,12 +532,14 @@ class _ProductsTabState extends State<ProductsTab> {
                                   Uint8List.fromList(selectedImage!.bytes),
                                   fit: BoxFit.cover,
                                 )
-                              : CachedNetworkImage(
-                                  imageUrl: widget.productService.resolveImageUrl(
+                              : Image.network(
+                                  widget.productService.resolveImageUrl(
                                     imgUrlCtrl.text.trim(),
                                   ),
                                   fit: BoxFit.cover,
-                                  errorWidget: (context, url, error) => Center(
+                                  width: double.infinity,
+                                  height: 160,
+                                  errorBuilder: (context, error, stackTrace) => Center(
                                     child: Text(
                                       'Preview foto tidak dapat dimuat',
                                       style: _plusJakarta(
@@ -563,6 +577,7 @@ class _ProductsTabState extends State<ProductsTab> {
                               int.tryParse(minThresholdCtrl.text) ?? 5;
                           final desc = descCtrl.text.trim();
                           final imgUrl = imgUrlCtrl.text.trim();
+                          final barcode = barcodeCtrl.text.trim();
 
                           if (name.isEmpty ||
                               (isEdit && sku.isEmpty) ||
@@ -620,6 +635,7 @@ class _ProductsTabState extends State<ProductsTab> {
                                 id: id!,
                                 name: name,
                                 sku: sku,
+                                barcode: barcode.isEmpty ? null : barcode,
                                 categoryId: selectedCategoryId!,
                                 buyPrice: buyVal,
                                 sellPrice: sellVal,
@@ -636,6 +652,7 @@ class _ProductsTabState extends State<ProductsTab> {
                             } else {
                               res = await widget.productService.createProduct(
                                 name: name,
+                                barcode: barcode.isEmpty ? null : barcode,
                                 categoryId: selectedCategoryId!,
                                 buyPrice: buyVal,
                                 sellPrice: sellVal,
@@ -1019,6 +1036,7 @@ class _ProductsTabState extends State<ProductsTab> {
         final id = prod['id'].toString();
         final name = prod['name']?.toString() ?? '-';
         final sku = prod['sku']?.toString() ?? '-';
+        final barcode = prod['barcode']?.toString() ?? '';
         final sellPrice = parseCurrency(prod['sell_price']);
         final offlineQty = int.parse(
           (prod['stock']?['offline_qty'] ?? 0).toString(),
@@ -1060,11 +1078,29 @@ class _ProductsTabState extends State<ProductsTab> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: imageUrl != null
-                      ? CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          fit: BoxFit.cover,
-                          errorWidget: (context, url, error) =>
-                              const Icon(Icons.pets, color: Color(0xFFFFB570)),
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.network(
+                            imageUrl,
+                            fit: BoxFit.cover,
+                            width: isCompact ? 54 : 58,
+                            height: isCompact ? 54 : 58,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.pets, color: Color(0xFFFFB570)),
+                            loadingBuilder: (context, child, progress) =>
+                                progress == null
+                                    ? child
+                                    : const Center(
+                                        child: SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Color(0xFFFFB570),
+                                          ),
+                                        ),
+                                      ),
+                          ),
                         )
                       : const Icon(Icons.pets, color: Color(0xFFFFB570)),
                 ),
@@ -1086,7 +1122,7 @@ class _ProductsTabState extends State<ProductsTab> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'SKU: $sku',
+                        'SKU: $sku${barcode.isNotEmpty ? '  •  Barcode: $barcode' : ''}',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: _plusJakarta(
