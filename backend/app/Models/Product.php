@@ -15,6 +15,7 @@ class Product extends Model
         'category_id',
         'name',
         'sku',
+        'barcode',
         'buy_price',
         'sell_price',
         'margin_percentage',

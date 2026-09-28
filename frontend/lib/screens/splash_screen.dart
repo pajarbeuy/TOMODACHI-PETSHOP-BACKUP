@@ -8,11 +8,11 @@ import '../widgets/app_logo.dart';
 
 const _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://127.0.0.1:8000',
+  defaultValue: 'https://crusher-vaguely-tyke.ngrok-free.dev/api',
 );
 const _mobileApiBaseUrl = String.fromEnvironment(
   'MOBILE_API_BASE_URL',
-  defaultValue: 'https://tomodachi-petshop.xyz',
+  defaultValue: ' https://crusher-vaguely-tyke.ngrok-free.dev/api',
 );
 
 class SplashScreen extends StatefulWidget {
